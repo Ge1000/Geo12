@@ -68,11 +68,26 @@
 
   <script>
     <script>
+  <script>
+  const challenges = [
+    "No sugar today.",
+    "Wake up and make your bed.",
+    "No social media for 24 hours.",
+    "Cold shower for 30 seconds.",
+    "Read 10 pages of any book.",
+    "Go for a 20-minute walk."
+  ];
+
   function startApp() {
-    const challenge = "No social media for 2 hours. Focus on one task.";
-    alert("Today's Challenge:\n\n" + challenge);
+    const today = new Date().getDate();
+    const challenge = challenges[today % challenges.length];
+    alert("Today's challenge:\n\n" + challenge);
   }
 </script>
-  </script>
+
+    
+  
+
+  
 </body>
 </html>
