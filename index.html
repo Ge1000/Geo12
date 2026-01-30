@@ -20,101 +20,106 @@ body {
   overflow: hidden;
 }
 
-/* SCREENS */
 .screen {
   position: absolute;
-  width: 100%;
-  height: 100%;
-  padding: 24px;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity .5s ease, transform .5s ease;
 }
 
 .hidden {
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.96);
+  transform: scale(.96);
 }
 
-/* TEXT */
-h1 { margin-bottom: 6px; font-weight: 600; }
+h1 {
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
 p {
-  opacity: 0.75;
-  margin-bottom: 22px;
+  opacity: .7;
+  max-width: 320px;
   text-align: center;
-  max-width: 360px;
-  line-height: 1.45;
+  margin-bottom: 24px;
 }
 
-/* BUTTONS */
 button {
   background: #1db954;
   border: none;
   padding: 16px 40px;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   border-radius: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-button.secondary {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.25);
-  margin-top: 12px;
+  transition: all .2s ease;
 }
 
 button:hover {
   transform: scale(1.05);
-  box-shadow: 0 10px 30px rgba(29,185,84,0.35);
+  box-shadow: 0 10px 30px rgba(29,185,84,.4);
 }
 
-/* PROGRESS */
+button.secondary {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.3);
+  margin-top: 12px;
+}
+
 .progress {
-  width: 240px;
+  width: 220px;
   height: 10px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,.15);
   border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .progress-bar {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg,#1db954,#6aff9c);
-  transition: width 0.4s ease;
+  background: #1db954;
+  transition: width .4s ease;
 }
 
-/* PREMIUM */
+.lock {
+  font-size: 42px;
+  margin-bottom: 12px;
+  opacity: .7;
+}
+
+.invites {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
 .price {
-  font-size: 38px;
+  font-size: 36px;
   font-weight: 700;
   margin: 10px 0;
 }
 
 .badge {
   font-size: 12px;
-  opacity: 0.6;
+  opacity: .6;
 }
 
-/* SHARE */
 .share {
-  margin-top: 24px;
-  font-size: 13px;
-  opacity: 0.6;
+  margin-top: 14px;
+  font-size: 14px;
+  opacity: .6;
   cursor: pointer;
 }
 
-/* DISCLAIMER */
 .disclaimer {
   position: fixed;
   bottom: 14px;
   font-size: 11px;
-  opacity: 0.45;
+  opacity: .45;
   text-align: center;
   max-width: 90%;
 }
@@ -133,103 +138,85 @@ button:hover {
 
 <!-- LEVEL -->
 <div class="screen hidden" id="level">
-  <h1 id="title"></h1>
+  <div class="lock" id="lock">🔓</div>
+  <h1 id="title">Level 1</h1>
   <p id="text"></p>
-
-  <div class="progress">
-    <div class="progress-bar" id="bar"></div>
-  </div>
-
-  <button id="continue" onclick="next()">Continue</button>
-
-  <div id="paywall" class="hidden">
-    <p>Premium unlock required</p>
-    <div class="price">$9</div>
-    <button onclick="unlock()">Upgrade to Premium</button>
-    <div class="badge">Demo only · No real payment</div>
-  </div>
-
-  <div class="share" onclick="share()">🔗 Share ThinSkin</div>
+  <div class="progress"><div class="progress-bar" id="bar"></div></div>
+  <button onclick="next()">Continue</button>
 </div>
 
-<!-- DISCLAIMER -->
+<!-- PAY -->
+<div class="screen hidden" id="pay">
+  <h1>Premium</h1>
+  <p>Commitment checkpoint.</p>
+  <div class="price">$9</div>
+  <button onclick="unlock()">Unlock</button>
+  <div class="badge">Simulation only</div>
+</div>
+
 <div class="disclaimer">
   This is a personal experimental project. It does not provide advice or guarantees.
 </div>
 
 <script>
-/* ---------- DATA ---------- */
 const messages = [
   "Starting is enough.",
   "Consistency over motivation.",
   "Discomfort builds resilience.",
-  "You don’t need permission to continue.",
-  "Repetition removes fear.",
-  "This is the work."
+  "Not everything is for everyone.",
+  "Discipline compounds quietly."
 ];
 
-let level = parseInt(localStorage.getItem("level")) || 0;
+let level = Number(localStorage.getItem("level")) || 0;
 let premium = localStorage.getItem("premium") === "true";
 
-/* ---------- CORE ---------- */
 function show(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+function save() {
+  localStorage.setItem("level", level);
+  localStorage.setItem("premium", premium);
 }
 
 function start() {
-  if (level === 0) level = 1;
+  level = Math.max(level, 1);
   save();
   render();
   show("level");
 }
 
 function render() {
-  title.innerText = "Level " + level;
-  text.innerText = messages[level - 1];
-  bar.style.width = (level * 16.6) + "%";
-
-  if (level >= 4 && !premium) {
-    continue.style.display = "none";
-    paywall.classList.remove("hidden");
-  } else {
-    continue.style.display = "block";
-    paywall.classList.add("hidden");
-  }
+  document.getElementById("title").innerText = "Level " + level;
+  document.getElementById("text").innerText = messages[level - 1] || "Completed.";
+  document.getElementById("bar").style.width = Math.min(level / 5 * 100, 100) + "%";
 }
 
 function next() {
-  if (level < 6) {
+  if (level < 5) {
     level++;
     save();
     render();
-  } else {
-    alert("End of demo.\nProgress saved.");
+  } else if (!premium) {
+    show("pay");
   }
 }
 
 function unlock() {
   premium = true;
   save();
-  render();
   alert("Premium unlocked (demo).");
+  show("level");
 }
 
-/* ---------- SHARE ---------- */
 function share() {
-  navigator.clipboard.writeText(
-    "ThinSkin — a private space for daily discipline.\nTry it here: (paste your link)"
-  );
-  alert("Share text copied.");
+  navigator.share
+    ? navigator.share({ title: "ThinSkin", url: location.href })
+    : alert("Copy link manually.");
 }
 
-/* ---------- SAVE ---------- */
-function save() {
-  localStorage.setItem("level", level);
-  localStorage.setItem("premium", premium);
-}
-
-/* ---------- INIT ---------- */
+/* INIT */
 if (level > 0) {
   render();
   show("level");
