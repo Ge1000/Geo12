@@ -2,119 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Geo12</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geo12</title>
 
   <style>
-    body {<div style="
-  position: fixed;
-  bottom: 10px;
-  left: 10px;
-  right: 10px;
-  background: rgba(0,0,0,0.8);
-  color: #ffffff;
-  font-size: 12px;
-  padding: 10px;
-  border-radius: 8px;
-  text-align: center;
-  z-index: 9999;
-">
-  This website is a personal project. Nothing here constitutes financial advice, investment advice, or an offer to sell or buy any asset.
-</div>
+    body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #0f172a;
-      color: #ffffff;
+      height: 100vh;
+      background: radial-gradient(circle at top, #0f1a2b, #050b18);
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: white;
     }
 
-    .card {
-      background: #020617;
-      padding: 40px;
-      border-radius: 16px;
-      text-align: center;
-      max-width: 420px;
-      width: 100%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    }
-
-    h1 {
-      margin-bottom: 10px;
-      font-size: 32px;
-    }
-
-    p {
-      opacity: 0.8;
-      font-size: 16px;
-    }
-
-    button {
-      margin-top: 25px;
-      padding: 14px 28px;
-      font-size: 16px;
+    .start-btn {
+      background: #1db954;
       border: none;
-      border-radius: 10px;
-      background: #22c55e;
-      color: #020617;
+      padding: 18px 42px;
+      font-size: 20px;
+      font-weight: 600;
+      border-radius: 14px;
       cursor: pointer;
-      font-weight: bold;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    button:hover {
-      background: #16a34a;
+    .start-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 30px rgba(29,185,84,0.4);
+    }
+
+    .disclaimer {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      opacity: 0.6;
+      text-align: center;
+      max-width: 90%;
     }
   </style>
 </head>
+
 <body>
-<div style="
-  position: fixed;
-  bottom: 10px;
-  left: 10px;
-  right: 10px;
-  background: rgba(0,0,0,0.8);
-  color: #ffffff;
-  font-size: 12px;
-  padding: 10px;
-  border-radius: 8px;
-  text-align: center;
-  z-index: 9999;
-">
-  This website is a personal project. Nothing here constitutes advice.
-</div>
-    <button onclick="startApp()">
-      Start
-    </button>
 
+  <button class="start-btn" onclick="startApp()">Start</button>
 
-<script>
-const challenges = [
-  "A day with less distraction.",
-  "Starting with the hardest task.",
-  "Choosing silence over noise.",
-  "Doing one uncomfortable thing.",
-  "Focus first. Comfort later.",
-  "What would discipline look like today?",
-  "Where does your attention go most?",
-  "What are you avoiding right now?",
-  "What choice would your future self appreciate?",
-  "What actually matters today?"
-];
+  <div class="disclaimer">
+    Personal project. No advice given.
+  </div>
 
-function startApp() {
-  const today = new Date().getDate();
-  const challenge = challenges[today % challenges.length];
-  alert(challenge);
-}
-</script>
-  
-  
+  <script>
+    function startApp() {
+      alert("App starts here 🚀");
+    }
+  </script>
 
-    
-  
-
-  
 </body>
 </html>
