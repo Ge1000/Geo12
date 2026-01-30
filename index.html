@@ -1,64 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geo12</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThinSkin</title>
 
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: radial-gradient(circle at top, #0f1a2b, #050b18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      color: white;
-    }
+<style>
+* { box-sizing: border-box; }
 
-    .start-btn {
-      background: #1db954;
-      border: none;
-      padding: 18px 42px;
-      font-size: 20px;
-      font-weight: 600;
-      border-radius: 14px;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top, #0f1a2b, #050b18);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
 
-    .start-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 10px 30px rgba(29,185,84,0.4);
-    }
+/* SCREENS */
+.screen {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
 
-    .disclaimer {
-      position: fixed;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      opacity: 0.6;
-      text-align: center;
-      max-width: 90%;
-    }
-  </style>
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+}
+
+/* TEXT */
+h1 { margin-bottom: 6px; font-weight: 600; }
+p {
+  opacity: 0.75;
+  margin-bottom: 22px;
+  text-align: center;
+  max-width: 360px;
+  line-height: 1.45;
+}
+
+/* BUTTONS */
+button {
+  background: #1db954;
+  border: none;
+  padding: 16px 40px;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.25);
+  margin-top: 12px;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(29,185,84,0.35);
+}
+
+/* PROGRESS */
+.progress {
+  width: 240px;
+  height: 10px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#1db954,#6aff9c);
+  transition: width 0.4s ease;
+}
+
+/* PREMIUM */
+.price {
+  font-size: 38px;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+.badge {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* SHARE */
+.share {
+  margin-top: 24px;
+  font-size: 13px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+/* DISCLAIMER */
+.disclaimer {
+  position: fixed;
+  bottom: 14px;
+  font-size: 11px;
+  opacity: 0.45;
+  text-align: center;
+  max-width: 90%;
+}
+</style>
 </head>
 
 <body>
 
-  <button class="start-btn" onclick="startApp()">Start</button>
+<!-- HOME -->
+<div class="screen" id="home">
+  <h1>ThinSkin</h1>
+  <p>A private space for daily discipline.</p>
+  <button onclick="start()">Start</button>
+  <div class="share" onclick="share()">🔗 Share ThinSkin</div>
+</div>
 
-  <div class="disclaimer">
-    Personal project. No advice given.
+<!-- LEVEL -->
+<div class="screen hidden" id="level">
+  <h1 id="title"></h1>
+  <p id="text"></p>
+
+  <div class="progress">
+    <div class="progress-bar" id="bar"></div>
   </div>
 
-  <script>
-    function startApp() {
-      alert("App starts here 🚀");
-    }
-  </script>
+  <button id="continue" onclick="next()">Continue</button>
+
+  <div id="paywall" class="hidden">
+    <p>Premium unlock required</p>
+    <div class="price">$9</div>
+    <button onclick="unlock()">Upgrade to Premium</button>
+    <div class="badge">Demo only · No real payment</div>
+  </div>
+
+  <div class="share" onclick="share()">🔗 Share ThinSkin</div>
+</div>
+
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  This is a personal experimental project. It does not provide advice or guarantees.
+</div>
+
+<script>
+/* ---------- DATA ---------- */
+const messages = [
+  "Starting is enough.",
+  "Consistency over motivation.",
+  "Discomfort builds resilience.",
+  "You don’t need permission to continue.",
+  "Repetition removes fear.",
+  "This is the work."
+];
+
+let level = parseInt(localStorage.getItem("level")) || 0;
+let premium = localStorage.getItem("premium") === "true";
+
+/* ---------- CORE ---------- */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function start() {
+  if (level === 0) level = 1;
+  save();
+  render();
+  show("level");
+}
+
+function render() {
+  title.innerText = "Level " + level;
+  text.innerText = messages[level - 1];
+  bar.style.width = (level * 16.6) + "%";
+
+  if (level >= 4 && !premium) {
+    continue.style.display = "none";
+    paywall.classList.remove("hidden");
+  } else {
+    continue.style.display = "block";
+    paywall.classList.add("hidden");
+  }
+}
+
+function next() {
+  if (level < 6) {
+    level++;
+    save();
+    render();
+  } else {
+    alert("End of demo.\nProgress saved.");
+  }
+}
+
+function unlock() {
+  premium = true;
+  save();
+  render();
+  alert("Premium unlocked (demo).");
+}
+
+/* ---------- SHARE ---------- */
+function share() {
+  navigator.clipboard.writeText(
+    "ThinSkin — a private space for daily discipline.\nTry it here: (paste your link)"
+  );
+  alert("Share text copied.");
+}
+
+/* ---------- SAVE ---------- */
+function save() {
+  localStorage.setItem("level", level);
+  localStorage.setItem("premium", premium);
+}
+
+/* ---------- INIT ---------- */
+if (level > 0) {
+  render();
+  show("level");
+} else {
+  show("home");
+}
+</script>
 
 </body>
 </html>
