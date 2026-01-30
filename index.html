@@ -1,228 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ThinSkin</title>
 
 <style>
-* { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
 
-body {
-  margin: 0;
-  height: 100vh;
-  background: radial-gradient(circle at top, #0f1a2b, #050b18);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top, #0f1c2d, #05080f);
+    color: white;
+    min-height: 100vh;
+  }
 
-.screen {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: opacity .5s ease, transform .5s ease;
-}
+  .screen {
+    display: none;
+    min-height: 100vh;
+    padding: 40px 20px;
+    text-align: center;
+  }
 
-.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(.96);
-}
+  .active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
 
-h1 {
-  margin: 0 0 12px;
-  font-weight: 600;
-}
+  h1 {
+    margin-bottom: 10px;
+    font-size: 34px;
+  }
 
-p {
-  opacity: .7;
-  max-width: 320px;
-  text-align: center;
-  margin-bottom: 24px;
-}
+  p {
+    opacity: 0.8;
+    margin-bottom: 30px;
+    line-height: 1.5;
+  }
 
-button {
-  background: #1db954;
-  border: none;
-  padding: 16px 40px;
-  font-size: 18px;
-  font-weight: 600;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all .2s ease;
-}
+  button {
+    background: #22c55e;
+    color: #001a0d;
+    border: none;
+    padding: 18px 28px;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(34,197,94,.4);
+  }
 
-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 30px rgba(29,185,84,.4);
-}
+  button:active {
+    transform: scale(0.98);
+  }
 
-button.secondary {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,.3);
-  margin-top: 12px;
-}
+  .progress {
+    width: 100%;
+    max-width: 300px;
+    height: 10px;
+    background: rgba(255,255,255,.15);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
 
-.progress {
-  width: 220px;
-  height: 10px;
-  background: rgba(255,255,255,.15);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 24px;
-}
+  .bar {
+    height: 100%;
+    background: #22c55e;
+    width: 0%;
+    transition: width .3s;
+  }
 
-.progress-bar {
-  height: 100%;
-  width: 0%;
-  background: #1db954;
-  transition: width .4s ease;
-}
+  .lock {
+    font-size: 42px;
+    margin-bottom: 20px;
+  }
 
-.lock {
-  font-size: 42px;
-  margin-bottom: 12px;
-  opacity: .7;
-}
-
-.invites {
-  font-size: 32px;
-  margin-bottom: 12px;
-}
-
-.price {
-  font-size: 36px;
-  font-weight: 700;
-  margin: 10px 0;
-}
-
-.badge {
-  font-size: 12px;
-  opacity: .6;
-}
-
-.share {
-  margin-top: 14px;
-  font-size: 14px;
-  opacity: .6;
-  cursor: pointer;
-}
-
-.disclaimer {
-  position: fixed;
-  bottom: 14px;
-  font-size: 11px;
-  opacity: .45;
-  text-align: center;
-  max-width: 90%;
-}
+  footer {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.5;
+    padding: 0 20px;
+  }
 </style>
 </head>
 
 <body>
 
 <!-- HOME -->
-<div class="screen" id="home">
+<div id="home" class="screen active">
   <h1>ThinSkin</h1>
   <p>A private space for daily discipline.</p>
   <button onclick="start()">Start</button>
-  <div class="share" onclick="share()">🔗 Share ThinSkin</div>
+
+  <footer>
+    This is a personal experimental project. It does not provide advice or guarantees.
+  </footer>
 </div>
 
 <!-- LEVEL -->
-<div class="screen hidden" id="level">
-  <div class="lock" id="lock">🔓</div>
-  <h1 id="title">Level 1</h1>
-  <p id="text"></p>
-  <div class="progress"><div class="progress-bar" id="bar"></div></div>
+<div id="level" class="screen">
+  <div class="lock">🔒</div>
+  <h1 id="levelTitle"></h1>
+  <p id="levelText"></p>
+
+  <div class="progress">
+    <div class="bar" id="bar"></div>
+  </div>
+
   <button onclick="next()">Continue</button>
 </div>
 
-<!-- PAY -->
-<div class="screen hidden" id="pay">
-  <h1>Premium</h1>
-  <p>Commitment checkpoint.</p>
-  <div class="price">$9</div>
-  <button onclick="unlock()">Unlock</button>
-  <div class="badge">Simulation only</div>
-</div>
+<!-- END -->
+<div id="end" class="screen">
+  <h1>Completed</h1>
+  <p>You reached the end.<br>Most people don’t.</p>
+  <button onclick="reset()">Restart</button>
 
-<div class="disclaimer">
-  This is a personal experimental project. It does not provide advice or guarantees.
+  <footer>
+    Progress resets by design.
+  </footer>
 </div>
 
 <script>
-const messages = [
-  "Starting is enough.",
-  "Consistency over motivation.",
-  "Discomfort builds resilience.",
-  "Not everything is for everyone.",
-  "Discipline compounds quietly."
-];
+  const texts = [
+    "Silence beats motivation.",
+    "You showed up again.",
+    "Consistency shapes identity.",
+    "You act without applause.",
+    "Discipline compounds quietly."
+  ];
 
-let level = Number(localStorage.getItem("level")) || 0;
-let premium = localStorage.getItem("premium") === "true";
+  let level = parseInt(localStorage.getItem("level")) || 0;
 
-function show(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
-}
+  function show(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
 
-function save() {
-  localStorage.setItem("level", level);
-  localStorage.setItem("premium", premium);
-}
-
-function start() {
-  level = Math.max(level, 1);
-  save();
-  render();
-  show("level");
-}
-
-function render() {
-  document.getElementById("title").innerText = "Level " + level;
-  document.getElementById("text").innerText = messages[level - 1] || "Completed.";
-  document.getElementById("bar").style.width = Math.min(level / 5 * 100, 100) + "%";
-}
-
-function next() {
-  if (level < 5) {
-    level++;
+  function start() {
+    level = 1;
     save();
     render();
-  } else if (!premium) {
-    show("pay");
+    show("level");
   }
-}
 
-function unlock() {
-  premium = true;
-  save();
-  alert("Premium unlocked (demo).");
-  show("level");
-}
+  function render() {
+    document.getElementById("levelTitle").innerText = "Level " + level;
+    document.getElementById("levelText").innerText = texts[level - 1];
+    document.getElementById("bar").style.width = (level / 5) * 100 + "%";
+  }
 
-function share() {
-  navigator.share
-    ? navigator.share({ title: "ThinSkin", url: location.href })
-    : alert("Copy link manually.");
-}
+  function next() {
+    if (level < 5) {
+      level++;
+      save();
+      render();
+    } else {
+      show("end");
+    }
+  }
 
-/* INIT */
-if (level > 0) {
-  render();
-  show("level");
-} else {
-  show("home");
-}
+  function reset() {
+    level = 0;
+    save();
+    show("home");
+  }
+
+  function save() {
+    localStorage.setItem("level", level);
+  }
+
+  // INIT
+  if (level > 0 && level <= 5) {
+    render();
+    show("level");
+  } else {
+    show("home");
+  }
 </script>
 
 </body>
