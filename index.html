@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ThinSkin</title>
 
+<!-- SHARE / PREVIEW FIX (WhatsApp, iMessage, Facebook) -->
+<meta property="og:title" content="ThinSkin" />
+<meta property="og:description" content="One small discomfort challenge per day. No pressure." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://012-nine.vercel.app" />
+<meta property="og:image" content="https://012-nine.vercel.app/preview.png" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ThinSkin" />
+<meta name="twitter:description" content="Daily exposure, no pressure." />
+<meta name="twitter:image" content="https://012-nine.vercel.app/preview.png" />
+<!-- END SHARE FIX -->
+
 <style>
   body {
     margin: 0;
@@ -89,7 +102,6 @@
 
 <div class="card" id="app"></div>
 
-<!-- Privacy Modal -->
 <div class="modal" id="privacyModal">
   <div class="modal-content">
     <h3>Privacy Policy</h3>
@@ -101,7 +113,6 @@
   </div>
 </div>
 
-<!-- Disclaimer Modal -->
 <div class="modal" id="disclaimerModal">
   <div class="modal-content">
     <h3>Disclaimer</h3>
@@ -116,8 +127,6 @@
 </div>
 
 <script>
-/* ------------------ DATA ------------------ */
-
 const challenges = [
   "Maintain eye contact for 3 seconds.",
   "Say hello first in a short interaction.",
@@ -166,13 +175,9 @@ const challenges = [
 
 const FREE_LIMIT = 14;
 
-/* ------------------ STATE ------------------ */
-
 const todayKey = new Date().toDateString();
 let doneToday = localStorage.getItem("doneToday") === todayKey;
 let completed = Number(localStorage.getItem("completed") || 0);
-
-/* ------------------ LOGIC ------------------ */
 
 function getTodayChallenge() {
   return challenges[completed % challenges.length];
@@ -238,10 +243,15 @@ function markDone() {
   render();
 }
 
-/* ------------------ SHARE ------------------ */
-
+/* === MODIFICAT DOAR SHARE === */
 function shareApp() {
-  const text = "I’m using ThinSkin — a simple daily app for building tolerance to discomfort. One small challenge per day. No pressure.";
+  const variants = [
+    "I found this app called ThinSkin.\nOne small discomfort challenge per day.\nNo pressure.\n\nSurprisingly addictive.",
+    "This is weird but interesting.\nThinSkin gives you ONE tiny challenge per day.\nThat’s it.\n\nDidn’t expect to like it.",
+    "ThinSkin.\nDaily discomfort.\nZero pressure.\n\nTry it."
+  ];
+
+  const text = variants[Math.floor(Math.random() * variants.length)];
 
   if (navigator.share) {
     navigator.share({
@@ -253,8 +263,7 @@ function shareApp() {
     alert(text + "\n\n" + window.location.href);
   }
 }
-
-/* ------------------ MODALS ------------------ */
+/* === END SHARE === */
 
 function openModal(id) {
   document.getElementById(id).style.display = "flex";
