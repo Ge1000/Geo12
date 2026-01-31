@@ -1,191 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ThinSkin</title>
 
 <style>
-  * {
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  }
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top, #0f1a2b, #050b18);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  body {
-    margin: 0;
-    background: radial-gradient(circle at top, #0f1c2d, #05080f);
-    color: white;
-    min-height: 100vh;
-  }
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 90%;
+  max-width: 420px;
+}
 
-  .screen {
-    display: none;
-    min-height: 100vh;
-    padding: 40px 20px;
-    text-align: center;
-  }
+h1 { margin-bottom: 6px; }
+p { opacity: 0.75; }
 
-  .active {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
+button {
+  margin-top: 24px;
+  padding: 16px 38px;
+  border-radius: 14px;
+  border: none;
+  font-size: 17px;
+  font-weight: 600;
+  background: #22c55e;
+  color: #000;
+  cursor: pointer;
+}
 
-  h1 {
-    margin-bottom: 10px;
-    font-size: 34px;
-  }
+button.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
 
-  p {
-    opacity: 0.8;
-    margin-bottom: 30px;
-    line-height: 1.5;
-  }
+.link {
+  margin-top: 14px;
+  font-size: 13px;
+  opacity: 0.6;
+  cursor: pointer;
+}
 
-  button {
-    background: #22c55e;
-    color: #001a0d;
-    border: none;
-    padding: 18px 28px;
-    border-radius: 16px;
-    font-size: 18px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 10px 30px rgba(34,197,94,.4);
-  }
+.challenge {
+  font-size: 18px;
+  margin: 24px 0;
+}
 
-  button:active {
-    transform: scale(0.98);
-  }
+label {
+  margin-top: 20px;
+  cursor: pointer;
+}
 
-  .progress {
-    width: 100%;
-    max-width: 300px;
-    height: 10px;
-    background: rgba(255,255,255,.15);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 30px;
-  }
+.progress {
+  margin-top: 16px;
+  font-size: 15px;
+  opacity: 0.8;
+}
 
-  .bar {
-    height: 100%;
-    background: #22c55e;
-    width: 0%;
-    transition: width .3s;
-  }
+.disclaimer {
+  position: fixed;
+  bottom: 14px;
+  font-size: 11px;
+  opacity: 0.45;
+  text-align: center;
+  max-width: 90%;
+}
 
-  .lock {
-    font-size: 42px;
-    margin-bottom: 20px;
-  }
+.footer-links {
+  position: fixed;
+  bottom: 40px;
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  opacity: 0.5;
+}
 
-  footer {
-    position: absolute;
-    bottom: 20px;
-    width: 100%;
-    text-align: center;
-    font-size: 12px;
-    opacity: 0.5;
-    padding: 0 20px;
-  }
+.footer-links span {
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
 <!-- HOME -->
-<div id="home" class="screen active">
+<div id="home" class="screen">
   <h1>ThinSkin</h1>
   <p>A private space for daily discipline.</p>
-  <button onclick="start()">Start</button>
-
-  <footer>
-    This is a personal experimental project. It does not provide advice or guarantees.
-  </footer>
+  <button id="start">Start</button>
 </div>
 
-<!-- LEVEL -->
-<div id="level" class="screen">
-  <div class="lock">🔒</div>
-  <h1 id="levelTitle"></h1>
-  <p id="levelText"></p>
+<!-- DAILY -->
+<div id="daily" class="screen">
+  <h1 id="dayTitle"></h1>
+  <div class="challenge" id="challengeText"></div>
 
-  <div class="progress">
-    <div class="bar" id="bar"></div>
-  </div>
+  <label>
+    <input type="checkbox" id="doneCheck"> I did this today
+  </label>
 
-  <button onclick="next()">Continue</button>
+  <button id="confirmBtn" class="locked">Confirm</button>
+  <div class="progress" id="streakInfo"></div>
 </div>
 
-<!-- END -->
-<div id="end" class="screen">
-  <h1>Completed</h1>
-  <p>You reached the end.<br>Most people don’t.</p>
-  <button onclick="reset()">Restart</button>
+<!-- LOCKED -->
+<div id="locked" class="screen">
+  <h1>Done for today</h1>
+  <p>Come back tomorrow.</p>
+</div>
 
-  <footer>
-    Progress resets by design.
-  </footer>
+<!-- POLICY -->
+<div id="policy" class="screen">
+  <h1 id="policyTitle"></h1>
+  <p id="policyText" style="font-size:14px; line-height:1.6;"></p>
+  <button onclick="goHome()">Back</button>
+</div>
+
+<!-- FOOTER -->
+<div class="footer-links">
+  <span onclick="showPolicy('privacy')">Privacy</span>
+  <span onclick="showPolicy('terms')">Policy</span>
+</div>
+
+<div class="disclaimer">
+  This is a personal experimental project. It does not provide advice, treatment, or guarantees.
 </div>
 
 <script>
-  const texts = [
-    "Silence beats motivation.",
-    "You showed up again.",
-    "Consistency shapes identity.",
-    "You act without applause.",
-    "Discipline compounds quietly."
-  ];
+// ================= DATA =================
+const challenges = [
+  "Do one uncomfortable thing in silence.",
+  "Finish something without seeking validation.",
+  "Repeat yesterday’s effort, even if imperfect.",
+  "Choose discipline over comfort once today.",
+  "Do the task without explaining yourself.",
+  "Show up even if motivation is gone."
+];
 
-  let level = parseInt(localStorage.getItem("level")) || 0;
+// ================= STATE =================
+let state = JSON.parse(localStorage.getItem("thinskin")) || {
+  streak: 0,
+  lastDate: null
+};
 
-  function show(id) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
+// ================= ELEMENTS =================
+const home = document.getElementById("home");
+const daily = document.getElementById("daily");
+const locked = document.getElementById("locked");
+const policy = document.getElementById("policy");
+
+const challengeText = document.getElementById("challengeText");
+const dayTitle = document.getElementById("dayTitle");
+const check = document.getElementById("doneCheck");
+const confirmBtn = document.getElementById("confirmBtn");
+const streakInfo = document.getElementById("streakInfo");
+
+// ================= HELPERS =================
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function save() {
+  localStorage.setItem("thinskin", JSON.stringify(state));
+}
+
+function show(screen) {
+  [home, daily, locked, policy].forEach(s => s.style.display = "none");
+  screen.style.display = "flex";
+}
+
+// ================= LOGIC =================
+function loadDaily() {
+  const t = today();
+
+  if (state.lastDate === t) {
+    show(locked);
+    return;
   }
 
-  function start() {
-    level = 1;
-    save();
-    render();
-    show("level");
+  if (state.lastDate) {
+    const diff = (new Date(t) - new Date(state.lastDate)) / 86400000;
+    if (diff > 1) state.streak = 0;
   }
 
-  function render() {
-    document.getElementById("levelTitle").innerText = "Level " + level;
-    document.getElementById("levelText").innerText = texts[level - 1];
-    document.getElementById("bar").style.width = (level / 5) * 100 + "%";
-  }
+  const challenge = challenges[Math.floor(Math.random()*challenges.length)];
+  challengeText.textContent = challenge;
+  dayTitle.textContent = "Day " + (state.streak + 1);
+  streakInfo.textContent = "Current streak: " + state.streak;
 
-  function next() {
-    if (level < 5) {
-      level++;
-      save();
-      render();
-    } else {
-      show("end");
-    }
-  }
+  check.checked = false;
+  confirmBtn.classList.add("locked");
 
-  function reset() {
-    level = 0;
-    save();
-    show("home");
-  }
+  show(daily);
+}
 
-  function save() {
-    localStorage.setItem("level", level);
-  }
+check.onchange = () => {
+  confirmBtn.classList.toggle("locked", !check.checked);
+};
 
-  // INIT
-  if (level > 0 && level <= 5) {
-    render();
-    show("level");
+confirmBtn.onclick = () => {
+  state.streak++;
+  state.lastDate = today();
+  save();
+  show(locked);
+};
+
+document.getElementById("start").onclick = loadDaily;
+
+// ================= POLICY =================
+function showPolicy(type) {
+  show(policy);
+  if (type === "privacy") {
+    policyTitle.textContent = "Privacy Policy";
+    policyText.textContent =
+      "ThinSkin does not collect, store, or transmit any personal data. " +
+      "All progress is stored locally on your device using browser storage. " +
+      "No analytics, cookies, accounts, or tracking are used.";
   } else {
-    show("home");
+    policyTitle.textContent = "Usage Policy";
+    policyText.textContent =
+      "ThinSkin is a personal experimental project intended for self-reflection only. " +
+      "It does not provide medical, psychological, financial, or professional advice. " +
+      "Use at your own discretion. No guarantees or outcomes are implied.";
   }
+}
+
+function goHome() {
+  show(home);
+}
+
+// ================= INIT =================
+show(home);
 </script>
 
 </body>
