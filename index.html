@@ -6,7 +6,7 @@
 <title>ThinSkin</title>
 
 <style>
-:root {
+:root{
   --bg1:#0b1220;
   --bg2:#050914;
   --card:#111827cc;
@@ -15,55 +15,42 @@
   --muted:#9ca3af;
 }
 
-* { box-sizing:border-box; }
+*{box-sizing:border-box}
 
-body {
+body{
   margin:0;
   height:100vh;
-  background: radial-gradient(circle at top, var(--bg1), var(--bg2));
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(circle at top,var(--bg1),var(--bg2));
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   color:var(--text);
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-.card {
+.card{
   width:90%;
   max-width:420px;
   background:var(--card);
   border-radius:20px;
   padding:32px 24px;
   text-align:center;
-  backdrop-filter: blur(14px);
+  backdrop-filter:blur(14px);
 }
 
-h1 {
-  font-size:32px;
-  margin-bottom:12px;
-}
+h1{font-size:30px;margin-bottom:10px}
+.challenge{font-size:20px;margin:22px 0}
 
-.challenge {
-  font-size:20px;
-  margin:24px 0;
-}
-
-.checkbox {
+.checkbox{
   display:flex;
   justify-content:center;
-  gap:10px;
   align-items:center;
+  gap:10px;
   font-size:18px;
-  margin:24px 0;
-  cursor:pointer;
+  margin:22px 0;
 }
 
-.checkbox input {
-  width:22px;
-  height:22px;
-}
-
-button {
+button{
   background:var(--green);
   color:#052e16;
   border:none;
@@ -73,19 +60,15 @@ button {
   border-radius:14px;
   cursor:pointer;
 }
+button:disabled{opacity:.4}
 
-button:disabled {
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-.footer {
-  margin-top:28px;
-  font-size:14px;
+.footer{
+  margin-top:26px;
+  font-size:15px;
   color:var(--muted);
+  line-height:1.5;
 }
-
-.footer a {
+.footer a{
   color:#93c5fd;
   text-decoration:underline;
   margin:0 6px;
@@ -95,86 +78,214 @@ button:disabled {
 
 <body>
 
-<div class="card" id="app"></div>
+<div class="card" id="app">Loading…</div>
 
 <script>
-// =====================
-// CHALLENGES (EXTENSIBLE)
-// =====================
+// ===================== CHALLENGES (220) =====================
 const challenges = [
-  "Do not use social media for 1 hour.",
+  // Level 1 – basics
+  "Drink a full glass of water.",
+  "Make your bed.",
+  "Step outside for 2 minutes.",
+  "Take 5 deep breaths.",
+  "Stand up and stretch.",
+  "Put your phone down for 10 minutes.",
+  "Clean one small surface.",
+  "Wash your hands mindfully.",
+  "Sit in silence for 1 minute.",
+  "Open a window.",
+
+  // Focus & discipline
+  "No social media for 1 hour.",
+  "No phone during meals.",
+  "Read 5 pages.",
+  "Write one honest sentence.",
+  "Do one task without music.",
+  "Finish one small task fully.",
+  "Avoid multitasking for 30 minutes.",
+  "Plan tomorrow in one sentence.",
+  "Delete one useless app.",
+  "Turn off notifications for 1 hour.",
+
+  // Movement
   "Take a 10 minute walk.",
-  "Drink only water today.",
-  "Write down one thing you avoided doing.",
-  "Clean one small area completely.",
-  "Go to bed 30 minutes earlier.",
-  "No phone during meals today.",
   "Stretch for 5 minutes.",
-  "Take a cold face wash with water.",
-  "Read 5 pages of any book.",
-  "Sit in silence for 5 minutes.",
-  "Organize your notes or thoughts.",
-  "No sugar today.",
-  "Breathe deeply for 3 minutes.",
-  "Do one thing you’ve been postponing.",
-  "Cold shower for 30 seconds if safe.",
-  "Write one honest sentence to yourself.",
-  "Avoid complaining today.",
-  "Step outside for fresh air.",
-  "Eat slowly for one meal."
-  // 👉 aici poți adăuga sute fără probleme
+  "Do 20 bodyweight squats.",
+  "Hold a plank for 30 seconds.",
+  "Walk instead of sitting for a call.",
+  "Stand up every 30 minutes today.",
+  "Do light mobility for your neck.",
+  "Take stairs once today.",
+  "Move without your phone.",
+  "Slow walk focusing on breath.",
+
+  // Mental resilience
+  "Sit with boredom for 5 minutes.",
+  "Do nothing for 3 minutes.",
+  "Resist checking your phone once.",
+  "Notice an urge and don’t act on it.",
+  "Delay a craving by 10 minutes.",
+  "Let a thought pass without reacting.",
+  "Accept discomfort for 2 minutes.",
+  "Observe your breath for 1 minute.",
+  "Stay present during one task.",
+  "Pause before responding once.",
+
+  // Hygiene & self-respect
+  "Wash your face with cold water.",
+  "Take a mindful shower.",
+  "Brush teeth slowly.",
+  "Clean your desk.",
+  "Change your bedsheets.",
+  "Organize one drawer.",
+  "Prepare clothes for tomorrow.",
+  "Throw away one useless item.",
+  "Wipe your phone screen.",
+  "Air your room.",
+
+  // Energy & health (safe)
+  "Drink water before coffee.",
+  "Eat without distractions once.",
+  "Take a short daylight break.",
+  "Go outside after waking up.",
+  "Sleep 30 minutes earlier.",
+  "Avoid sugar for one meal.",
+  "Eat slower than usual.",
+  "Stop eating when satisfied.",
+  "Notice hunger vs boredom.",
+  "Stand in sunlight for 2 minutes.",
+
+  // Social (not alone)
+  "Say thank you sincerely.",
+  "Listen without interrupting.",
+  "Make eye contact once.",
+  "Smile at someone.",
+  "Send a kind message.",
+  "Compliment someone honestly.",
+  "Be patient in a conversation.",
+  "Let someone else speak first.",
+  "Help someone briefly.",
+  "Be polite under pressure.",
+
+  // Digital minimalism
+  "Delete 10 old photos.",
+  "Clear browser tabs.",
+  "Unfollow one account.",
+  "Turn phone grayscale for 1 hour.",
+  "No phone first 15 minutes after waking.",
+  "No phone last 15 minutes before sleep.",
+  "Remove one notification.",
+  "Check messages only once per hour.",
+  "Keep phone in another room briefly.",
+  "Use phone with intention.",
+
+  // Discipline stacking
+  "Finish what you start today.",
+  "Do one thing you avoid.",
+  "Start a task immediately.",
+  "Don’t complain today.",
+  "Be on time.",
+  "Keep posture upright.",
+  "Speak slower than usual.",
+  "Breathe before reacting.",
+  "Accept inconvenience calmly.",
+  "Choose effort over comfort once.",
+
+  // Awareness
+  "Notice your thoughts for 2 minutes.",
+  "Name one emotion you feel.",
+  "Observe body tension.",
+  "Relax jaw and shoulders.",
+  "Slow your breathing.",
+  "Listen to ambient sounds.",
+  "Notice automatic habits.",
+  "Act intentionally once.",
+  "Pause before scrolling.",
+  "Check in with yourself.",
+
+  // Advanced resilience
+  "Cold water on face for 30 seconds.",
+  "Hold eye contact during conversation.",
+  "Sit without phone for 10 minutes.",
+  "Delay gratification once today.",
+  "Finish the hardest task first.",
+  "Stay calm under mild stress.",
+  "Keep focus despite distraction.",
+  "Resist impulse buying.",
+  "Embrace mild discomfort.",
+  "Stay present under pressure.",
+
+  // Endgame (still safe)
+  "Do one thing with full attention.",
+  "Be consistent, not intense.",
+  "Show up even if unmotivated.",
+  "Act despite discomfort.",
+  "Respect your own word.",
+  "End the day intentionally.",
+  "Reflect briefly on today.",
+  "Choose long-term over short-term.",
+  "Practice quiet discipline.",
+  "Return tomorrow."
 ];
 
-// =====================
-// STORAGE
-// =====================
-const today = new Date().toISOString().split("T")[0];
-let data = JSON.parse(localStorage.getItem("thinskin")) || {
-  used: [],
-  lastDay: null,
-  todayDone: false
-};
+// ===================== DATE & STORAGE =====================
+const today = new Date().toISOString().slice(0,10);
+
+let data;
+try{
+  data = JSON.parse(localStorage.getItem("thinskin"));
+}catch{
+  data = null;
+}
+
+if(!data || !Array.isArray(data.used)){
+  data = { used:[], lastDay:null, todayDone:false };
+}
+
+if(data.lastDay !== today){
+  data.todayDone = false;
+  data.lastDay = today;
+}
+
+localStorage.setItem("thinskin", JSON.stringify(data));
 
 const app = document.getElementById("app");
 
-// =====================
-// LOGIC
-// =====================
-if (data.lastDay !== today) {
-  data.todayDone = false;
-  data.lastDay = today;
-  localStorage.setItem("thinskin", JSON.stringify(data));
+// ===================== LOGIC =====================
+function nextChallenge(){
+  return challenges.find(c => !data.used.includes(c)) || null;
 }
 
-if (data.todayDone) {
-  renderDone();
-} else {
-  renderChallenge();
+function renderDone(){
+  app.innerHTML = `
+    <h1>Done for today</h1>
+    <div class="challenge">Come back tomorrow.</div>
+    <div class="footer">
+      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>
+      This project is experimental.<br>
+      No medical advice. No guarantees.<br>
+      Not AI guidance. Not professional advice.
+    </div>
+  `;
 }
 
-function getNextChallenge() {
-  for (let c of challenges) {
-    if (!data.used.includes(c)) return c;
-  }
-  return "No task today.";
-}
-
-function renderChallenge() {
-  const challenge = getNextChallenge();
+function renderChallenge(){
+  const challenge = nextChallenge();
+  if(!challenge){ renderDone(); return; }
 
   app.innerHTML = `
     <h1>Today</h1>
     <div class="challenge">${challenge}</div>
 
     <label class="checkbox">
-      <input type="checkbox" id="check"/>
+      <input type="checkbox" id="check">
       <span>Done for today</span>
     </label>
 
-    <button id="confirm" disabled>Confirm</button>
+    <button id="btn" disabled>Confirm</button>
 
     <div class="footer">
-      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>
+      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>  
       This project is experimental.<br>
       No medical advice. No guarantees.<br>
       Not AI guidance. Not professional advice.
@@ -182,33 +293,19 @@ function renderChallenge() {
   `;
 
   const check = document.getElementById("check");
-  const btn = document.getElementById("confirm");
+  const btn = document.getElementById("btn");
 
-  check.addEventListener("change", () => {
-    btn.disabled = !check.checked;
-  });
-
-  btn.addEventListener("click", () => {
+  check.onchange = () => btn.disabled = !check.checked;
+  btn.onclick = () => {
     data.used.push(challenge);
     data.todayDone = true;
     localStorage.setItem("thinskin", JSON.stringify(data));
     renderDone();
-  });
+  };
 }
 
-function renderDone() {
-  app.innerHTML = `
-    <h1>Done for today</h1>
-    <div class="challenge">Come back tomorrow.</div>
-
-    <div class="footer">
-      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>
-      This project is experimental.<br>
-      No medical advice. No guarantees.<br>
-      Not AI guidance. Not professional advice.
-    </div>
-  `;
-}
+// ===================== START =====================
+data.todayDone ? renderDone() : renderChallenge();
 </script>
 
 </body>
