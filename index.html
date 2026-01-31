@@ -1,84 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ThinSkin</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: radial-gradient(circle at top, #0f172a, #020617);
-    color: #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  }
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .card {
-    width: 90%;
-    max-width: 420px;
-    background: rgba(15, 23, 42, 0.85);
-    border-radius: 20px;
-    padding: 28px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    text-align: center;
-  }
+.card {
+  width: 90%;
+  max-width: 420px;
+  background: rgba(15,23,42,0.9);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+  text-align: center;
+}
 
-  h1 {
-    margin: 0 0 10px;
-    font-size: 28px;
-  }
+h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
 
-  .subtitle {
-    opacity: 0.7;
-    margin-bottom: 24px;
-  }
+.subtitle {
+  opacity: 0.7;
+  margin-bottom: 22px;
+}
 
-  .challenge {
-    font-size: 20px;
-    margin: 24px 0;
-    line-height: 1.4;
-  }
+.challenge {
+  font-size: 20px;
+  line-height: 1.45;
+  margin: 28px 0;
+}
 
-  button {
-    background: #1e293b;
-    color: white;
-    border: none;
-    padding: 14px 20px;
-    border-radius: 12px;
-    font-size: 16px;
-    cursor: pointer;
-    width: 100%;
-  }
+button {
+  width: 100%;
+  padding: 15px;
+  border-radius: 14px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1e293b;
+  color: white;
+}
 
-  button:hover {
-    background: #334155;
-  }
+button:hover {
+  background: #334155;
+}
 
-  .small {
-    margin-top: 18px;
-    font-size: 13px;
-    opacity: 0.65;
-    line-height: 1.4;
-  }
+.lock {
+  opacity: 0.6;
+}
 
-  .links {
-    margin-top: 14px;
-    font-size: 14px;
-  }
+.footer {
+  margin-top: 18px;
+  font-size: 13px;
+  opacity: 0.6;
+}
 
-  .links a {
-    color: #93c5fd;
-    text-decoration: none;
-    margin: 0 6px;
-  }
+.links {
+  margin-top: 14px;
+  font-size: 14px;
+}
 
-  .locked {
-    opacity: 0.5;
-  }
+.links a {
+  color: #93c5fd;
+  text-decoration: none;
+  margin: 0 6px;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -86,139 +87,189 @@
 
 <div class="card">
   <h1>ThinSkin</h1>
-  <div class="subtitle">Daily discomfort experiment</div>
+  <div class="subtitle">Daily exposure to discomfort</div>
 
   <div id="content"></div>
 
-  <div class="links">
-    <a href="#" onclick="showPrivacy()">Privacy</a> ·
-    <a href="#" onclick="showDisclaimer()">Disclaimer</a>
+  <div class="footer">
+    Days completed: <span id="days">0</span>
   </div>
 
-  <div class="small" id="footerText">
-    Experimental project.<br>
-    No medical or therapy advice.
+  <div class="links">
+    <a onclick="showPrivacy()">Privacy</a> ·
+    <a onclick="showDisclaimer()">Disclaimer</a>
   </div>
 </div>
 
 <script>
-/* ===============================
-   SAFE STORAGE
-================================ */
+/* =======================
+   DATA
+======================= */
+const challenges = [
+/* 1–45 FREE */
+"Say hello without adding anything else.",
+"Maintain eye contact two seconds longer.",
+"Ask a simple question you already know.",
+"Say 'I don’t know' and stop.",
+"Allow an awkward moment without fixing it.",
+"Respond shorter than you want.",
+"Do not explain a small action.",
+"Let silence exist in a conversation.",
+"Do not smile to soften the moment.",
+"Say 'ok' and stop.",
+"Receive feedback without defending yourself.",
+"Listen fully without interrupting.",
+"Repeat what someone said, no opinion.",
+"Accept someone else may be right.",
+"Let a small mistake pass.",
+"Allow someone else the last word.",
+"Notice defensiveness without acting.",
+"Do not explain unless asked.",
+"Accept a neutral 'no'.",
+"Do not seek confirmation.",
+"Stay one minute without your phone.",
+"Repeat a boring task without variation.",
+"Do something intentionally slow.",
+"Sit with boredom for two minutes.",
+"Accept the urge to escape.",
+"Stand still for 30 seconds.",
+"Observe breathing without control.",
+"Do not optimize anything today.",
+"Accept a slower pace.",
+"Do less than you could.",
+"Ask for a minor piece of information.",
+"Accept a short answer without follow-up.",
+"Send a plain message without emojis.",
+"Do not rewrite a message.",
+"Send something ‘good enough’.",
+"Do not check for reactions.",
+"Leave a message seen.",
+"Accept no response.",
+"Do not fill silence.",
+"Notice tension in your body.",
+"Do not prove competence.",
+"Do not try to be interesting.",
+"Be present without performing.",
+"Accept not being noticed.",
+"End the day without evaluating it.",
+
+/* 46–90 PREMIUM */
+"State a neutral opinion without explanation.",
+"Leave a sentence unfinished.",
+"Allow a small misunderstanding.",
+"Do not correct yourself immediately.",
+"Speak slower than usual.",
+"Accept a neutral reaction.",
+"Remain serious without humor.",
+"Do not mask uncertainty.",
+"Accept not being liked.",
+"Sit with discomfort for 60 seconds.",
+"Ask for general feedback.",
+"Listen to feedback without reacting.",
+"Do not over-thank.",
+"Accept a vague answer.",
+"Do not ask for clarification.",
+"Let a small refusal stand.",
+"Do not repair your image.",
+"Accept 'maybe'.",
+"Notice desire to control.",
+"Do not convince.",
+"Repeat yesterday’s discomfort.",
+"Do the same thing intentionally again.",
+"Accept monotony.",
+"Do not seek meaning immediately.",
+"Sit with frustration.",
+"Accept no visible progress.",
+"Do not encourage yourself.",
+"Let discomfort pass naturally.",
+"Notice urge to quit.",
+"Continue without motivation.",
+"Be intentionally unnoticed.",
+"Take up less space.",
+"Accept not impressing.",
+"Do not seek validation.",
+"Let others lead.",
+"Accept social uncertainty.",
+"Do not predict reactions.",
+"Stay when you want to leave.",
+"Accept emotional tension.",
+"Do not escape.",
+"Observe shame without judgment.",
+"Accept discomfort as normal.",
+"Do not avoid what appears.",
+"Remain calm in tension.",
+"Say: 'I can stay with this.'"
+];
+
+const STORAGE_KEY = "thinskin_v1";
 const today = new Date().toDateString();
-const data = JSON.parse(localStorage.getItem("thinskin") || "{}");
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+  start: Date.now(),
+  completed: [],
+  today: null
+};
 
-if (!data.startDate) {
-  data.startDate = Date.now();
-  data.completed = [];
-}
+const dayCount = Math.floor((Date.now() - state.start) / 86400000) + 1;
+document.getElementById("days").innerText = state.completed.length;
 
-const dayCount = Math.floor((Date.now() - data.startDate) / 86400000) + 1;
-const isPremiumLocked = dayCount > 7;
-
-/* ===============================
-   CHALLENGE GENERATOR (200+)
-================================ */
-function generateChallenges() {
-  const base = [
-    "Ask a question you already know the answer to.",
-    "Pause for 3 seconds before responding to someone.",
-    "Admit you misunderstood something.",
-    "Let silence exist without filling it.",
-    "Say 'I might be wrong' once today.",
-    "Give a short, honest opinion without explaining it.",
-    "Receive feedback without defending yourself.",
-    "Repeat back what someone said instead of replying.",
-    "Notice discomfort without fixing it.",
-    "Do nothing for one full minute."
-  ];
-
-  const variations = [
-    "in a casual conversation",
-    "during a routine interaction",
-    "without adding context",
-    "without apologizing",
-    "and sit with the feeling",
-    "without explaining yourself",
-    "even if it feels awkward",
-    "without seeking reassurance",
-    "and observe your reaction",
-    "without trying to be liked"
-  ];
-
-  const challenges = [];
-
-  for (let i = 0; i < base.length; i++) {
-    for (let j = 0; j < variations.length; j++) {
-      challenges.push(base[i] + " " + variations[j] + ".");
-    }
-  }
-
-  // Advanced (locked after day 7)
-  const advanced = [];
-  for (let i = 1; i <= 80; i++) {
-    advanced.push("Advanced: allow a moment of visible uncertainty and do not resolve it immediately.");
-  }
-
-  return { normal: challenges, advanced };
-}
-
-const allChallenges = generateChallenges();
-
-/* ===============================
-   DAILY CHALLENGE LOGIC
-================================ */
-if (!data.daily || data.daily.date !== today) {
-  const used = new Set(data.completed);
-  const pool = allChallenges.normal.filter(c => !used.has(c));
-
-  const selected = pool[Math.floor(Math.random() * pool.length)];
-
-  data.daily = { date: today, challenge: selected };
-  localStorage.setItem("thinskin", JSON.stringify(data));
+/* =======================
+   LOGIC
+======================= */
+if (!state.today || state.today.date !== today) {
+  const available = challenges.filter(c => !state.completed.includes(c));
+  state.today = {
+    date: today,
+    challenge: available[Math.floor(Math.random() * available.length)]
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 const content = document.getElementById("content");
 
-/* ===============================
-   UI STATES
-================================ */
-if (data.completed.includes(data.daily.challenge)) {
+if (state.completed.includes(state.today.challenge)) {
   content.innerHTML = `
     <div class="challenge">Done for today.</div>
-    <div class="subtitle">Come back tomorrow.</div>
+    <button disabled class="lock">Come back tomorrow</button>
   `;
 } else {
-  content.innerHTML = `
-    <div class="challenge">${data.daily.challenge}</div>
-    <button onclick="complete()">I did it</button>
-  `;
+  const isPremium = challenges.indexOf(state.today.challenge) >= 45;
+  if (isPremium && dayCount > 7 === false) {
+    content.innerHTML = `
+      <div class="challenge lock">🔒 Premium challenge locked</div>
+      <button disabled class="lock">Unlock after 7 days</button>
+    `;
+  } else {
+    content.innerHTML = `
+      <div class="challenge">${state.today.challenge}</div>
+      <button onclick="complete()">I did it</button>
+    `;
+  }
 }
 
 function complete() {
-  data.completed.push(data.daily.challenge);
-  localStorage.setItem("thinskin", JSON.stringify(data));
+  state.completed.push(state.today.challenge);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   location.reload();
 }
 
-/* ===============================
-   PRIVACY & DISCLAIMER
-================================ */
+/* =======================
+   LEGAL SAFE
+======================= */
 function showPrivacy() {
   alert(
-    "Privacy Policy:\n\n" +
-    "This app stores minimal data locally on your device only (progress and dates).\n" +
-    "No accounts. No tracking. No analytics. No data is transmitted or shared."
+    "Privacy Policy\n\n" +
+    "No accounts. No tracking. No analytics.\n" +
+    "All data is stored locally on your device only."
   );
 }
 
 function showDisclaimer() {
   alert(
-    "Disclaimer:\n\n" +
+    "Disclaimer\n\n" +
     "This is an experimental personal project.\n" +
-    "Not medical advice. Not therapy. Not professional guidance.\n" +
-    "No guarantees. Participate voluntarily.\n" +
-    "Stop if uncomfortable or unsafe."
+    "Not medical advice. Not therapy.\n" +
+    "Not professional guidance.\n" +
+    "Participate voluntarily and stop if unsafe."
   );
 }
 </script>
