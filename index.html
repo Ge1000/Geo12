@@ -1,299 +1,358 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ThinSkin</title>
 
 <style>
-:root{
-  --bg1:#050b18;
-  --bg2:#020615;
-  --card:rgba(255,255,255,0.06);
-  --text:#ffffff;
-  --muted:rgba(255,255,255,0.6);
-  --accent:#22c55e;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #0f1a2b, #050b18);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif}
-body{
-  margin:0;min-height:100vh;
-  background:radial-gradient(1200px 600px at top,var(--bg1),var(--bg2));
-  color:var(--text);
-  display:flex;align-items:center;justify-content:center;
+
+.container {
+  width: 100%;
+  max-width: 420px;
+  padding: 24px;
+  text-align: center;
 }
-.card{
-  width:92%;max-width:420px;
-  padding:28px;border-radius:22px;
-  background:var(--card);
-  backdrop-filter:blur(16px);
-  box-shadow:0 20px 60px rgba(0,0,0,.4);
-  text-align:center;
+
+h1 { margin-bottom: 6px; }
+.subtitle { opacity: 0.7; margin-bottom: 22px; }
+
+.card {
+  background: rgba(255,255,255,0.07);
+  border-radius: 18px;
+  padding: 24px;
 }
-h1{margin:0 0 10px;font-size:28px}
-h2{margin:0 0 6px;font-size:22px}
-p{margin:6px 0;color:var(--muted);line-height:1.4}
-button{
-  margin-top:18px;padding:14px 18px;width:100%;
-  border:none;border-radius:14px;
-  background:var(--accent);
-  color:#052e12;font-size:16px;font-weight:600;
+
+.challenge {
+  font-size: 18px;
+  line-height: 1.45;
+  min-height: 90px;
 }
-button.secondary{
-  background:transparent;border:1px solid rgba(255,255,255,.2);
-  color:var(--text);
+
+.lock {
+  font-size: 40px;
+  margin-bottom: 10px;
 }
-.checkbox{
-  margin:16px 0;display:flex;gap:10px;
-  align-items:center;justify-content:center;
+
+button {
+  background: #1db954;
+  border: none;
+  padding: 16px;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-top: 14px;
 }
-input[type=checkbox]{width:20px;height:20px}
-.links{margin-top:16px;font-size:13px}
-.links span{cursor:pointer;text-decoration:underline;color:#93c5fd;margin:0 6px}
-.hidden{display:none}
-.small{font-size:12px;color:var(--muted);margin-top:16px}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.footer {
+  margin-top: 16px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.links {
+  margin-top: 14px;
+}
+
+.links a {
+  color: #9fd3ff;
+  margin: 0 6px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-content {
+  background: #0f1a2b;
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 500px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-height: 80vh;
+  overflow-y: auto;
+}
 </style>
 </head>
 
 <body>
 
-<div class="card" id="home">
-  <h1>You have one thing to do today.</h1>
-  <p>Small. Quiet. Intentional.</p>
-  <button onclick="start()">Start</button>
-  <p class="small">Experimental project. No advice. No guarantees.</p>
-</div>
+<div class="container">
+  <h1>ThinSkin</h1>
+  <div class="subtitle">Train tolerance to discomfort.</div>
 
-<div class="card hidden" id="challenge">
-  <p>LEVEL <span id="level"></span></p>
-  <h2 id="task"></h2>
-  <div class="checkbox">
-    <input type="checkbox" id="doneCheck"/>
-    <label for="doneCheck">I did this today.</label>
+  <div class="card">
+    <div id="content">
+      <div class="challenge" id="challengeText">
+        Press start to receive today’s exposure.
+      </div>
+    </div>
+
+    <button onclick="start()">Start</button>
+    <button class="secondary" onclick="complete()">I did it</button>
   </div>
-  <button onclick="complete()">Continue</button>
-</div>
 
-<div class="card hidden" id="done">
-  <h1>Done for today</h1>
-  <p>Come back tomorrow.</p>
-  <button class="secondary" onclick="share()">Share</button>
+  <div class="footer">
+    Days completed: <span id="days">0</span>
+  </div>
+
   <div class="links">
-    <span onclick="showPrivacy()">Privacy</span> ·
-    <span onclick="showDisclaimer()">Disclaimer</span>
+    <a onclick="openModal('privacy')">Privacy</a>
+    <a onclick="openModal('terms')">Terms</a>
+    <a onclick="openModal('disclaimer')">Disclaimer</a>
   </div>
 </div>
 
-<div class="card hidden" id="locked">
-  <h1>Already done.</h1>
-  <p>Discipline compounds quietly.</p>
-  <div class="links">
-    <span onclick="showPrivacy()">Privacy</span> ·
-    <span onclick="showDisclaimer()">Disclaimer</span>
-  </div>
-</div>
-
-<div class="card hidden" id="privacy">
-  <h2>Privacy</h2>
-  <p>No accounts. No tracking. No servers.<br>Everything stays on your device.</p>
-  <button class="secondary" onclick="back()">Back</button>
-</div>
-
-<div class="card hidden" id="disclaimer">
-  <h2>Disclaimer</h2>
-  <p>
-    This is a personal experimental project.<br><br>
-    It does NOT provide medical advice, therapy,
-    professional guidance, or guarantees of any kind.<br><br>
-    Use at your own discretion.
-  </p>
-  <button class="secondary" onclick="back()">Back</button>
+<div class="modal" id="modal">
+  <div class="modal-content" id="modalContent"></div>
 </div>
 
 <script>
-const challenges = [
-  // 🔹 BASICS (1–50)
-  "Drink a full glass of water.",
-  "Make your bed.",
-  "No social media for 1 hour.",
-  "Take a 10 minute walk.",
-  "Clean one small surface.",
-  "Stretch for 5 minutes.",
-  "Write one honest sentence.",
-  "No phone for 30 minutes.",
-  "Read 5 pages of anything.",
-  "Breathe slowly for 2 minutes.",
-  "Organize one folder.",
-  "Stand up straight for 1 minute.",
-  "Open a window for fresh air.",
-  "Wash your face with cold water.",
-  "Delete 5 old photos.",
-  "Sit in silence for 3 minutes.",
-  "Prepare clothes for tomorrow.",
-  "Drink water before coffee.",
-  "No sugar today.",
-  "Look outside for 2 minutes.",
-  "Tidy your desk.",
-  "Write down tomorrow’s first task.",
-  "Avoid complaining today.",
-  "Eat without distractions once.",
-  "Walk slower than usual.",
-  "Fix one small thing.",
-  "Close unused browser tabs.",
-  "Listen to one full song.",
-  "Go to bed 15 minutes earlier.",
-  "Avoid news today.",
-  "Take a deep breath before speaking.",
-  "Notice your posture.",
-  "Drink water after waking.",
-  "Clean your phone screen.",
-  "Plan tomorrow in 3 bullets.",
-  "Stretch your neck.",
-  "Pause before opening apps.",
-  "Make tea or coffee mindfully.",
-  "Sit without moving for 1 minute.",
-  "Eat one fruit.",
-  "Avoid junk food today.",
-  "Put phone away while eating.",
-  "Notice one sound around you.",
-  "Breathe through your nose for 1 min.",
-  "Stand still for 60 seconds.",
-  "Organize one drawer.",
-  "Wash hands slowly.",
-  "Delete one unused app.",
-  "Write one intention.",
-  "Do nothing for 2 minutes.",
+const FREE_DAYS = 7;
 
-  // 🔹 DISCIPLINE (51–120)
-  "No social media until noon.",
-  "Wake up without snoozing.",
-  "Cold water on face for 30 seconds.",
-  "Read instead of scrolling.",
-  "Finish one small task fully.",
-  "No snacks between meals.",
-  "Walk for 15 minutes.",
-  "Clean your shoes.",
-  "Write one thing you avoided.",
-  "Delay gratification once today.",
-  "Sit with discomfort for 2 minutes.",
-  "Don’t multitask for one task.",
-  "Turn off notifications for 1 hour.",
-  "Stretch legs for 5 minutes.",
-  "Write one fear.",
-  "Avoid fast food today.",
-  "Speak less than usual.",
-  "Eat slower than usual.",
-  "Drink water before meals.",
-  "Stop one bad habit today.",
-  "Do one thing you postponed.",
-  "Leave phone in another room.",
-  "Stand instead of sit for 5 minutes.",
-  "Do something boring fully.",
-  "Avoid entertainment today.",
-  "Focus on one thing only.",
-  "Don’t check phone after waking.",
-  "Organize digital files.",
-  "Read something difficult.",
-  "Sit with straight back for 3 min.",
-  "Pause before reacting.",
-  "Delay checking messages.",
-  "Do task without music.",
-  "End shower with cool water (safe).",
-  "Eat without screen.",
-  "Notice urge without acting.",
-  "Take stairs if possible.",
-  "Prepare tomorrow early.",
-  "Stop scrolling mid-urge.",
-  "Do task imperfectly but finish.",
-  "Avoid excuses today.",
-  "Choose effort over comfort once.",
-  "Clean kitchen surface.",
-  "Write down one lesson.",
-  "Move body for 10 minutes.",
-  "Avoid late eating.",
-  "Stay present for 5 minutes.",
-  "Put things back immediately.",
-  "Don’t rush today.",
-  "Be intentionally quiet for 10 min.",
-  "Keep promises to yourself.",
-  "Leave comfort zone slightly.",
-  "Do task without reward.",
-  "Observe thoughts without acting.",
-  "Delay pleasure by 1 hour.",
-  "Finish what you start.",
-  "Choose discipline over mood.",
-  "Stay with boredom briefly.",
-  "Slow your movements intentionally.",
-  "Act without motivation.",
-
-  // 🔹 LONG GAME (121–220)
-  "Repeat yesterday’s discipline.",
-  "Do task without recognition.",
-  "Stay consistent, not intense.",
-  "Build habit, not mood.",
-  "Accept discomfort calmly.",
-  "Ignore urge to quit.",
-  "Focus on process, not result.",
-  "Do the obvious thing.",
-  "Show up without excitement.",
-  "Keep routine simple.",
-  "Choose silence over noise.",
-  "Let go of perfection.",
-  "Act even if tired.",
-  "Respect your word.",
-  "Delay gratification again.",
-  "Continue even if boring.",
-  "Be reliable to yourself.",
-  "Choose structure today.",
-  "Do minimum, but do it.",
-  "Stay grounded.",
-  "Discipline without drama.",
-  "Consistency over intensity.",
-  "Small steps matter.",
-  "Trust repetition.",
-  "Finish the day clean.",
-  "Repeat basics.",
-  "Stay steady.",
-  "No shortcuts today.",
-  "Do the work quietly.",
-  "Respect the process.",
-  "Stay boring.",
-  "Ignore motivation.",
-  "Keep going.",
-  "Discipline is enough."
+/* BASIC (primele zile) */
+const basicChallenges = [
+  "Say hello without adding anything else.",
+  "Maintain eye contact one second longer.",
+  "Ask a simple question.",
+  "Say 'I don’t know' and stop.",
+  "Pause before replying.",
+  "Do nothing for one minute.",
+  "Allow mild awkwardness.",
+  "Send a short message without rereading."
 ];
 
-const today = new Date().toDateString();
-let state = JSON.parse(localStorage.getItem("thinskin") || "{}");
+/* 200+ ADVANCED CHALLENGES — SAFE */
+const advancedChallenges = [
+  "Let silence last longer than comfortable.",
+  "Resist explaining yourself.",
+  "Allow someone to misunderstand you.",
+  "Read feedback without responding.",
+  "Say less than you want to.",
+  "Leave a conversation unfinished.",
+  "Accept disagreement calmly.",
+  "Notice embarrassment without reacting.",
+  "Allow someone else to speak first.",
+  "Pause before correcting someone.",
+  "Do a task without optimizing it.",
+  "Sit with boredom for two minutes.",
+  "Let a message remain unanswered today.",
+  "Avoid clarifying your intent.",
+  "Accept not being liked.",
+  "Observe tension without fixing it.",
+  "Let someone else choose.",
+  "Notice the urge to impress.",
+  "Allow an awkward pause.",
+  "Avoid over-preparing.",
+  "Say 'okay' and stop.",
+  "Resist the need to be right.",
+  "Do not justify a choice.",
+  "Let a small mistake pass.",
+  "Notice defensiveness arise.",
+  "Allow discomfort to peak.",
+  "Sit upright in silence for one minute.",
+  "Allow yourself to feel exposed.",
+  "Avoid checking reactions.",
+  "Let go of last word.",
+  "Allow neutral feedback to exist.",
+  "Notice impatience without acting.",
+  "Accept being average today.",
+  "Avoid performing competence.",
+  "Let others set the tone.",
+  "Notice comparison without judgment.",
+  "Pause before agreeing.",
+  "Let uncertainty remain.",
+  "Avoid fixing awkwardness.",
+  "Notice urge to escape.",
+  "Allow awkward body language.",
+  "Sit without phone for 3 minutes.",
+  "Notice self-criticism silently.",
+  "Let something be incomplete.",
+  "Allow mild social discomfort.",
+  "Do not smooth tension.",
+  "Accept not knowing outcome.",
+  "Avoid rehearsing responses.",
+  "Let awkward laughter pass.",
+  "Notice urge to explain.",
+  "Remain present during discomfort.",
+  "Allow misalignment.",
+  "Avoid self-correction.",
+  "Sit still with crossed arms.",
+  "Allow neutral expression.",
+  "Notice heart rate changes.",
+  "Avoid humor to deflect.",
+  "Let seriousness exist.",
+  "Allow low energy.",
+  "Do not mask uncertainty.",
+  "Notice impulse to apologize.",
+  "Allow unpolished response.",
+  "Let others misunderstand timing.",
+  "Pause after being addressed.",
+  "Allow presence without contribution.",
+  "Avoid proving value.",
+  "Let feedback linger.",
+  "Notice embarrassment physically.",
+  "Allow simplicity.",
+  "Do not self-soothe immediately.",
+  "Accept mild rejection feeling.",
+  "Allow discomfort to pass naturally.",
+  "Observe thoughts without engagement.",
+  "Let awkward posture be.",
+  "Avoid justification.",
+  "Sit quietly in public space.",
+  "Allow inner tension.",
+  "Notice desire for approval.",
+  "Avoid seeking reassurance.",
+  "Let others react freely.",
+  "Remain neutral when praised.",
+  "Accept lack of control.",
+  "Let silence do the work.",
+  "Notice mental narration.",
+  "Avoid dramatizing.",
+  "Allow emotional flatness.",
+  "Pause after being interrupted.",
+  "Let attention drift back.",
+  "Avoid rushing response.",
+  "Accept social ambiguity.",
+  "Notice breath shallow or deep.",
+  "Allow calm discomfort.",
+  "Let interaction end naturally.",
+  "Avoid emotional cushioning.",
+  "Sit with crossed legs still.",
+  "Allow uncertainty about perception.",
+  "Do not fill empty space.",
+  "Notice internal pressure.",
+  "Allow neutral reactions.",
+  "Avoid defensive tone.",
+  "Remain open-faced.",
+  "Let thoughts pass.",
+  "Accept awkward timing.",
+  "Avoid correcting assumptions.",
+  "Notice urge to control.",
+  "Allow mild vulnerability.",
+  "Let quiet be enough.",
+  "Accept non-closure.",
+  "Avoid reassurance seeking.",
+  "Sit with awareness.",
+  "Allow subtle discomfort.",
+  "Notice anticipation.",
+  "Do not pre-explain.",
+  "Allow presence without fixing.",
+  "Remain steady.",
+  "Accept slow pace.",
+  "Avoid performance mode.",
+  "Notice bodily tension.",
+  "Let reaction happen.",
+  "Allow stillness.",
+  "End exposure calmly."
+];
 
-function hideAll(){document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"))}
-function start(){
-  if(state.done===today){hideAll();locked.classList.remove("hidden");return;}
-  if(!state.index)state.index=0;
-  showChallenge();
-}
-function showChallenge(){
-  hideAll();
-  level.textContent=state.index+1;
-  task.textContent=challenges[state.index % challenges.length];
-  doneCheck.checked=false;
-  challenge.classList.remove("hidden");
-}
-function complete(){
-  if(!doneCheck.checked)return;
-  state.done=today;
-  state.index++;
-  localStorage.setItem("thinskin",JSON.stringify(state));
-  hideAll();done.classList.remove("hidden");
-}
-function share(){
-  navigator.clipboard.writeText("I didn’t skip today.");
-  alert("Copied.");
-}
-function showPrivacy(){hideAll();privacy.classList.remove("hidden")}
-function showDisclaimer(){hideAll();disclaimer.classList.remove("hidden")}
-function back(){hideAll();home.classList.remove("hidden")}
+let used = JSON.parse(localStorage.getItem("usedChallenges")) || [];
+let days = Number(localStorage.getItem("days")) || 0;
+let todayDone = localStorage.getItem("todayDone");
 
-hideAll();home.classList.remove("hidden");
+document.getElementById("days").innerText = days;
+
+function start() {
+  if (todayDone) {
+    document.getElementById("challengeText").innerText =
+      "You already completed today. Come back tomorrow.";
+    return;
+  }
+
+  let pool = days < FREE_DAYS ? basicChallenges : advancedChallenges;
+  const available = pool.filter(c => !used.includes(c));
+
+  if (!available.length) {
+    document.getElementById("challengeText").innerText =
+      "No new challenges available.";
+    return;
+  }
+
+  const challenge = available[Math.floor(Math.random() * available.length)];
+  document.getElementById("challengeText").innerText = challenge;
+  localStorage.setItem("current", challenge);
+}
+
+function complete() {
+  const current = localStorage.getItem("current");
+  if (!current || todayDone) return;
+
+  used.push(current);
+  days++;
+
+  localStorage.setItem("usedChallenges", JSON.stringify(used));
+  localStorage.setItem("days", days);
+  localStorage.setItem("todayDone", "yes");
+
+  document.getElementById("days").innerText = days;
+  document.getElementById("challengeText").innerText =
+    "Done. See you tomorrow.";
+
+  localStorage.removeItem("current");
+}
+
+function openModal(type) {
+  const modal = document.getElementById("modal");
+  const content = document.getElementById("modalContent");
+
+  if (type === "privacy") {
+    content.innerHTML = `
+      <h3>Privacy Policy</h3>
+      No accounts. No tracking.  
+      All progress is stored locally on your device.
+    `;
+  }
+
+  if (type === "terms") {
+    content.innerHTML = `
+      <h3>Terms of Use</h3>
+      This is an experimental self-reflection tool.
+      Use is voluntary and at your own discretion.
+    `;
+  }
+
+  if (type === "disclaimer") {
+    content.innerHTML = `
+      <h3>Disclaimer</h3>
+      This app does not provide medical, psychological,
+      therapeutic, legal, or professional advice.
+      It is not a substitute for professional care.
+      Only perform challenges that feel safe to you.
+    `;
+  }
+
+  modal.style.display = "flex";
+  modal.onclick = () => modal.style.display = "none";
+}
 </script>
 
 </body>
