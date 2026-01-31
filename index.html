@@ -2,236 +2,264 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ThinSkin</title>
 
 <style>
+* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #0f1a2b, #050b18);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: white;
+  background: radial-gradient(circle at top, #0c1630, #050914);
   display: flex;
-  justify-content: center;
   align-items: center;
-}
-
-.app {
-  width: 100%;
-  max-width: 420px;
-  padding: 24px;
-  text-align: center;
-}
-
-h1 {
-  margin-bottom: 8px;
-}
-
-.subtitle {
-  opacity: 0.75;
-  font-size: 14px;
-  margin-bottom: 24px;
+  justify-content: center;
+  color: white;
 }
 
 .card {
-  background: rgba(255,255,255,0.05);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 16px;
+  width: 92%;
+  max-width: 380px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 22px;
+  padding: 26px;
+  text-align: center;
+  backdrop-filter: blur(10px);
 }
+
+h1 { margin: 0; font-size: 28px; }
+.subtitle { margin-top: 6px; font-size: 14px; opacity: 0.75; }
 
 .challenge {
+  margin-top: 26px;
   font-size: 18px;
-  margin-bottom: 12px;
+  line-height: 1.45;
 }
 
-.guidance {
+.explain {
+  margin-top: 14px;
   font-size: 13px;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 button {
-  background: #1db954;
-  border: none;
-  padding: 14px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 12px;
-  cursor: pointer;
+  margin-top: 24px;
   width: 100%;
-  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-size: 16px;
+  background: #1f6fff;
+  color: white;
 }
 
-button:disabled {
-  background: #444;
-  cursor: not-allowed;
+.locked {
+  background: #2b2f3a;
+  opacity: 0.6;
 }
 
 .footer {
-  font-size: 12px;
+  margin-top: 18px;
+  font-size: 13px;
   opacity: 0.7;
-  margin-top: 24px;
 }
 
-.footer a {
-  color: #1db954;
-  text-decoration: none;
-  margin: 0 6px;
+.footer a { color: #7fb0ff; text-decoration: none; }
+
+/* MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-box {
+  background: #0f1a2b;
+  padding: 22px;
+  border-radius: 16px;
+  max-width: 340px;
+  text-align: center;
+}
+
+.modal-box p {
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.9;
 }
 </style>
 </head>
 
 <body>
 
-<div class="app" id="app">
+<div class="card">
   <h1>ThinSkin</h1>
-  <div class="subtitle">A private space for daily exposure</div>
+  <div class="subtitle">Daily exposure, no pressure</div>
 
-  <div class="card" id="content">
-    <button onclick="start()">Start</button>
-  </div>
+  <div class="challenge" id="challenge"></div>
+  <div class="explain" id="explain"></div>
+
+  <button id="actionBtn" onclick="complete()">I did it</button>
 
   <div class="footer">
-    <a href="#" onclick="showPolicy()">Privacy</a> ·
-    <a href="#" onclick="showDisclaimer()">Disclaimer</a>
+    <a href="#" onclick="openPrivacy()">Privacy</a> ·
+    <a href="#" onclick="openDisclaimer()">Disclaimer</a>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <p id="modalText"></p>
+    <button onclick="closeModal()">Got it</button>
   </div>
 </div>
 
 <script>
+/* ================= CHALLENGES (90) ================= */
 const challenges = [
-"Say hello first in a short interaction",
-"Ask a simple question even if you already know the answer",
-"Leave a short comment online",
-"Make brief eye contact and smile",
-"Share a neutral opinion in a group",
-"Ask for clarification instead of guessing",
-"Send a short honest message",
-"Walk into a store without buying anything",
-"Say thank you out loud",
-"Ask someone how their day is",
-"Speak slightly louder than usual",
-"Pause before responding instead of rushing",
-"Admit you don’t know something",
-"Ask for directions",
-"Make a small request",
-"Sit with boredom for 5 minutes",
-"Don’t check your phone for 15 minutes",
-"Stay present in a quiet moment",
-"Accept silence without filling it",
-"Do a task slower on purpose",
-"Read something uncomfortable but safe",
-"Listen without interrupting",
-"Let someone finish completely",
-"Accept mild awkwardness",
-"Stay in line without distraction",
-"Share a small preference",
-"Ask for feedback on something small",
-"Receive feedback without explaining",
-"Say ‘I see’ instead of defending",
-"Nod and acknowledge feedback",
-"Thank someone for feedback",
-"Write down one criticism without reacting",
-"Re-read feedback calmly",
-"Let feedback sit for 10 minutes",
-"Don’t justify yourself today",
-"Accept a different opinion",
-"Ask ‘what do you mean?’ calmly",
-"Allow disagreement to exist",
-"Observe discomfort without acting",
-"Do one thing imperfectly",
-"Leave a typo uncorrected",
-"Post something simple",
-"Speak up once today",
-"Ask a follow-up question",
-"Let someone else choose",
-"Don’t control the outcome",
-"Stay with uncertainty",
-"Wait before replying to a message",
-"Resist over-explaining",
-"Say less than usual",
-"End a conversation naturally",
-"Allow a pause in conversation",
-"Sit in a public place quietly",
-"Walk without headphones",
-"Notice people without judging",
-"Be seen without performing",
-"Do nothing productive for 10 minutes",
-"Let boredom exist",
-"Stop seeking reassurance",
-"Delay checking reactions",
-"Accept not being liked by everyone",
-"Choose honesty over comfort",
-"Share something neutral about yourself",
-"Let someone misunderstand slightly",
-"Don’t correct a minor mistake",
-"Accept mild embarrassment",
-"Observe anxiety without fixing it",
-"Allow discomfort to pass",
-"Practice calm breathing",
-"Notice body sensations",
-"Ground yourself in the present",
-"Stay curious instead of defensive",
-"Say ‘okay’ and move on",
-"Release control gently",
-"Trust the process",
-"End the day without reviewing it",
-"Go to bed without overthinking",
-"Accept today as enough"
+  "Say hello first in a small interaction.",
+  "Send a message without overthinking it.",
+  "Share an idea before it feels ready.",
+  "Ask a simple question you already know.",
+  "Leave a short comment online.",
+  "Post something imperfect.",
+  "Speak slightly louder than usual.",
+  "Maintain eye contact for 3 seconds.",
+  "Say no to a small request.",
+  "Ask for clarification instead of guessing.",
+  "Give a neutral opinion.",
+  "Reply without rereading 5 times.",
+  "Let a pause exist in conversation.",
+  "Send a follow-up you’ve delayed.",
+  "Express a preference out loud.",
+  "Share a minor disagreement politely.",
+  "Ask for help with something small.",
+  "Admit you don’t know something.",
+  "Let someone finish without filling silence.",
+  "Respond honestly but briefly.",
+  "Walk into a space confidently.",
+  "Introduce yourself first.",
+  "Say thank you without minimizing.",
+  "Make a small request.",
+  "Allow a message to be seen unanswered.",
+  "Accept a compliment without deflecting.",
+  "Share progress before it’s perfect.",
+  "Let someone else choose.",
+  "State a boundary calmly.",
+  "Say what you want, simply.",
+  "Ask for feedback on something small.",
+  "Stay present in mild discomfort.",
+  "Send one honest sentence.",
+  "Share a work-in-progress.",
+  "Allow a small mistake to exist.",
+  "Stop explaining too much.",
+  "Say ‘I need time to think’.",
+  "Ask a neutral follow-up.",
+  "Let go of controlling the outcome.",
+  "Stay visible instead of hiding.",
+  "Voice a simple preference.",
+  "Let someone disagree.",
+  "Respond without emojis.",
+  "Ask a direct question.",
+  "Say what you feel, lightly.",
+  "Share something unfinished.",
+  "Allow yourself to be average.",
+  "Post without checking likes.",
+  "Speak without rehearsing.",
+  "Leave feedback that’s factual.",
+  "Receive feedback without defending.",
+  "Pause before responding.",
+  "Let the conversation end naturally.",
+  "Say less than usual.",
+  "Let uncertainty stay.",
+  "Share something small publicly.",
+  "Ask for clarification once.",
+  "Let your message stand.",
+  "Send one honest reaction.",
+  "State what you need today.",
+  "Allow someone to misunderstand.",
+  "Clarify instead of apologizing.",
+  "Speak even if voice shakes.",
+  "Let feedback sit for a moment.",
+  "Ask a genuine question.",
+  "Say yes to visibility.",
+  "Let yourself be seen trying.",
+  "Speak one sentence slowly.",
+  "End a message without softening.",
+  "Accept neutral reactions.",
+  "Do not over-explain.",
+  "Let others react freely.",
+  "Stay with mild awkwardness.",
+  "Send a short response.",
+  "Allow imperfection publicly.",
+  "Stop editing mid-sentence.",
+  "Say what matters briefly.",
+  "Let silence do its job.",
+  "Trust the message you sent.",
+  "Don’t fix how you came across.",
+  "Show up without preparing.",
+  "Accept being misunderstood once.",
+  "Say ‘that’s all’.",
+  "End the interaction calmly."
 ];
 
-const guidanceText = `
-Choose a small action that feels slightly uncomfortable, but safe.
-You can:
-• Do a smaller version
-• Stop early
-• Choose the safest option
-• Skip if it feels unsafe
-`;
+/* ================= LOGIC ================= */
+let index = Number(localStorage.getItem("ts_index")) || 0;
+const premiumAfter = 14;
 
-function todayIndex() {
-  const start = localStorage.getItem("startDate");
-  if (!start) return 0;
-  const diff = Math.floor((Date.now() - Number(start)) / 86400000);
-  return diff;
-}
-
-function start() {
-  if (!localStorage.getItem("startDate")) {
-    localStorage.setItem("startDate", Date.now());
-  }
-  showChallenge();
-}
-
-function showChallenge() {
-  const day = todayIndex();
-
-  if (day >= 7) {
-    document.getElementById("content").innerHTML = `
-      <div class="challenge">Premium required</div>
-      <div class="guidance">Unlock advanced challenges after day 7.</div>
-    `;
+function render() {
+  if (index >= premiumAfter) {
+    document.getElementById("challenge").innerText = "🔒 Premium locked";
+    document.getElementById("explain").innerText =
+      "You’ve completed the free set.\nPremium unlocks continued exposure challenges.";
+    document.getElementById("actionBtn").innerText = "Upgrade (coming soon)";
+    document.getElementById("actionBtn").classList.add("locked");
+    document.getElementById("actionBtn").disabled = true;
     return;
   }
 
-  const challenge = challenges[day % challenges.length];
-
-  document.getElementById("content").innerHTML = `
-    <div class="challenge">${challenge}</div>
-    <div class="guidance">${guidanceText}</div>
-    <button disabled>Come back tomorrow</button>
-  `;
+  document.getElementById("challenge").innerText = challenges[index];
+  document.getElementById("explain").innerText =
+    "Choose a safe, small version. You can skip or stop anytime.";
 }
 
-function showPolicy() {
-  alert("Privacy Policy:\n\nThis app stores progress locally on your device only. No data is collected, stored, or shared.");
+function complete() {
+  index++;
+  localStorage.setItem("ts_index", index);
+  render();
 }
 
-function showDisclaimer() {
-  alert(
-    "Disclaimer:\n\nThis is a personal experimental project.\nIt does NOT provide medical, psychological, therapeutic, or professional advice.\nIt is not AI coaching.\nParticipation is voluntary.\nStop or skip anything that feels unsafe."
+/* ================= MODAL ================= */
+function openPrivacy() {
+  openModal(
+    "<b>Privacy Policy</b><br><br>" +
+    "No personal data is collected or stored. Progress is saved locally on your device only."
   );
 }
+
+function openDisclaimer() {
+  openModal(
+    "<b>Disclaimer</b><br><br>" +
+    "ThinSkin is not medical, psychological, or therapeutic advice. " +
+    "Challenges are optional. Stop or skip anything that feels unsafe. " +
+    "You remain fully responsible for your actions."
+  );
+}
+
+function openModal(text) {
+  document.getElementById("modalText").innerHTML = text;
+  document.getElementById("modal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+render();
 </script>
 
 </body>
