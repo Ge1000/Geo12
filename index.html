@@ -1,175 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ThinSkin</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(circle at top, #0b1630, #020617);
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .card {
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 28px;
-      max-width: 420px;
-      width: 90%;
-      text-align: center;
-    }
-    h1 {
-      margin: 0;
-      font-size: 28px;
-    }
-    .subtitle {
-      opacity: 0.7;
-      margin-bottom: 20px;
-    }
-    .challenge {
-      font-size: 20px;
-      margin-bottom: 12px;
-    }
-    .hint {
-      font-size: 14px;
-      opacity: 0.6;
-      margin-bottom: 20px;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 14px 22px;
-      font-size: 16px;
-      border-radius: 12px;
-      cursor: pointer;
-      width: 100%;
-    }
-    button:disabled {
-      background: #374151;
-      cursor: not-allowed;
-    }
-    .footer {
-      margin-top: 18px;
-      font-size: 13px;
-      opacity: 0.6;
-    }
-    .footer a {
-      color: #93c5fd;
-      text-decoration: none;
-      margin: 0 6px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ThinSkin</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    color: #e5e7eb;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    background: rgba(15,23,42,0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 28px;
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  h1 { margin: 0; font-size: 28px; }
+  .subtitle { opacity: .7; margin: 8px 0 20px; }
+
+  .challenge { font-size: 20px; margin-bottom: 14px; }
+  .info {
+    font-size: 14px;
+    opacity: .65;
+    margin-bottom: 20px;
+  }
+
+  button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .links {
+    margin-top: 18px;
+    font-size: 14px;
+    opacity: .7;
+  }
+
+  .links span {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-content {
+    background: #020617;
+    padding: 20px;
+    border-radius: 14px;
+    max-width: 500px;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .modal-content button {
+    margin-top: 14px;
+    background: #334155;
+  }
+</style>
 </head>
 <body>
 
-<div class="card">
-  <h1>ThinSkin</h1>
-  <div class="subtitle">Daily exposure, no pressure</div>
+<div class="card" id="app"></div>
 
-  <div id="challenge" class="challenge"></div>
-  <div class="hint">
-    Choose a safe, small version. You can skip or stop anytime.
+<!-- Privacy Modal -->
+<div class="modal" id="privacyModal">
+  <div class="modal-content">
+    <h3>Privacy Policy</h3>
+    <p>
+      ThinSkin does not collect personal data, track behavior, or store sensitive information.
+      All progress is stored locally on your device.
+    </p>
+    <button onclick="closeModal('privacyModal')">Close</button>
   </div>
+</div>
 
-  <button id="doneBtn">I did it</button>
-
-  <div class="footer">
-    <a href="#">Privacy</a> · <a href="#">Disclaimer</a>
+<!-- Disclaimer Modal -->
+<div class="modal" id="disclaimerModal">
+  <div class="modal-content">
+    <h3>Disclaimer</h3>
+    <p>
+      This app is for educational and self-reflection purposes only.
+      It is not medical advice, therapy, or mental health treatment.
+      You may skip or stop any challenge at any time.
+      If something feels unsafe, do not do it.
+    </p>
+    <button onclick="closeModal('disclaimerModal')">Close</button>
   </div>
 </div>
 
 <script>
-/* =========================
-   CHALLENGES (90)
-   ========================= */
+/* ------------------ DATA ------------------ */
+
 const challenges = [
   "Maintain eye contact for 3 seconds.",
+  "Say hello first in a short interaction.",
   "Speak slightly louder than usual.",
   "Post something imperfect.",
   "Leave a short comment online.",
   "Ask a simple question you already know.",
-  "Say hello first in a short interaction.",
   "Share an idea before it feels ready.",
-  "Send something 'good enough'.",
-  "Pause before explaining yourself.",
+  "Send a message without overthinking it.",
+  "Smile at a stranger.",
   "Accept a small mistake without fixing it.",
-  "Let a message go unanswered for a while.",
+
+  "Pause before responding instead of rushing.",
+  "Admit you don't know something.",
+  "Share a draft instead of a final version.",
+  "Let someone finish without interrupting.",
+  "Say 'I’ll get back to you' instead of forcing an answer.",
+  "Leave a typo uncorrected.",
   "Ask for clarification once.",
-  "Express a mild preference out loud.",
-  "Stay silent for 2 seconds longer than usual.",
-  "Disagree gently without overexplaining.",
-  "Make a simple request.",
-  "Allow a brief awkward moment.",
-  "Share an opinion without a disclaimer.",
-  "Post without rereading more than once.",
-  "Leave a conversation without apologizing.",
-  // … păstrezi exact restul până la 90
+  "Say no to a small request.",
+  "Express a neutral opinion.",
+  "End a conversation politely first.",
+
+  "Ask for help with something small.",
+  "Let silence exist for 2 seconds.",
+  "Send a short voice note.",
+  "Share a personal preference.",
+  "Ask someone how their day is.",
+  "Respond without emojis.",
+  "Post without checking likes later.",
+  "Disagree politely once.",
+  "Share something unfinished.",
+  "Speak slower than usual.",
+
+  "Let feedback sit without responding.",
+  "Ask a follow-up question.",
+  "Say ‘that makes sense’ even if unsure.",
+  "Share a thought without justification.",
+  "End a message without softening words.",
+  "Say 'I’m not sure yet.'",
+  "Let someone else lead the conversation.",
+  "Express uncertainty calmly.",
+  "Leave a conversation without overexplaining.",
+  "Do nothing to fix discomfort today."
 ];
 
-/* =========================
-   STATE
-   ========================= */
-const today = new Date().toDateString();
-const lastCompletedDate = localStorage.getItem("lastCompletedDate");
-let completedCount = Number(localStorage.getItem("completedCount") || 0);
+const FREE_LIMIT = 14;
 
-const challengeEl = document.getElementById("challenge");
-const doneBtn = document.getElementById("doneBtn");
+/* ------------------ STATE ------------------ */
 
-/* =========================
-   PREMIUM LOGIC
-   ========================= */
-const PREMIUM_LOCK_AFTER = 14;
-const isPremiumLocked = completedCount >= PREMIUM_LOCK_AFTER;
+const todayKey = new Date().toDateString();
+let doneToday = localStorage.getItem("doneToday") === todayKey;
+let completed = Number(localStorage.getItem("completed") || 0);
 
-/* =========================
-   FUNCTIONS
-   ========================= */
-function showDoneForToday() {
-  challengeEl.innerText = "Done for today. Come back tomorrow.";
-  doneBtn.style.display = "none";
+/* ------------------ LOGIC ------------------ */
+
+function getTodayChallenge() {
+  return challenges[completed % challenges.length];
 }
 
-function showPremiumLock() {
-  challengeEl.innerText =
-    "Advanced challenges are locked.\nUpgrade to continue.";
-  doneBtn.disabled = true;
-}
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
 
-function showChallenge() {
-  if (isPremiumLocked) {
-    showPremiumLock();
+  if (completed >= FREE_LIMIT) {
+    app.innerHTML = `
+      <h1>ThinSkin</h1>
+      <p class="subtitle">Premium required</p>
+      <p>Advanced challenges are locked.</p>
+      <div class="links">
+        <span onclick="shareApp()">Share</span> ·
+        <span onclick="openModal('privacyModal')">Privacy</span> ·
+        <span onclick="openModal('disclaimerModal')">Disclaimer</span>
+      </div>
+    `;
     return;
   }
-  const challenge =
-    challenges[completedCount % challenges.length];
-  challengeEl.innerText = challenge;
+
+  if (doneToday) {
+    app.innerHTML = `
+      <h1>ThinSkin</h1>
+      <p class="subtitle">Daily exposure, no pressure</p>
+      <p>Done for today. Come back tomorrow.</p>
+      <div class="links">
+        <span onclick="shareApp()">Share</span> ·
+        <span onclick="openModal('privacyModal')">Privacy</span> ·
+        <span onclick="openModal('disclaimerModal')">Disclaimer</span>
+      </div>
+    `;
+    return;
+  }
+
+  app.innerHTML = `
+    <h1>ThinSkin</h1>
+    <p class="subtitle">Daily exposure, no pressure</p>
+
+    <div class="challenge">${getTodayChallenge()}</div>
+
+    <div class="info">
+      Choose a safe, small version. You can skip or stop anytime.
+    </div>
+
+    <button onclick="markDone()">I did it</button>
+
+    <div class="links">
+      <span onclick="shareApp()">Share</span> ·
+      <span onclick="openModal('privacyModal')">Privacy</span> ·
+      <span onclick="openModal('disclaimerModal')">Disclaimer</span>
+    </div>
+  `;
 }
 
-function completeChallenge() {
-  localStorage.setItem("lastCompletedDate", today);
-  localStorage.setItem("completedCount", completedCount + 1);
-  showDoneForToday();
+function markDone() {
+  localStorage.setItem("doneToday", todayKey);
+  localStorage.setItem("completed", completed + 1);
+  doneToday = true;
+  completed++;
+  render();
 }
 
-/* =========================
-   INIT
-   ========================= */
-if (lastCompletedDate === today) {
-  showDoneForToday();
-} else {
-  showChallenge();
+/* ------------------ SHARE ------------------ */
+
+function shareApp() {
+  const text = "I’m using ThinSkin — a simple daily app for building tolerance to discomfort. One small challenge per day. No pressure.";
+
+  if (navigator.share) {
+    navigator.share({
+      title: "ThinSkin",
+      text: text,
+      url: window.location.href
+    });
+  } else {
+    alert(text + "\n\n" + window.location.href);
+  }
 }
 
-doneBtn.addEventListener("click", completeChallenge);
+/* ------------------ MODALS ------------------ */
+
+function openModal(id) {
+  document.getElementById(id).style.display = "flex";
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+render();
 </script>
-
 </body>
 </html>
