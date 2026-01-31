@@ -6,98 +6,89 @@
 <title>ThinSkin</title>
 
 <style>
-* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+:root {
+  --bg1:#0b1220;
+  --bg2:#050914;
+  --card:#111827cc;
+  --green:#22c55e;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+}
+
+* { box-sizing:border-box; }
 
 body {
-  margin: 0;
-  height: 100vh;
-  background: radial-gradient(circle at top, #0f1b2d, #05080f);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin:0;
+  height:100vh;
+  background: radial-gradient(circle at top, var(--bg1), var(--bg2));
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .card {
-  width: 92%;
-  max-width: 440px;
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(16px);
-  border-radius: 24px;
-  padding: 30px;
-  text-align: center;
-  box-shadow: 0 30px 70px rgba(0,0,0,0.55);
+  width:90%;
+  max-width:420px;
+  background:var(--card);
+  border-radius:20px;
+  padding:32px 24px;
+  text-align:center;
+  backdrop-filter: blur(14px);
 }
 
 h1 {
-  margin: 0 0 6px;
-  font-weight: 600;
-}
-
-.subtitle {
-  opacity: .75;
-  margin-bottom: 22px;
-}
-
-.level {
-  letter-spacing: 2px;
-  opacity: .6;
-  font-size: 12px;
+  font-size:32px;
+  margin-bottom:12px;
 }
 
 .challenge {
-  font-size: 22px;
-  line-height: 1.45;
-  margin: 22px 0 26px;
+  font-size:20px;
+  margin:24px 0;
 }
 
 .checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 16px;
-  margin-bottom: 24px;
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  align-items:center;
+  font-size:18px;
+  margin:24px 0;
+  cursor:pointer;
 }
 
 .checkbox input {
-  width: 20px;
-  height: 20px;
+  width:22px;
+  height:22px;
 }
 
 button {
-  width: 100%;
-  padding: 16px;
-  border-radius: 16px;
-  border: none;
-  font-size: 17px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  cursor: pointer;
-  opacity: .4;
+  background:var(--green);
+  color:#052e16;
+  border:none;
+  padding:14px 28px;
+  font-size:18px;
+  font-weight:600;
+  border-radius:14px;
+  cursor:pointer;
 }
 
-button.active { opacity: 1; }
+button:disabled {
+  opacity:.6;
+  cursor:not-allowed;
+}
 
 .footer {
-  margin-top: 26px;
-  font-size: 13px;
-  line-height: 1.5;
-  opacity: .85;
+  margin-top:28px;
+  font-size:14px;
+  color:var(--muted);
 }
 
 .footer a {
-  color: #9bbcff;
-  text-decoration: underline;
-  margin: 0 6px;
-  cursor: pointer;
-}
-
-.disclaimer {
-  margin-top: 14px;
-  font-size: 13px;
-  opacity: .8;
+  color:#93c5fd;
+  text-decoration:underline;
+  margin:0 6px;
 }
 </style>
 </head>
@@ -107,314 +98,116 @@ button.active { opacity: 1; }
 <div class="card" id="app"></div>
 
 <script>
-/* ================= CHALLENGES ================= */
+// =====================
+// CHALLENGES (EXTENSIBLE)
+// =====================
 const challenges = [
-/* LEVEL 1 */
-"Drink one full glass of water",
-"Make your bed",
-"Open a window for 5 minutes",
-"Wash your face with cold water",
-"Stretch your arms for 2 minutes",
-"Take 5 deep breaths",
-"Write one thing you’re grateful for",
-"Walk for 5 minutes",
-"Clean one small surface",
-"Put your phone down for 10 minutes",
-"Stand up and stretch once per hour",
-"Smile intentionally once",
-"Drink a warm drink mindfully",
-"Read one page of anything",
-"Go outside for fresh air",
-"Organize your desk",
-"Listen to one calm song",
-"Eat one fruit",
-"Sit quietly for 2 minutes",
-"Write tomorrow’s first task",
-"Wash your hands slowly and mindfully",
-"Sit with correct posture for 5 minutes",
-"Remove one unnecessary app",
-"Say thank you to someone",
-"Do 10 squats",
-"Look away from screens for 3 minutes",
-"Prepare clothes for tomorrow",
-"Drink water before sleep",
-"Notice one good thing today",
-"Go to bed 15 minutes earlier",
-
-/* LEVEL 2 */
-"No social media for 1 hour",
-"Walk for 10 minutes",
-"Drink water regularly today",
-"Read 5 pages",
-"Stretch your back for 5 minutes",
-"Write 3 goals for the week",
-"Eat without phone once today",
-"Clean for 10 minutes",
-"Do 15 push-ups or knee push-ups",
-"Sit in silence for 5 minutes",
-"Cold shower for 30 seconds (if safe)",
-"Prepare a simple healthy meal",
-"Wake up without snoozing",
-"No sugar today",
-"Phone away 30 minutes before sleep",
-"Write one thing you did well",
-"Walk focusing on breathing",
-"Delete 5 unnecessary photos",
-"Stretch neck and shoulders",
-"Plan tomorrow on paper",
-"Drink tea without distractions",
-"Stand barefoot for 2 minutes",
-"Listen to something educational",
-"Organize one small area",
-"Write one idea",
-"Move your body for 10 minutes",
-"Spend time outside before noon",
-"Wash your face before sleep",
-"Compliment someone sincerely",
-"Prepare a calm morning",
-
-/* LEVEL 3 */
-"Walk for 20 minutes without checking your phone",
-"Write one full page",
-"Sit in silence for 7 minutes",
-"Stretch your hips and back",
-"Eat one meal slowly",
-"Delay a small urge intentionally",
-"Clean one neglected area",
-"Read 10 pages",
-"Plan tomorrow clearly",
-"Observe your posture for one hour",
-"Meditate 7 minutes",
-"Drink water every hour",
-"Reduce screen brightness",
-"Do plank for 30 seconds",
-"Organize digital files",
-"Write one long-term goal",
-"Walk without headphones",
-"Prepare food for tomorrow",
-"Review today honestly",
-"Sleep at the same hour as yesterday",
-"Practice calm breathing",
-"Stretch legs mindfully",
-"Sit with mild discomfort briefly",
-"Limit caffeine today",
-"Write how you feel",
-"Practice gratitude (5 items)",
-"Go outside twice today",
-"Read before sleep",
-"Notice automatic habits",
-"Sleep 7+ hours",
-
-/* LEVEL 4 */
-"No social media all day",
-"Walk for 30 minutes",
-"Cold shower for 1 minute (if safe)",
-"Focused work for 45 minutes",
-"Write 2 pages",
-"Read 20 pages",
-"No junk food today",
-"Wake up earlier than usual",
-"Stretch for 15 minutes",
-"Meditate 10 minutes",
-"Learn a skill for 30 minutes",
-"Clean one drawer completely",
-"Plan next 30 days",
-"Do 40 squats",
-"Plank for 1 minute",
-"No phone during meals",
-"Journal emotions honestly",
-"Drink only water today",
-"Walk and reflect quietly",
-"Review your goals",
-"Sleep without phone in room",
-"Practice breathing 10 minutes",
-"Read non-fiction",
-"Limit news intake",
-"Write personal rules",
-"Practice posture all day",
-"Stretch spine gently",
-"Go outside morning and evening",
-"Wake without rushing",
-"Reflect on progress",
-
-/* LEVEL 5 */
-"Cold shower for 90 seconds (if safe)",
-"Walk for 45 minutes",
-"No sugar or junk food today",
-"Focused work for 60 minutes",
-"Write 3 pages",
-"Meditate 15 minutes",
-"Read 30 pages",
-"Workout for 30 minutes",
-"Wake up at fixed hour",
-"No social media for 48 hours",
-"Deep clean one area",
-"Plan next month",
-"Sit with discomfort for 5 minutes",
-"Stretch for 20 minutes",
-"Review habits",
-"Digital detox evening",
-"Learn something difficult",
-"Journal fears honestly",
-"Eat clean all day",
-"Go to sleep early",
-"Walk in silence",
-"Drink water intentionally",
-"Do mobility work",
-"Practice calm breathing",
-"No complaining today",
-"Read philosophy",
-"Write to your future self",
-"Focus on posture",
-"Light fasting (if safe)",
-"Reflect deeply",
-
-/* LEVEL 6 */
-"Wake up same hour three days in a row",
-"Cold exposure 2 minutes (if safe)",
-"Walk for 60 minutes",
-"Workout for 45 minutes",
-"Read 40 pages",
-"Meditate 20 minutes",
-"No social media for 72 hours",
-"Write life goals",
-"Clean entire room",
-"Deep work 90 minutes",
-"Eat clean whole day",
-"Journal mindset",
-"Practice silence 30 minutes",
-"Plan next 90 days",
-"Reduce screen time under 2h",
-"Learn for one hour",
-"Stretch full body",
-"Drink water only today",
-"No caffeine today",
-"Reflect on habits",
-"Sleep 8 hours",
-"Write personal code",
-"Review finances",
-"Practice patience",
-"Go outside early morning",
-"Light yoga",
-"Read deep material",
-"Gratitude journaling",
-"No multitasking",
-"Evaluate progress",
-
-/* LEVEL 7 */
-"Cold exposure 3 minutes (if safe)",
-"Walk for 90 minutes",
-"Workout for 60 minutes",
-"Deep work for 2 hours",
-"Meditate 30 minutes",
-"Write life vision",
-"Read 50 pages",
-"Digital detox full day",
-"Eat minimal and clean",
-"Wake before sunrise",
-"Stretch for 30 minutes",
-"Journal deeply",
-"Practice silence 1 hour",
-"Plan next year",
-"Learn a difficult concept",
-"No phone entire morning",
-"Reflect on identity",
-"Write life principles",
-"Review entire journey",
-"Gratitude reflection",
-"Evaluate mental strength",
-"Commit to discipline",
-"Clean digital life",
-"Focus on breath 15 minutes",
-"Practice calmness",
-"Review values",
-"Minimalism day",
-"Long reflective walk",
-"Prepare next challenge cycle",
-"Completion reflection"
+  "Do not use social media for 1 hour.",
+  "Take a 10 minute walk.",
+  "Drink only water today.",
+  "Write down one thing you avoided doing.",
+  "Clean one small area completely.",
+  "Go to bed 30 minutes earlier.",
+  "No phone during meals today.",
+  "Stretch for 5 minutes.",
+  "Take a cold face wash with water.",
+  "Read 5 pages of any book.",
+  "Sit in silence for 5 minutes.",
+  "Organize your notes or thoughts.",
+  "No sugar today.",
+  "Breathe deeply for 3 minutes.",
+  "Do one thing you’ve been postponing.",
+  "Cold shower for 30 seconds if safe.",
+  "Write one honest sentence to yourself.",
+  "Avoid complaining today.",
+  "Step outside for fresh air.",
+  "Eat slowly for one meal."
+  // 👉 aici poți adăuga sute fără probleme
 ];
 
-/* ================= LOGIC ================= */
-const app = document.getElementById("app");
-const today = new Date().toDateString();
-const savedDate = localStorage.getItem("date");
-let index = parseInt(localStorage.getItem("index") || "0");
+// =====================
+// STORAGE
+// =====================
+const today = new Date().toISOString().split("T")[0];
+let data = JSON.parse(localStorage.getItem("thinskin")) || {
+  used: [],
+  lastDay: null,
+  todayDone: false
+};
 
-if (savedDate === today && localStorage.getItem("done") === "yes") {
-  showDone();
-} else {
-  if (savedDate !== today) {
-    localStorage.setItem("date", today);
-    localStorage.setItem("done", "no");
-  }
-  showChallenge();
+const app = document.getElementById("app");
+
+// =====================
+// LOGIC
+// =====================
+if (data.lastDay !== today) {
+  data.todayDone = false;
+  data.lastDay = today;
+  localStorage.setItem("thinskin", JSON.stringify(data));
 }
 
-function showChallenge() {
-  const level = Math.floor(index / 30) + 1;
+if (data.todayDone) {
+  renderDone();
+} else {
+  renderChallenge();
+}
+
+function getNextChallenge() {
+  for (let c of challenges) {
+    if (!data.used.includes(c)) return c;
+  }
+  return "No task today.";
+}
+
+function renderChallenge() {
+  const challenge = getNextChallenge();
 
   app.innerHTML = `
-    <div class="level">LEVEL ${level}</div>
-    <div class="challenge">${challenges[index]}</div>
+    <h1>Today</h1>
+    <div class="challenge">${challenge}</div>
 
     <label class="checkbox">
-      <input type="checkbox" id="check">
-      Mark complete
+      <input type="checkbox" id="check"/>
+      <span>Done for today</span>
     </label>
 
-    <button id="btn" disabled>Continue</button>
+    <button id="confirm" disabled>Confirm</button>
 
     <div class="footer">
-      <a onclick="alertPolicy()">Privacy</a> · <a onclick="alertPolicy()">Terms</a>
-      <div class="disclaimer">
-        This is a personal experimental project.<br>
-        It does NOT provide medical advice.<br>
-        It is NOT AI guidance.<br>
-        It is NOT professional, psychological, or health advice.<br>
-        Participate responsibly.
-      </div>
+      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>
+      This project is experimental.<br>
+      No medical advice. No guarantees.<br>
+      Not AI guidance. Not professional advice.
     </div>
   `;
 
   const check = document.getElementById("check");
-  const btn = document.getElementById("btn");
+  const btn = document.getElementById("confirm");
 
-  check.onchange = () => {
+  check.addEventListener("change", () => {
     btn.disabled = !check.checked;
-    btn.classList.toggle("active", check.checked);
-  };
+  });
 
-  btn.onclick = () => {
-    localStorage.setItem("done", "yes");
-    localStorage.setItem("index", index + 1);
-    showDone();
-  };
+  btn.addEventListener("click", () => {
+    data.used.push(challenge);
+    data.todayDone = true;
+    localStorage.setItem("thinskin", JSON.stringify(data));
+    renderDone();
+  });
 }
 
-function showDone() {
+function renderDone() {
   app.innerHTML = `
     <h1>Done for today</h1>
-    <p class="subtitle">Come back tomorrow.</p>
+    <div class="challenge">Come back tomorrow.</div>
 
     <div class="footer">
-      <a onclick="alertPolicy()">Privacy</a> · <a onclick="alertPolicy()">Terms</a>
-      <div class="disclaimer">
-        This project is experimental.<br>
-        No medical advice. No guarantees.<br>
-        Not AI guidance. Not professional advice.
-      </div>
+      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>
+      This project is experimental.<br>
+      No medical advice. No guarantees.<br>
+      Not AI guidance. Not professional advice.
     </div>
   `;
-}
-
-function alertPolicy() {
-  alert(
-    "ThinSkin – Notice\n\n" +
-    "This is a personal experimental project.\n" +
-    "It does not provide medical, psychological, or professional advice.\n" +
-    "It is not an AI decision-making system.\n" +
-    "All actions are voluntary and done at your own responsibility."
-  );
 }
 </script>
 
