@@ -2,72 +2,37 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ThinSkin</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    background: radial-gradient(circle at top, #0f1c2e, #050b16);
-    color: #fff;
-    text-align: center;
-    min-height: 100vh;
-  }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at top, #0b1a2d, #020812);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+}
 
-  .screen {
-    display: none;
-    padding: 80px 20px;
-  }
+.screen { display: none; max-width: 320px; }
+.screen.active { display: block; }
 
-  .screen.active {
-    display: block;
-  }
+button {
+  background: #22c55e;
+  border: none;
+  color: #000;
+  padding: 16px 28px;
+  border-radius: 14px;
+  font-size: 18px;
+  margin-top: 24px;
+}
 
-  h1 {
-    font-size: 40px;
-    margin-bottom: 10px;
-  }
-
-  h2 {
-    font-size: 28px;
-    margin-bottom: 10px;
-  }
-
-  p {
-    opacity: 0.7;
-    max-width: 320px;
-    margin: 0 auto 30px;
-  }
-
-  button {
-    background: #22c55e;
-    color: #000;
-    border: none;
-    padding: 16px 36px;
-    font-size: 18px;
-    border-radius: 14px;
-    cursor: pointer;
-  }
-
-  button.locked {
-    opacity: 0.4;
-    pointer-events: none;
-  }
-
-  .box {
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 20px;
-    margin: 20px auto;
-    max-width: 320px;
-  }
-
-  footer {
-    opacity: 0.4;
-    font-size: 12px;
-    margin-top: 80px;
-  }
+.small { opacity: .6; font-size: 12px; margin-top: 40px; }
+.challenge { font-size: 20px; margin-top: 20px; }
 </style>
 </head>
 
@@ -77,28 +42,19 @@
 <div id="home" class="screen active">
   <h1>ThinSkin</h1>
   <p>A private space for daily discipline.</p>
-  <button onclick="start()">Start</button>
-  <footer>
-    This is a personal experimental project.<br>
-    It does not provide advice or guarantees.
-  </footer>
+  <button id="startBtn">Start</button>
+  <div class="small">This is a personal experimental project.</div>
 </div>
 
-<!-- DAILY -->
-<div id="daily" class="screen">
-  <h2 id="dayTitle"></h2>
-  <div class="box">
-    <p id="challengeText"></p>
-  </div>
-  <label>
-    <input type="checkbox" id="doneCheck" /> I did this today
-  </label>
-  <br><br>
-  <button id="confirmBtn" class="locked">Confirm</button>
+<!-- CHALLENGE -->
+<div id="challenge" class="screen">
+  <h2 id="levelText"></h2>
+  <div class="challenge" id="challengeText"></div>
+  <button id="doneBtn">I did this today</button>
 </div>
 
-<!-- LOCKED -->
-<div id="locked" class="screen">
+<!-- DONE -->
+<div id="done" class="screen">
   <h2>Done for today</h2>
   <p>Come back tomorrow.</p>
 </div>
@@ -106,94 +62,81 @@
 <!-- COMPLETED -->
 <div id="completed" class="screen">
   <h2>Completed</h2>
-  <p>You reached the end.<br>Most people don’t.</p>
-  <button onclick="resetAll()">Restart</button>
-  <footer>Progress resets by design.</footer>
+  <p>You reached the end. Most people don’t.</p>
+  <button id="restartBtn">Restart</button>
 </div>
 
 <script>
-const ALL_CHALLENGES = [
-  "Wake up without checking your phone for 30 minutes.",
-  "Do one uncomfortable task immediately.",
-  "No sugar today.",
-  "Write one honest sentence about yourself.",
-  "Move your body for 10 minutes.",
-  "Say no once today.",
-  "Finish something small you’ve been avoiding.",
-  "No complaining today.",
+/* ---------------- DATA ---------------- */
+
+const challenges = [
+  "Wake up without your phone for 10 minutes.",
+  "Take a cold splash on your face.",
+  "Walk 10 minutes without music.",
+  "Do 20 pushups (or try).",
+  "Write one uncomfortable truth.",
+  "Clean one small area.",
+  "Skip sugar today.",
   "Sit in silence for 5 minutes.",
-  "Go to bed earlier than usual."
+  "Go outside alone.",
+  "Sleep without scrolling."
 ];
 
-let state = JSON.parse(localStorage.getItem("thinskin")) || {
-  used: [],
-  today: null,
-  lastDate: null,
-  completedToday: false
-};
+const MAX_LEVEL = challenges.length;
 
-const screens = {
-  home, daily, locked, completed
-};
+/* ---------------- STATE ---------------- */
 
-function show(name) {
-  Object.values(screens).forEach(s => s.classList.remove("active"));
-  screens[name].classList.add("active");
-}
+let used = JSON.parse(localStorage.getItem("usedChallenges") || "[]");
+let level = parseInt(localStorage.getItem("level") || "0");
+let lastDay = localStorage.getItem("lastDay");
+
+/* ---------------- HELPERS ---------------- */
 
 function today() {
   return new Date().toDateString();
 }
 
-function save() {
-  localStorage.setItem("thinskin", JSON.stringify(state));
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 
-function start() {
-  if (state.completedToday && state.lastDate === today()) {
-    show("locked");
+/* ---------------- LOGIC ---------------- */
+
+document.getElementById("startBtn").onclick = () => {
+  if (lastDay === today()) {
+    show("done");
     return;
   }
-  loadChallenge();
-}
 
-function loadChallenge() {
-  const remaining = ALL_CHALLENGES.filter(c => !state.used.includes(c));
-
-  if (remaining.length === 0) {
+  if (level >= MAX_LEVEL) {
     show("completed");
     return;
   }
 
-  if (!state.today) {
-    state.today = remaining[Math.floor(Math.random() * remaining.length)];
-    state.completedToday = false;
-  }
-
-  dayTitle.textContent = "Day " + (state.used.length + 1);
-  challengeText.textContent = state.today;
-  doneCheck.checked = false;
-  confirmBtn.classList.add("locked");
-
-  show("daily");
-}
-
-doneCheck.onchange = () => {
-  confirmBtn.classList.toggle("locked", !doneCheck.checked);
+  document.getElementById("levelText").innerText = "Level " + (level + 1);
+  document.getElementById("challengeText").innerText = challenges[level];
+  show("challenge");
 };
 
-confirmBtn.onclick = () => {
-  state.used.push(state.today);
-  state.today = null;
-  state.completedToday = true;
-  state.lastDate = today();
-  save();
-  show("locked");
+document.getElementById("doneBtn").onclick = () => {
+  used.push(level);
+  level++;
+  localStorage.setItem("usedChallenges", JSON.stringify(used));
+  localStorage.setItem("level", level);
+  localStorage.setItem("lastDay", today());
+  show("done");
 };
 
-function resetAll() {
-  localStorage.removeItem("thinskin");
+document.getElementById("restartBtn").onclick = () => {
+  localStorage.clear();
   location.reload();
+};
+
+/* ---------------- INIT ---------------- */
+
+if (lastDay === today()) {
+  show("done");
 }
 </script>
 
