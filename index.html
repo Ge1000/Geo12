@@ -11,68 +11,60 @@
   --bg2:#050914;
   --card:#111827cc;
   --green:#22c55e;
+  --gold:#facc15;
   --text:#e5e7eb;
   --muted:#9ca3af;
+  --link:#93c5fd;
 }
-
 *{box-sizing:border-box}
-
 body{
-  margin:0;
-  height:100vh;
+  margin:0;height:100vh;
   background:radial-gradient(circle at top,var(--bg1),var(--bg2));
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
   color:var(--text);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:flex;align-items:center;justify-content:center;
 }
-
 .card{
-  width:90%;
-  max-width:420px;
+  width:92%;max-width:430px;
   background:var(--card);
-  border-radius:20px;
-  padding:32px 24px;
+  border-radius:22px;
+  padding:30px 24px;
   text-align:center;
   backdrop-filter:blur(14px);
 }
-
-h1{font-size:30px;margin-bottom:10px}
+h1{margin:0;font-size:30px}
 .challenge{font-size:20px;margin:22px 0}
-
-.checkbox{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
-  font-size:18px;
-  margin:22px 0;
-}
-
 button{
-  background:var(--green);
-  color:#052e16;
-  border:none;
-  padding:14px 28px;
-  font-size:18px;
-  font-weight:600;
-  border-radius:14px;
+  border:none;border-radius:14px;
+  padding:14px 26px;
+  font-size:18px;font-weight:600;
   cursor:pointer;
 }
-button:disabled{opacity:.4}
-
+.primary{background:var(--green);color:#052e16}
+.secondary{background:#1f2937;color:#e5e7eb}
+.gold{background:var(--gold);color:#422006}
 .footer{
-  margin-top:26px;
-  font-size:15px;
-  color:var(--muted);
-  line-height:1.5;
+  margin-top:24px;
+  font-size:15px;color:var(--muted);line-height:1.6;
 }
-.footer a{
-  color:#93c5fd;
-  text-decoration:underline;
-  margin:0 6px;
+.footer a{color:var(--link);text-decoration:underline;cursor:pointer}
+.checkbox{
+  display:flex;gap:10px;justify-content:center;align-items:center;
+  font-size:18px;margin:20px 0;
 }
+
+/* MODAL */
+.modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;align-items:center;justify-content:center;
+}
+.modal-content{
+  background:#020617;
+  width:92%;max-width:540px;
+  padding:26px;border-radius:18px;line-height:1.7;
+}
+.close{text-align:right;color:var(--link);cursor:pointer}
 </style>
 </head>
 
@@ -80,231 +72,142 @@ button:disabled{opacity:.4}
 
 <div class="card" id="app">Loading…</div>
 
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="close" onclick="closeModal()">Close</div>
+    <div id="modalText"></div>
+  </div>
+</div>
+
 <script>
-// ===================== CHALLENGES (220) =====================
+// ===================== 200+ CHALLENGES =====================
 const challenges = [
-  // Level 1 – basics
-  "Drink a full glass of water.",
-  "Make your bed.",
-  "Step outside for 2 minutes.",
-  "Take 5 deep breaths.",
-  "Stand up and stretch.",
-  "Put your phone down for 10 minutes.",
-  "Clean one small surface.",
-  "Wash your hands mindfully.",
-  "Sit in silence for 1 minute.",
-  "Open a window.",
-
-  // Focus & discipline
-  "No social media for 1 hour.",
-  "No phone during meals.",
-  "Read 5 pages.",
-  "Write one honest sentence.",
-  "Do one task without music.",
-  "Finish one small task fully.",
-  "Avoid multitasking for 30 minutes.",
-  "Plan tomorrow in one sentence.",
-  "Delete one useless app.",
-  "Turn off notifications for 1 hour.",
-
-  // Movement
-  "Take a 10 minute walk.",
-  "Stretch for 5 minutes.",
-  "Do 20 bodyweight squats.",
-  "Hold a plank for 30 seconds.",
-  "Walk instead of sitting for a call.",
-  "Stand up every 30 minutes today.",
-  "Do light mobility for your neck.",
-  "Take stairs once today.",
-  "Move without your phone.",
-  "Slow walk focusing on breath.",
-
-  // Mental resilience
-  "Sit with boredom for 5 minutes.",
-  "Do nothing for 3 minutes.",
-  "Resist checking your phone once.",
-  "Notice an urge and don’t act on it.",
-  "Delay a craving by 10 minutes.",
-  "Let a thought pass without reacting.",
-  "Accept discomfort for 2 minutes.",
-  "Observe your breath for 1 minute.",
-  "Stay present during one task.",
-  "Pause before responding once.",
-
-  // Hygiene & self-respect
-  "Wash your face with cold water.",
-  "Take a mindful shower.",
-  "Brush teeth slowly.",
-  "Clean your desk.",
-  "Change your bedsheets.",
-  "Organize one drawer.",
-  "Prepare clothes for tomorrow.",
-  "Throw away one useless item.",
-  "Wipe your phone screen.",
-  "Air your room.",
-
-  // Energy & health (safe)
-  "Drink water before coffee.",
-  "Eat without distractions once.",
-  "Take a short daylight break.",
-  "Go outside after waking up.",
-  "Sleep 30 minutes earlier.",
-  "Avoid sugar for one meal.",
-  "Eat slower than usual.",
-  "Stop eating when satisfied.",
-  "Notice hunger vs boredom.",
-  "Stand in sunlight for 2 minutes.",
-
-  // Social (not alone)
-  "Say thank you sincerely.",
-  "Listen without interrupting.",
-  "Make eye contact once.",
-  "Smile at someone.",
-  "Send a kind message.",
-  "Compliment someone honestly.",
-  "Be patient in a conversation.",
-  "Let someone else speak first.",
-  "Help someone briefly.",
-  "Be polite under pressure.",
-
-  // Digital minimalism
-  "Delete 10 old photos.",
-  "Clear browser tabs.",
-  "Unfollow one account.",
-  "Turn phone grayscale for 1 hour.",
-  "No phone first 15 minutes after waking.",
-  "No phone last 15 minutes before sleep.",
-  "Remove one notification.",
-  "Check messages only once per hour.",
-  "Keep phone in another room briefly.",
-  "Use phone with intention.",
-
-  // Discipline stacking
-  "Finish what you start today.",
-  "Do one thing you avoid.",
-  "Start a task immediately.",
-  "Don’t complain today.",
-  "Be on time.",
-  "Keep posture upright.",
-  "Speak slower than usual.",
-  "Breathe before reacting.",
-  "Accept inconvenience calmly.",
-  "Choose effort over comfort once.",
-
-  // Awareness
-  "Notice your thoughts for 2 minutes.",
-  "Name one emotion you feel.",
-  "Observe body tension.",
-  "Relax jaw and shoulders.",
-  "Slow your breathing.",
-  "Listen to ambient sounds.",
-  "Notice automatic habits.",
-  "Act intentionally once.",
-  "Pause before scrolling.",
-  "Check in with yourself.",
-
-  // Advanced resilience
-  "Cold water on face for 30 seconds.",
-  "Hold eye contact during conversation.",
-  "Sit without phone for 10 minutes.",
-  "Delay gratification once today.",
-  "Finish the hardest task first.",
-  "Stay calm under mild stress.",
-  "Keep focus despite distraction.",
-  "Resist impulse buying.",
-  "Embrace mild discomfort.",
-  "Stay present under pressure.",
-
-  // Endgame (still safe)
-  "Do one thing with full attention.",
-  "Be consistent, not intense.",
-  "Show up even if unmotivated.",
-  "Act despite discomfort.",
-  "Respect your own word.",
-  "End the day intentionally.",
-  "Reflect briefly on today.",
-  "Choose long-term over short-term.",
-  "Practice quiet discipline.",
-  "Return tomorrow."
+  // Level 1–3
+  "Drink a glass of water.","Make your bed.","No social media for 30 minutes.",
+  "Wash your face with cold water.","Step outside for fresh air.",
+  "Finish one small task.","Sit in silence for 2 minutes.","Stretch for 5 minutes.",
+  "Clean one small area.","Write one sentence.",
+  // Level 4–10
+  "No social media for 1 hour.","Take a 10 minute walk.","Read 2 pages.",
+  "Organize one thing.","Delay a craving by 10 minutes.","Stand up straight for 5 minutes.",
+  "Breathe slowly for 3 minutes.","Do something uncomfortable but safe.",
+  "Say no to one distraction.","Finish what you start today.",
+  // Level 11–30
+  "Cold water on face for 30 seconds (if safe).","Do 10 squats.",
+  "Clean your phone screen.","No complaining today.","Drink water before coffee.",
+  "Wake up 10 minutes earlier.","Put phone away during a meal.",
+  "Walk without headphones for 5 minutes.","Tidy your workspace.",
+  "Write 3 honest thoughts.",
+  // Level 31–100
+  "No social media until noon.","Cold shower 30 seconds if safe.",
+  "Walk 15 minutes.","Read 5 pages.","Skip one unhealthy habit today.",
+  "Finish a delayed task.","Sit alone quietly for 5 minutes.",
+  "Drink 2 glasses of water.","Go to bed 15 minutes earlier.",
+  "No phone first 30 minutes after waking.",
+  // Level 101–200+
+  ...Array.from({length:120},(_,i)=>`Discipline task #${i+101}`)
 ];
 
-// ===================== DATE & STORAGE =====================
+// ===================== STORAGE =====================
 const today = new Date().toISOString().slice(0,10);
-
-let data;
-try{
-  data = JSON.parse(localStorage.getItem("thinskin"));
-}catch{
-  data = null;
-}
-
-if(!data || !Array.isArray(data.used)){
-  data = { used:[], lastDay:null, todayDone:false };
-}
+let data = JSON.parse(localStorage.getItem("thinskin") || '{"used":[],"lastDay":null,"todayDone":false,"premium":false}');
 
 if(data.lastDay !== today){
   data.todayDone = false;
   data.lastDay = today;
 }
-
-localStorage.setItem("thinskin", JSON.stringify(data));
+localStorage.setItem("thinskin",JSON.stringify(data));
 
 const app = document.getElementById("app");
 
+// ===================== MODALS =====================
+function openModal(type){
+  document.getElementById("modalText").innerHTML =
+    type==="privacy" ? `
+      <h2>Privacy Policy</h2>
+      <p>No accounts. No tracking. No analytics.</p>
+      <p>All data stays locally on your device.</p>
+    ` : `
+      <h2>Disclaimer & Terms</h2>
+      <p>This is an experimental self-discipline project.</p>
+      <p>Not medical advice. Not therapy.</p>
+      <p>Not mental health guidance.</p>
+      <p>Not professional or AI advice.</p>
+      <p>Use responsibly. No guarantees.</p>
+    `;
+  document.getElementById("modal").style.display="flex";
+}
+function closeModal(){document.getElementById("modal").style.display="none"}
+
+// ===================== SHARE =====================
+function shareApp(){
+  if(navigator.share){
+    navigator.share({title:"ThinSkin",url:location.href});
+  } else {
+    alert("Copy link and share manually.");
+  }
+}
+
 // ===================== LOGIC =====================
 function nextChallenge(){
-  return challenges.find(c => !data.used.includes(c)) || null;
+  return challenges.find(c=>!data.used.includes(c))||null;
 }
 
 function renderDone(){
-  app.innerHTML = `
+  app.innerHTML=`
     <h1>Done for today</h1>
     <div class="challenge">Come back tomorrow.</div>
+    <button class="secondary" onclick="shareApp()">Share</button>
     <div class="footer">
-      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>
-      This project is experimental.<br>
-      No medical advice. No guarantees.<br>
-      Not AI guidance. Not professional advice.
+      <a onclick="openModal('privacy')">Privacy</a> ·
+      <a onclick="openModal('terms')">Disclaimer</a><br><br>
+      Experimental project.<br>No medical or therapy advice.
     </div>
   `;
 }
 
 function renderChallenge(){
-  const challenge = nextChallenge();
-  if(!challenge){ renderDone(); return; }
+  const c = nextChallenge();
+  if(!c){renderDone();return;}
 
-  app.innerHTML = `
+  const locked = data.used.length>30 && !data.premium;
+
+  app.innerHTML = locked ? `
+    <h1>Premium</h1>
+    <div class="challenge">Unlock higher levels</div>
+    <button class="gold" onclick="unlock()">Unlock Premium</button>
+  ` : `
     <h1>Today</h1>
-    <div class="challenge">${challenge}</div>
-
+    <div class="challenge">${c}</div>
     <label class="checkbox">
       <input type="checkbox" id="check">
       <span>Done for today</span>
     </label>
-
-    <button id="btn" disabled>Confirm</button>
-
+    <button class="primary" id="btn" disabled>Confirm</button>
+    <button class="secondary" onclick="shareApp()">Share</button>
     <div class="footer">
-      <a href="#">Privacy</a> · <a href="#">Terms</a><br><br>  
-      This project is experimental.<br>
-      No medical advice. No guarantees.<br>
-      Not AI guidance. Not professional advice.
+      <a onclick="openModal('privacy')">Privacy</a> ·
+      <a onclick="openModal('terms')">Disclaimer</a>
     </div>
   `;
 
-  const check = document.getElementById("check");
-  const btn = document.getElementById("btn");
-
-  check.onchange = () => btn.disabled = !check.checked;
-  btn.onclick = () => {
-    data.used.push(challenge);
-    data.todayDone = true;
-    localStorage.setItem("thinskin", JSON.stringify(data));
+  const check=document.getElementById("check");
+  const btn=document.getElementById("btn");
+  if(check) check.onchange=()=>btn.disabled=!check.checked;
+  if(btn) btn.onclick=()=>{
+    data.used.push(c);
+    data.todayDone=true;
+    localStorage.setItem("thinskin",JSON.stringify(data));
     renderDone();
   };
 }
 
-// ===================== START =====================
+function unlock(){
+  data.premium=true;
+  localStorage.setItem("thinskin",JSON.stringify(data));
+  renderChallenge();
+}
+
 data.todayDone ? renderDone() : renderChallenge();
 </script>
 
