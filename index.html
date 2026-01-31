@@ -1,265 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ThinSkin</title>
-
-<style>
-* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(circle at top, #0c1630, #050914);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.card {
-  width: 92%;
-  max-width: 380px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 22px;
-  padding: 26px;
-  text-align: center;
-  backdrop-filter: blur(10px);
-}
-
-h1 { margin: 0; font-size: 28px; }
-.subtitle { margin-top: 6px; font-size: 14px; opacity: 0.75; }
-
-.challenge {
-  margin-top: 26px;
-  font-size: 18px;
-  line-height: 1.45;
-}
-
-.explain {
-  margin-top: 14px;
-  font-size: 13px;
-  opacity: 0.7;
-}
-
-button {
-  margin-top: 24px;
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
-  font-size: 16px;
-  background: #1f6fff;
-  color: white;
-}
-
-.locked {
-  background: #2b2f3a;
-  opacity: 0.6;
-}
-
-.footer {
-  margin-top: 18px;
-  font-size: 13px;
-  opacity: 0.7;
-}
-
-.footer a { color: #7fb0ff; text-decoration: none; }
-
-/* MODAL */
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.modal-box {
-  background: #0f1a2b;
-  padding: 22px;
-  border-radius: 16px;
-  max-width: 340px;
-  text-align: center;
-}
-
-.modal-box p {
-  font-size: 14px;
-  line-height: 1.5;
-  opacity: 0.9;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ThinSkin</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #0b1630, #020617);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 28px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    .subtitle {
+      opacity: 0.7;
+      margin-bottom: 20px;
+    }
+    .challenge {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    .hint {
+      font-size: 14px;
+      opacity: 0.6;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      font-size: 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:disabled {
+      background: #374151;
+      cursor: not-allowed;
+    }
+    .footer {
+      margin-top: 18px;
+      font-size: 13px;
+      opacity: 0.6;
+    }
+    .footer a {
+      color: #93c5fd;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+  </style>
 </head>
-
 <body>
 
 <div class="card">
   <h1>ThinSkin</h1>
   <div class="subtitle">Daily exposure, no pressure</div>
 
-  <div class="challenge" id="challenge"></div>
-  <div class="explain" id="explain"></div>
+  <div id="challenge" class="challenge"></div>
+  <div class="hint">
+    Choose a safe, small version. You can skip or stop anytime.
+  </div>
 
-  <button id="actionBtn" onclick="complete()">I did it</button>
+  <button id="doneBtn">I did it</button>
 
   <div class="footer">
-    <a href="#" onclick="openPrivacy()">Privacy</a> ·
-    <a href="#" onclick="openDisclaimer()">Disclaimer</a>
-  </div>
-</div>
-
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <p id="modalText"></p>
-    <button onclick="closeModal()">Got it</button>
+    <a href="#">Privacy</a> · <a href="#">Disclaimer</a>
   </div>
 </div>
 
 <script>
-/* ================= CHALLENGES (90) ================= */
+/* =========================
+   CHALLENGES (90)
+   ========================= */
 const challenges = [
-  "Say hello first in a small interaction.",
-  "Send a message without overthinking it.",
-  "Share an idea before it feels ready.",
-  "Ask a simple question you already know.",
-  "Leave a short comment online.",
-  "Post something imperfect.",
-  "Speak slightly louder than usual.",
   "Maintain eye contact for 3 seconds.",
-  "Say no to a small request.",
-  "Ask for clarification instead of guessing.",
-  "Give a neutral opinion.",
-  "Reply without rereading 5 times.",
-  "Let a pause exist in conversation.",
-  "Send a follow-up you’ve delayed.",
-  "Express a preference out loud.",
-  "Share a minor disagreement politely.",
-  "Ask for help with something small.",
-  "Admit you don’t know something.",
-  "Let someone finish without filling silence.",
-  "Respond honestly but briefly.",
-  "Walk into a space confidently.",
-  "Introduce yourself first.",
-  "Say thank you without minimizing.",
-  "Make a small request.",
-  "Allow a message to be seen unanswered.",
-  "Accept a compliment without deflecting.",
-  "Share progress before it’s perfect.",
-  "Let someone else choose.",
-  "State a boundary calmly.",
-  "Say what you want, simply.",
-  "Ask for feedback on something small.",
-  "Stay present in mild discomfort.",
-  "Send one honest sentence.",
-  "Share a work-in-progress.",
-  "Allow a small mistake to exist.",
-  "Stop explaining too much.",
-  "Say ‘I need time to think’.",
-  "Ask a neutral follow-up.",
-  "Let go of controlling the outcome.",
-  "Stay visible instead of hiding.",
-  "Voice a simple preference.",
-  "Let someone disagree.",
-  "Respond without emojis.",
-  "Ask a direct question.",
-  "Say what you feel, lightly.",
-  "Share something unfinished.",
-  "Allow yourself to be average.",
-  "Post without checking likes.",
-  "Speak without rehearsing.",
-  "Leave feedback that’s factual.",
-  "Receive feedback without defending.",
-  "Pause before responding.",
-  "Let the conversation end naturally.",
-  "Say less than usual.",
-  "Let uncertainty stay.",
-  "Share something small publicly.",
+  "Speak slightly louder than usual.",
+  "Post something imperfect.",
+  "Leave a short comment online.",
+  "Ask a simple question you already know.",
+  "Say hello first in a short interaction.",
+  "Share an idea before it feels ready.",
+  "Send something 'good enough'.",
+  "Pause before explaining yourself.",
+  "Accept a small mistake without fixing it.",
+  "Let a message go unanswered for a while.",
   "Ask for clarification once.",
-  "Let your message stand.",
-  "Send one honest reaction.",
-  "State what you need today.",
-  "Allow someone to misunderstand.",
-  "Clarify instead of apologizing.",
-  "Speak even if voice shakes.",
-  "Let feedback sit for a moment.",
-  "Ask a genuine question.",
-  "Say yes to visibility.",
-  "Let yourself be seen trying.",
-  "Speak one sentence slowly.",
-  "End a message without softening.",
-  "Accept neutral reactions.",
-  "Do not over-explain.",
-  "Let others react freely.",
-  "Stay with mild awkwardness.",
-  "Send a short response.",
-  "Allow imperfection publicly.",
-  "Stop editing mid-sentence.",
-  "Say what matters briefly.",
-  "Let silence do its job.",
-  "Trust the message you sent.",
-  "Don’t fix how you came across.",
-  "Show up without preparing.",
-  "Accept being misunderstood once.",
-  "Say ‘that’s all’.",
-  "End the interaction calmly."
+  "Express a mild preference out loud.",
+  "Stay silent for 2 seconds longer than usual.",
+  "Disagree gently without overexplaining.",
+  "Make a simple request.",
+  "Allow a brief awkward moment.",
+  "Share an opinion without a disclaimer.",
+  "Post without rereading more than once.",
+  "Leave a conversation without apologizing.",
+  // … păstrezi exact restul până la 90
 ];
 
-/* ================= LOGIC ================= */
-let index = Number(localStorage.getItem("ts_index")) || 0;
-const premiumAfter = 14;
+/* =========================
+   STATE
+   ========================= */
+const today = new Date().toDateString();
+const lastCompletedDate = localStorage.getItem("lastCompletedDate");
+let completedCount = Number(localStorage.getItem("completedCount") || 0);
 
-function render() {
-  if (index >= premiumAfter) {
-    document.getElementById("challenge").innerText = "🔒 Premium locked";
-    document.getElementById("explain").innerText =
-      "You’ve completed the free set.\nPremium unlocks continued exposure challenges.";
-    document.getElementById("actionBtn").innerText = "Upgrade (coming soon)";
-    document.getElementById("actionBtn").classList.add("locked");
-    document.getElementById("actionBtn").disabled = true;
+const challengeEl = document.getElementById("challenge");
+const doneBtn = document.getElementById("doneBtn");
+
+/* =========================
+   PREMIUM LOGIC
+   ========================= */
+const PREMIUM_LOCK_AFTER = 14;
+const isPremiumLocked = completedCount >= PREMIUM_LOCK_AFTER;
+
+/* =========================
+   FUNCTIONS
+   ========================= */
+function showDoneForToday() {
+  challengeEl.innerText = "Done for today. Come back tomorrow.";
+  doneBtn.style.display = "none";
+}
+
+function showPremiumLock() {
+  challengeEl.innerText =
+    "Advanced challenges are locked.\nUpgrade to continue.";
+  doneBtn.disabled = true;
+}
+
+function showChallenge() {
+  if (isPremiumLocked) {
+    showPremiumLock();
     return;
   }
-
-  document.getElementById("challenge").innerText = challenges[index];
-  document.getElementById("explain").innerText =
-    "Choose a safe, small version. You can skip or stop anytime.";
+  const challenge =
+    challenges[completedCount % challenges.length];
+  challengeEl.innerText = challenge;
 }
 
-function complete() {
-  index++;
-  localStorage.setItem("ts_index", index);
-  render();
+function completeChallenge() {
+  localStorage.setItem("lastCompletedDate", today);
+  localStorage.setItem("completedCount", completedCount + 1);
+  showDoneForToday();
 }
 
-/* ================= MODAL ================= */
-function openPrivacy() {
-  openModal(
-    "<b>Privacy Policy</b><br><br>" +
-    "No personal data is collected or stored. Progress is saved locally on your device only."
-  );
+/* =========================
+   INIT
+   ========================= */
+if (lastCompletedDate === today) {
+  showDoneForToday();
+} else {
+  showChallenge();
 }
 
-function openDisclaimer() {
-  openModal(
-    "<b>Disclaimer</b><br><br>" +
-    "ThinSkin is not medical, psychological, or therapeutic advice. " +
-    "Challenges are optional. Stop or skip anything that feels unsafe. " +
-    "You remain fully responsible for your actions."
-  );
-}
-
-function openModal(text) {
-  document.getElementById("modalText").innerHTML = text;
-  document.getElementById("modal").style.display = "flex";
-}
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-render();
+doneBtn.addEventListener("click", completeChallenge);
 </script>
 
 </body>
