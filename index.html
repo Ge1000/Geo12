@@ -1,271 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ThinSkin</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Daily Challenge</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
 body {
   margin: 0;
   height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(60,120,255,0.15), transparent 40%),
-    linear-gradient(180deg, #050b18, #02050d);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: white;
+  background: radial-gradient(circle at top, #0f1b2d, #05080f);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
-/* ===== Screens ===== */
-.screen {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  transition: opacity .4s ease, transform .4s ease;
-}
-
-.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.96);
-}
-
-/* ===== Typography ===== */
-h1 {
-  font-weight: 600;
-  letter-spacing: 0.4px;
-}
-
-.subtitle {
-  opacity: 0.75;
-  max-width: 320px;
-  line-height: 1.5;
-}
-
-/* ===== Buttons ===== */
-button {
-  margin-top: 26px;
-  padding: 16px 40px;
-  border-radius: 16px;
-  font-size: 17px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  color: #04120a;
-  background: linear-gradient(135deg, #1db954, #4cff88);
-  box-shadow: 0 20px 40px rgba(29,185,84,0.35);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 26px 60px rgba(29,185,84,0.45);
-}
-
-button.secondary {
-  background: transparent;
-  color: white;
-  border: 1px solid rgba(255,255,255,0.25);
-  box-shadow: none;
-}
-
-/* ===== Challenge Card ===== */
 .card {
+  width: 90%;
+  max-width: 420px;
   background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(14px);
   border-radius: 22px;
-  padding: 32px 26px;
-  max-width: 360px;
-  width: 100%;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.45);
-  margin-top: 20px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
 .level {
+  letter-spacing: 2px;
+  opacity: 0.7;
   font-size: 13px;
-  letter-spacing: 1.2px;
-  opacity: 0.6;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .challenge {
-  font-size: 20px;
-  line-height: 1.5;
-  margin-bottom: 26px;
+  font-size: 22px;
+  margin: 18px 0 24px;
+  line-height: 1.4;
 }
 
-/* ===== Checkbox ===== */
-.check {
+.checkbox {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  font-size: 15px;
+  gap: 10px;
+  margin-bottom: 22px;
+  font-size: 16px;
+}
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-size: 17px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  cursor: pointer;
+  opacity: 0.4;
+}
+
+button.active {
+  opacity: 1;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.done {
+  font-size: 22px;
+}
+
+.footer {
+  margin-top: 28px;
+  font-size: 13px;
   opacity: 0.85;
 }
 
-input[type="checkbox"] {
-  transform: scale(1.4);
-}
-
-/* ===== Premium ===== */
-.lock {
-  font-size: 48px;
-  opacity: 0.7;
-  margin-bottom: 14px;
-}
-
-/* ===== Disclaimer ===== */
-.disclaimer {
-  position: fixed;
-  bottom: 18px;
-  font-size: 13px;
-  opacity: 0.8;
-  text-align: center;
-  max-width: 92%;
-  line-height: 1.5;
-}
-
-.disclaimer a {
-  color: rgba(255,255,255,0.9);
+.footer a {
+  color: #9bbcff;
   text-decoration: underline;
-  cursor: pointer;
+  margin: 0 6px;
+}
+
+.disclaimer {
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.75;
 }
 </style>
 </head>
 
 <body>
 
-<!-- HOME -->
-<div class="screen" id="home">
-  <h1>ThinSkin</h1>
-  <p class="subtitle">A private space for daily discipline.</p>
-  <button onclick="startApp()">Start</button>
-</div>
+<div class="card" id="app"></div>
 
-<!-- CHALLENGE -->
-<div class="screen hidden" id="challengeScreen">
-  <div class="card">
-    <div class="level" id="levelTitle"></div>
-    <div class="challenge" id="challengeText"></div>
+<script>
+const challenges = [
+  // LEVEL 1
+  "Drink one full glass of water after waking up",
+  "Make your bed",
+  "Open a window for 5 minutes",
+  "Wash your face with cold water",
+  "Stretch your arms for 2 minutes",
+  "Take 5 deep breaths",
+  "Write one thing you’re grateful for",
+  "Walk for 5 minutes",
+  "Clean one small surface",
+  "Put your phone down for 10 minutes",
+  "Stand up and stretch once per hour",
+  "Smile intentionally once",
+  "Drink a warm drink mindfully",
+  "Read one page of anything",
+  "Go outside and get fresh air",
+  "Organize your desk",
+  "Listen to one calm song",
+  "Eat one fruit",
+  "Sit quietly for 2 minutes",
+  "Write tomorrow’s first task",
+  "Wash your hands mindfully",
+  "Sit with correct posture for 5 minutes",
+  "Remove one unnecessary app",
+  "Say thank you to someone",
+  "Do 10 squats",
+  "Look away from screens for 3 minutes",
+  "Prepare clothes for tomorrow",
+  "Drink water before sleep",
+  "Take a photo of something nice",
+  "Go to bed 15 minutes earlier",
 
-    <label class="check">
-      <input type="checkbox" id="doneBox">
+  // LEVEL 2+
+  "No social media for 1 hour",
+  "Walk for 10 minutes",
+  "Drink 2 liters of water today",
+  "Read 5 pages",
+  "Stretch for 5 minutes",
+  "Write 3 goals for the week",
+  "Eat without phone once today",
+  "Clean for 10 minutes",
+  "Do 15 push-ups",
+  "Sit in silence for 5 minutes",
+  "Cold shower 30 seconds (only if safe)",
+  "Prepare a healthy meal",
+  "Wake up without snoozing",
+  "No sugar today",
+  "Phone away 30 minutes before sleep",
+  "Write one thing you did well",
+  "Walk focusing on breathing",
+  "Delete 5 photos",
+  "Stretch neck and shoulders",
+  "Plan tomorrow",
+
+  // LEVEL 3–7 (continuă fără repetiții)
+  ...Array.from({length: 180}, (_, i) => `Challenge ${i + 31}`)
+];
+
+const app = document.getElementById("app");
+
+const today = new Date().toDateString();
+const savedDate = localStorage.getItem("date");
+let index = parseInt(localStorage.getItem("index") || "0");
+
+if (savedDate === today && localStorage.getItem("done") === "yes") {
+  showDone();
+} else {
+  if (savedDate !== today) {
+    localStorage.setItem("date", today);
+    localStorage.setItem("done", "no");
+  }
+  showChallenge();
+}
+
+function showChallenge() {
+  const level = Math.floor(index / 30) + 1;
+
+  app.innerHTML = `
+    <div class="level">LEVEL ${level}</div>
+    <div class="challenge">${challenges[index]}</div>
+
+    <label class="checkbox">
+      <input type="checkbox" id="check"/>
       Mark complete
     </label>
 
-    <button class="secondary" onclick="completeChallenge()">Continue</button>
-  </div>
-</div>
+    <button id="btn" disabled>Continue</button>
 
-<!-- PREMIUM -->
-<div class="screen hidden" id="premium">
-  <div class="lock">🔒</div>
-  <h1>Premium</h1>
-  <p class="subtitle">Higher levels require premium access.</p>
-</div>
+    <div class="footer">
+      <a href="#">Privacy</a> · <a href="#">Terms</a>
+      <div class="disclaimer">
+        This is a personal experimental project.<br>
+        It does NOT provide medical advice.<br>
+        It is NOT AI guidance.<br>
+        It is NOT professional, psychological, or health advice.<br>
+        Participate at your own responsibility.
+      </div>
+    </div>
+  `;
 
-<!-- DISCLAIMER -->
-<div class="disclaimer">
-  This is a personal experimental project. It does not provide advice or guarantees.
-  <br>
-  <a onclick="showPolicy()">Privacy</a> · <a onclick="showPolicy()">Terms</a>
-</div>
+  const check = document.getElementById("check");
+  const btn = document.getElementById("btn");
 
-<script>
-/* ===== DATA ===== */
-const challenges = [
-  { level: 1, text: "Drink a glass of water" },
-  { level: 1, text: "Make your bed" },
-  { level: 1, text: "Sit quietly for 2 minutes" },
+  check.addEventListener("change", () => {
+    btn.disabled = !check.checked;
+    btn.classList.toggle("active", check.checked);
+  });
 
-  { level: 2, text: "Take a short walk" },
-  { level: 2, text: "No social media for 1 hour" },
-  { level: 2, text: "Write one sentence" },
-
-  { level: 3, text: "Wash your face with cold water" },
-  { level: 3, text: "Do something slightly uncomfortable" },
-
-  { level: 4, text: "Skip one unnecessary comfort" },
-  { level: 4, text: "Delay gratification once today" },
-
-  { level: 5, text: "Cold shower for 30 seconds (if safe)" },
-  { level: 5, text: "20 minutes without distractions" },
-
-  { level: 6, text: "Sit in silence for 5 minutes" },
-
-  { level: 7, text: "Cold exposure for 30 seconds (hands or face)" }
-];
-
-/* ===== STATE ===== */
-let used = JSON.parse(localStorage.getItem("usedChallenges") || "[]");
-let currentIndex = null;
-
-function startApp() {
-  show("challengeScreen");
-  loadChallenge();
+  btn.addEventListener("click", () => {
+    localStorage.setItem("done", "yes");
+    localStorage.setItem("index", index + 1);
+    showDone();
+  });
 }
 
-function loadChallenge() {
-  const available = challenges
-    .map((c, i) => ({ c, i }))
-    .filter(x => !used.includes(x.i));
+function showDone() {
+  app.innerHTML = `
+    <div class="done">Done for today</div>
+    <p>Come back tomorrow.</p>
 
-  if (available.length === 0) {
-    document.getElementById("levelTitle").innerText = "Completed";
-    document.getElementById("challengeText").innerText = "You completed all challenges.";
-    return;
-  }
-
-  currentIndex = available[0].i;
-  const c = available[0].c;
-
-  document.getElementById("levelTitle").innerText = "LEVEL " + c.level;
-  document.getElementById("challengeText").innerText = c.text;
-}
-
-function completeChallenge() {
-  if (!doneBox.checked) return;
-
-  const c = challenges[currentIndex];
-
-  if (c.level >= 4) {
-    show("premium");
-    return;
-  }
-
-  used.push(currentIndex);
-  localStorage.setItem("usedChallenges", JSON.stringify(used));
-  doneBox.checked = false;
-  loadChallenge();
-}
-
-function show(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
-}
-
-function showPolicy() {
-  alert(
-    "ThinSkin – Privacy & Terms\n\n" +
-    "• No personal data is collected\n" +
-    "• Progress is stored locally on your device\n" +
-    "• This is a personal experimental project\n" +
-    "• No advice or guarantees are provided\n\n" +
-    "Use responsibly."
-  );
+    <div class="footer">
+      <a href="#">Privacy</a> · <a href="#">Terms</a>
+      <div class="disclaimer">
+        This project is experimental.<br>
+        No medical advice. No guarantees.<br>
+        Not AI guidance. Not professional advice.
+      </div>
+    </div>
+  `;
 }
 </script>
 
