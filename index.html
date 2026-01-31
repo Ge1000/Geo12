@@ -1,275 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ThinSkin</title>
 
 <style>
 body {
   margin: 0;
-  height: 100vh;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #e5e7eb;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #0f1a2b, #050b18);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: white;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
-.card {
-  width: 90%;
+.app {
+  width: 100%;
   max-width: 420px;
-  background: rgba(15,23,42,0.9);
-  border-radius: 20px;
-  padding: 28px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+  padding: 24px;
   text-align: center;
 }
 
 h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
+  margin-bottom: 8px;
 }
 
 .subtitle {
-  opacity: 0.7;
-  margin-bottom: 22px;
+  opacity: 0.75;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
 }
 
 .challenge {
-  font-size: 20px;
-  line-height: 1.45;
-  margin: 28px 0;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.guidance {
+  font-size: 13px;
+  opacity: 0.75;
 }
 
 button {
-  width: 100%;
-  padding: 15px;
-  border-radius: 14px;
+  background: #1db954;
   border: none;
+  padding: 14px 24px;
   font-size: 16px;
   font-weight: 600;
+  border-radius: 12px;
   cursor: pointer;
-  background: #1e293b;
-  color: white;
+  width: 100%;
+  margin-top: 16px;
 }
 
-button:hover {
-  background: #334155;
-}
-
-.lock {
-  opacity: 0.6;
+button:disabled {
+  background: #444;
+  cursor: not-allowed;
 }
 
 .footer {
-  margin-top: 18px;
-  font-size: 13px;
-  opacity: 0.6;
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 24px;
 }
 
-.links {
-  margin-top: 14px;
-  font-size: 14px;
-}
-
-.links a {
-  color: #93c5fd;
+.footer a {
+  color: #1db954;
   text-decoration: none;
   margin: 0 6px;
-  cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div class="card">
+<div class="app" id="app">
   <h1>ThinSkin</h1>
-  <div class="subtitle">Daily exposure to discomfort</div>
+  <div class="subtitle">A private space for daily exposure</div>
 
-  <div id="content"></div>
-
-  <div class="footer">
-    Days completed: <span id="days">0</span>
+  <div class="card" id="content">
+    <button onclick="start()">Start</button>
   </div>
 
-  <div class="links">
-    <a onclick="showPrivacy()">Privacy</a> ·
-    <a onclick="showDisclaimer()">Disclaimer</a>
+  <div class="footer">
+    <a href="#" onclick="showPolicy()">Privacy</a> ·
+    <a href="#" onclick="showDisclaimer()">Disclaimer</a>
   </div>
 </div>
 
 <script>
-/* =======================
-   DATA
-======================= */
 const challenges = [
-/* 1–45 FREE */
-"Say hello without adding anything else.",
-"Maintain eye contact two seconds longer.",
-"Ask a simple question you already know.",
-"Say 'I don’t know' and stop.",
-"Allow an awkward moment without fixing it.",
-"Respond shorter than you want.",
-"Do not explain a small action.",
-"Let silence exist in a conversation.",
-"Do not smile to soften the moment.",
-"Say 'ok' and stop.",
-"Receive feedback without defending yourself.",
-"Listen fully without interrupting.",
-"Repeat what someone said, no opinion.",
-"Accept someone else may be right.",
-"Let a small mistake pass.",
-"Allow someone else the last word.",
-"Notice defensiveness without acting.",
-"Do not explain unless asked.",
-"Accept a neutral 'no'.",
-"Do not seek confirmation.",
-"Stay one minute without your phone.",
-"Repeat a boring task without variation.",
-"Do something intentionally slow.",
-"Sit with boredom for two minutes.",
-"Accept the urge to escape.",
-"Stand still for 30 seconds.",
-"Observe breathing without control.",
-"Do not optimize anything today.",
-"Accept a slower pace.",
-"Do less than you could.",
-"Ask for a minor piece of information.",
-"Accept a short answer without follow-up.",
-"Send a plain message without emojis.",
-"Do not rewrite a message.",
-"Send something ‘good enough’.",
-"Do not check for reactions.",
-"Leave a message seen.",
-"Accept no response.",
-"Do not fill silence.",
-"Notice tension in your body.",
-"Do not prove competence.",
-"Do not try to be interesting.",
-"Be present without performing.",
-"Accept not being noticed.",
-"End the day without evaluating it.",
-
-/* 46–90 PREMIUM */
-"State a neutral opinion without explanation.",
-"Leave a sentence unfinished.",
-"Allow a small misunderstanding.",
-"Do not correct yourself immediately.",
-"Speak slower than usual.",
-"Accept a neutral reaction.",
-"Remain serious without humor.",
-"Do not mask uncertainty.",
-"Accept not being liked.",
-"Sit with discomfort for 60 seconds.",
-"Ask for general feedback.",
-"Listen to feedback without reacting.",
-"Do not over-thank.",
-"Accept a vague answer.",
-"Do not ask for clarification.",
-"Let a small refusal stand.",
-"Do not repair your image.",
-"Accept 'maybe'.",
-"Notice desire to control.",
-"Do not convince.",
-"Repeat yesterday’s discomfort.",
-"Do the same thing intentionally again.",
-"Accept monotony.",
-"Do not seek meaning immediately.",
-"Sit with frustration.",
-"Accept no visible progress.",
-"Do not encourage yourself.",
-"Let discomfort pass naturally.",
-"Notice urge to quit.",
-"Continue without motivation.",
-"Be intentionally unnoticed.",
-"Take up less space.",
-"Accept not impressing.",
-"Do not seek validation.",
-"Let others lead.",
-"Accept social uncertainty.",
-"Do not predict reactions.",
-"Stay when you want to leave.",
-"Accept emotional tension.",
-"Do not escape.",
-"Observe shame without judgment.",
-"Accept discomfort as normal.",
-"Do not avoid what appears.",
-"Remain calm in tension.",
-"Say: 'I can stay with this.'"
+"Say hello first in a short interaction",
+"Ask a simple question even if you already know the answer",
+"Leave a short comment online",
+"Make brief eye contact and smile",
+"Share a neutral opinion in a group",
+"Ask for clarification instead of guessing",
+"Send a short honest message",
+"Walk into a store without buying anything",
+"Say thank you out loud",
+"Ask someone how their day is",
+"Speak slightly louder than usual",
+"Pause before responding instead of rushing",
+"Admit you don’t know something",
+"Ask for directions",
+"Make a small request",
+"Sit with boredom for 5 minutes",
+"Don’t check your phone for 15 minutes",
+"Stay present in a quiet moment",
+"Accept silence without filling it",
+"Do a task slower on purpose",
+"Read something uncomfortable but safe",
+"Listen without interrupting",
+"Let someone finish completely",
+"Accept mild awkwardness",
+"Stay in line without distraction",
+"Share a small preference",
+"Ask for feedback on something small",
+"Receive feedback without explaining",
+"Say ‘I see’ instead of defending",
+"Nod and acknowledge feedback",
+"Thank someone for feedback",
+"Write down one criticism without reacting",
+"Re-read feedback calmly",
+"Let feedback sit for 10 minutes",
+"Don’t justify yourself today",
+"Accept a different opinion",
+"Ask ‘what do you mean?’ calmly",
+"Allow disagreement to exist",
+"Observe discomfort without acting",
+"Do one thing imperfectly",
+"Leave a typo uncorrected",
+"Post something simple",
+"Speak up once today",
+"Ask a follow-up question",
+"Let someone else choose",
+"Don’t control the outcome",
+"Stay with uncertainty",
+"Wait before replying to a message",
+"Resist over-explaining",
+"Say less than usual",
+"End a conversation naturally",
+"Allow a pause in conversation",
+"Sit in a public place quietly",
+"Walk without headphones",
+"Notice people without judging",
+"Be seen without performing",
+"Do nothing productive for 10 minutes",
+"Let boredom exist",
+"Stop seeking reassurance",
+"Delay checking reactions",
+"Accept not being liked by everyone",
+"Choose honesty over comfort",
+"Share something neutral about yourself",
+"Let someone misunderstand slightly",
+"Don’t correct a minor mistake",
+"Accept mild embarrassment",
+"Observe anxiety without fixing it",
+"Allow discomfort to pass",
+"Practice calm breathing",
+"Notice body sensations",
+"Ground yourself in the present",
+"Stay curious instead of defensive",
+"Say ‘okay’ and move on",
+"Release control gently",
+"Trust the process",
+"End the day without reviewing it",
+"Go to bed without overthinking",
+"Accept today as enough"
 ];
 
-const STORAGE_KEY = "thinskin_v1";
-const today = new Date().toDateString();
-let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-  start: Date.now(),
-  completed: [],
-  today: null
-};
+const guidanceText = `
+Choose a small action that feels slightly uncomfortable, but safe.
+You can:
+• Do a smaller version
+• Stop early
+• Choose the safest option
+• Skip if it feels unsafe
+`;
 
-const dayCount = Math.floor((Date.now() - state.start) / 86400000) + 1;
-document.getElementById("days").innerText = state.completed.length;
-
-/* =======================
-   LOGIC
-======================= */
-if (!state.today || state.today.date !== today) {
-  const available = challenges.filter(c => !state.completed.includes(c));
-  state.today = {
-    date: today,
-    challenge: available[Math.floor(Math.random() * available.length)]
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function todayIndex() {
+  const start = localStorage.getItem("startDate");
+  if (!start) return 0;
+  const diff = Math.floor((Date.now() - Number(start)) / 86400000);
+  return diff;
 }
 
-const content = document.getElementById("content");
-
-if (state.completed.includes(state.today.challenge)) {
-  content.innerHTML = `
-    <div class="challenge">Done for today.</div>
-    <button disabled class="lock">Come back tomorrow</button>
-  `;
-} else {
-  const isPremium = challenges.indexOf(state.today.challenge) >= 45;
-  if (isPremium && dayCount > 7 === false) {
-    content.innerHTML = `
-      <div class="challenge lock">🔒 Premium challenge locked</div>
-      <button disabled class="lock">Unlock after 7 days</button>
-    `;
-  } else {
-    content.innerHTML = `
-      <div class="challenge">${state.today.challenge}</div>
-      <button onclick="complete()">I did it</button>
-    `;
+function start() {
+  if (!localStorage.getItem("startDate")) {
+    localStorage.setItem("startDate", Date.now());
   }
+  showChallenge();
 }
 
-function complete() {
-  state.completed.push(state.today.challenge);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  location.reload();
+function showChallenge() {
+  const day = todayIndex();
+
+  if (day >= 7) {
+    document.getElementById("content").innerHTML = `
+      <div class="challenge">Premium required</div>
+      <div class="guidance">Unlock advanced challenges after day 7.</div>
+    `;
+    return;
+  }
+
+  const challenge = challenges[day % challenges.length];
+
+  document.getElementById("content").innerHTML = `
+    <div class="challenge">${challenge}</div>
+    <div class="guidance">${guidanceText}</div>
+    <button disabled>Come back tomorrow</button>
+  `;
 }
 
-/* =======================
-   LEGAL SAFE
-======================= */
-function showPrivacy() {
-  alert(
-    "Privacy Policy\n\n" +
-    "No accounts. No tracking. No analytics.\n" +
-    "All data is stored locally on your device only."
-  );
+function showPolicy() {
+  alert("Privacy Policy:\n\nThis app stores progress locally on your device only. No data is collected, stored, or shared.");
 }
 
 function showDisclaimer() {
   alert(
-    "Disclaimer\n\n" +
-    "This is an experimental personal project.\n" +
-    "Not medical advice. Not therapy.\n" +
-    "Not professional guidance.\n" +
-    "Participate voluntarily and stop if unsafe."
+    "Disclaimer:\n\nThis is a personal experimental project.\nIt does NOT provide medical, psychological, therapeutic, or professional advice.\nIt is not AI coaching.\nParticipation is voluntary.\nStop or skip anything that feels unsafe."
   );
 }
 </script>
