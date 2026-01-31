@@ -29,6 +29,19 @@ body {
 h1 { margin-bottom: 6px; }
 p { opacity: 0.75; }
 
+.challenge-label {
+  margin-top: 24px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.challenge {
+  font-size: 18px;
+  margin: 12px 0 24px;
+}
+
 button {
   margin-top: 24px;
   padding: 16px 38px;
@@ -46,27 +59,15 @@ button.locked {
   pointer-events: none;
 }
 
-.link {
-  margin-top: 14px;
-  font-size: 13px;
-  opacity: 0.6;
-  cursor: pointer;
-}
-
-.challenge {
-  font-size: 18px;
-  margin: 24px 0;
-}
-
 label {
-  margin-top: 20px;
+  margin-top: 16px;
   cursor: pointer;
 }
 
 .progress {
   margin-top: 16px;
-  font-size: 15px;
-  opacity: 0.8;
+  font-size: 13px;
+  opacity: 0.7;
 }
 
 .disclaimer {
@@ -77,97 +78,84 @@ label {
   text-align: center;
   max-width: 90%;
 }
-
-.footer-links {
-  position: fixed;
-  bottom: 40px;
-  display: flex;
-  gap: 16px;
-  font-size: 11px;
-  opacity: 0.5;
-}
-
-.footer-links span {
-  cursor: pointer;
-}
 </style>
 </head>
 
 <body>
 
-<!-- HOME -->
 <div id="home" class="screen">
   <h1>ThinSkin</h1>
   <p>A private space for daily discipline.</p>
-  <button id="start">Start</button>
+  <button onclick="loadDaily()">Start</button>
 </div>
 
-<!-- DAILY -->
 <div id="daily" class="screen">
   <h1 id="dayTitle"></h1>
+
+  <div class="challenge-label">Today’s challenge</div>
   <div class="challenge" id="challengeText"></div>
 
   <label>
-    <input type="checkbox" id="doneCheck"> I did this today
+    <input type="checkbox" id="doneCheck">
+    I did this today
   </label>
 
   <button id="confirmBtn" class="locked">Confirm</button>
-  <div class="progress" id="streakInfo"></div>
+
+  <div class="progress" id="progressInfo"></div>
 </div>
 
-<!-- LOCKED -->
 <div id="locked" class="screen">
   <h1>Done for today</h1>
   <p>Come back tomorrow.</p>
 </div>
 
-<!-- POLICY -->
-<div id="policy" class="screen">
-  <h1 id="policyTitle"></h1>
-  <p id="policyText" style="font-size:14px; line-height:1.6;"></p>
-  <button onclick="goHome()">Back</button>
-</div>
-
-<!-- FOOTER -->
-<div class="footer-links">
-  <span onclick="showPolicy('privacy')">Privacy</span>
-  <span onclick="showPolicy('terms')">Policy</span>
+<div id="finished" class="screen">
+  <h1>No more challenges</h1>
+  <p>You have completed everything available.</p>
 </div>
 
 <div class="disclaimer">
-  This is a personal experimental project. It does not provide advice, treatment, or guarantees.
+  This is a personal experimental project. It does not provide advice or guarantees.
 </div>
 
 <script>
-// ================= DATA =================
-const challenges = [
-  "Do one uncomfortable thing in silence.",
+// ===== ALL CHALLENGES (FINITE, NEVER REPEAT) =====
+const ALL_CHALLENGES = [
+  "Do one uncomfortable thing today — quietly.",
+  "Avoid explaining yourself once today.",
   "Finish something without seeking validation.",
-  "Repeat yesterday’s effort, even if imperfect.",
-  "Choose discipline over comfort once today.",
-  "Do the task without explaining yourself.",
-  "Show up even if motivation is gone."
+  "Repeat a task even if you feel bored.",
+  "Show up when it would be easier to disappear.",
+  "Choose discipline over comfort one time today.",
+  "Continue even when no one notices.",
+  "Resist the urge to quit early.",
+  "Accept boredom without distraction."
 ];
 
-// ================= STATE =================
+// ===== STATE =====
 let state = JSON.parse(localStorage.getItem("thinskin")) || {
-  streak: 0,
-  lastDate: null
+  lastDate: null,
+  usedChallenges: [],
+  todayChallenge: null,
+  dayCount: 0
 };
 
-// ================= ELEMENTS =================
-const home = document.getElementById("home");
-const daily = document.getElementById("daily");
-const locked = document.getElementById("locked");
-const policy = document.getElementById("policy");
+// ===== ELEMENTS =====
+const screens = {
+  home: document.getElementById("home"),
+  daily: document.getElementById("daily"),
+  locked: document.getElementById("locked"),
+  finished: document.getElementById("finished")
+};
 
 const challengeText = document.getElementById("challengeText");
 const dayTitle = document.getElementById("dayTitle");
 const check = document.getElementById("doneCheck");
 const confirmBtn = document.getElementById("confirmBtn");
-const streakInfo = document.getElementById("streakInfo");
+const progressInfo = document.getElementById("progressInfo");
 
-// ================= HELPERS =================
+// ===== HELPERS =====
 function today() {
   return new Date().toISOString().slice(0,10);
 }
@@ -176,34 +164,45 @@ function save() {
   localStorage.setItem("thinskin", JSON.stringify(state));
 }
 
-function show(screen) {
-  [home, daily, locked, policy].forEach(s => s.style.display = "none");
-  screen.style.display = "flex";
+function show(name) {
+  Object.values(screens).forEach(s => s.style.display = "none");
+  screens[name].style.display = "flex";
 }
 
-// ================= LOGIC =================
+// ===== CORE LOGIC =====
 function loadDaily() {
   const t = today();
 
   if (state.lastDate === t) {
-    show(locked);
+    show("locked");
     return;
   }
 
-  if (state.lastDate) {
-    const diff = (new Date(t) - new Date(state.lastDate)) / 86400000;
-    if (diff > 1) state.streak = 0;
+  const remaining = ALL_CHALLENGES.filter(
+    c => !state.usedChallenges.includes(c)
+  );
+
+  if (remaining.length === 0) {
+    show("finished");
+    return;
   }
 
-  const challenge = challenges[Math.floor(Math.random()*challenges.length)];
-  challengeText.textContent = challenge;
-  dayTitle.textContent = "Day " + (state.streak + 1);
-  streakInfo.textContent = "Current streak: " + state.streak;
+  if (!state.todayChallenge) {
+    const i = Math.floor(Math.random() * remaining.length);
+    state.todayChallenge = remaining[i];
+  }
+
+  challengeText.textContent = state.todayChallenge;
+  state.dayCount++;
+
+  dayTitle.textContent = "Day " + state.dayCount;
+  progressInfo.textContent =
+    `${remaining.length} challenges remaining`;
 
   check.checked = false;
   confirmBtn.classList.add("locked");
 
-  show(daily);
+  show("daily");
 }
 
 check.onchange = () => {
@@ -211,38 +210,15 @@ check.onchange = () => {
 };
 
 confirmBtn.onclick = () => {
-  state.streak++;
   state.lastDate = today();
+  state.usedChallenges.push(state.todayChallenge);
+  state.todayChallenge = null;
   save();
-  show(locked);
+  show("locked");
 };
 
-document.getElementById("start").onclick = loadDaily;
-
-// ================= POLICY =================
-function showPolicy(type) {
-  show(policy);
-  if (type === "privacy") {
-    policyTitle.textContent = "Privacy Policy";
-    policyText.textContent =
-      "ThinSkin does not collect, store, or transmit any personal data. " +
-      "All progress is stored locally on your device using browser storage. " +
-      "No analytics, cookies, accounts, or tracking are used.";
-  } else {
-    policyTitle.textContent = "Usage Policy";
-    policyText.textContent =
-      "ThinSkin is a personal experimental project intended for self-reflection only. " +
-      "It does not provide medical, psychological, financial, or professional advice. " +
-      "Use at your own discretion. No guarantees or outcomes are implied.";
-  }
-}
-
-function goHome() {
-  show(home);
-}
-
-// ================= INIT =================
-show(home);
+// ===== INIT =====
+show("home");
 </script>
 
 </body>
