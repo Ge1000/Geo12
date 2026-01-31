@@ -1,142 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ThinSkin</title>
 
 <style>
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: radial-gradient(circle at top, #0b1a2d, #020812);
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(60,120,255,0.15), transparent 40%),
+    linear-gradient(180deg, #050b18, #02050d);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ===== Screens ===== */
+.screen {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  transition: opacity .4s ease, transform .4s ease;
 }
 
-.screen { display: none; max-width: 320px; }
-.screen.active { display: block; }
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+}
 
+/* ===== Typography ===== */
+h1 {
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.subtitle {
+  opacity: 0.75;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* ===== Buttons ===== */
 button {
-  background: #22c55e;
+  margin-top: 26px;
+  padding: 16px 40px;
+  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 600;
   border: none;
-  color: #000;
-  padding: 16px 28px;
-  border-radius: 14px;
-  font-size: 18px;
-  margin-top: 24px;
+  cursor: pointer;
+  color: #04120a;
+  background: linear-gradient(135deg, #1db954, #4cff88);
+  box-shadow: 0 20px 40px rgba(29,185,84,0.35);
+  transition: transform .15s ease, box-shadow .15s ease;
 }
 
-.small { opacity: .6; font-size: 12px; margin-top: 40px; }
-.challenge { font-size: 20px; margin-top: 20px; }
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 60px rgba(29,185,84,0.45);
+}
+
+button.secondary {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: none;
+}
+
+/* ===== Challenge Card ===== */
+.card {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(18px);
+  border-radius: 22px;
+  padding: 32px 26px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+  margin-top: 20px;
+}
+
+.level {
+  font-size: 13px;
+  letter-spacing: 1.2px;
+  opacity: 0.6;
+  margin-bottom: 12px;
+}
+
+.challenge {
+  font-size: 20px;
+  line-height: 1.5;
+  margin-bottom: 26px;
+}
+
+/* ===== Checkbox ===== */
+.check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+input[type="checkbox"] {
+  transform: scale(1.4);
+}
+
+/* ===== Premium ===== */
+.lock {
+  font-size: 48px;
+  opacity: 0.7;
+  margin-bottom: 14px;
+}
+
+/* ===== Disclaimer ===== */
+.disclaimer {
+  position: fixed;
+  bottom: 18px;
+  font-size: 13px;
+  opacity: 0.8;
+  text-align: center;
+  max-width: 92%;
+  line-height: 1.5;
+}
+
+.disclaimer a {
+  color: rgba(255,255,255,0.9);
+  text-decoration: underline;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
 <!-- HOME -->
-<div id="home" class="screen active">
+<div class="screen" id="home">
   <h1>ThinSkin</h1>
-  <p>A private space for daily discipline.</p>
-  <button id="startBtn">Start</button>
-  <div class="small">This is a personal experimental project.</div>
+  <p class="subtitle">A private space for daily discipline.</p>
+  <button onclick="startApp()">Start</button>
 </div>
 
 <!-- CHALLENGE -->
-<div id="challenge" class="screen">
-  <h2 id="levelText"></h2>
-  <div class="challenge" id="challengeText"></div>
-  <button id="doneBtn">I did this today</button>
+<div class="screen hidden" id="challengeScreen">
+  <div class="card">
+    <div class="level" id="levelTitle"></div>
+    <div class="challenge" id="challengeText"></div>
+
+    <label class="check">
+      <input type="checkbox" id="doneBox">
+      Mark complete
+    </label>
+
+    <button class="secondary" onclick="completeChallenge()">Continue</button>
+  </div>
 </div>
 
-<!-- DONE -->
-<div id="done" class="screen">
-  <h2>Done for today</h2>
-  <p>Come back tomorrow.</p>
+<!-- PREMIUM -->
+<div class="screen hidden" id="premium">
+  <div class="lock">🔒</div>
+  <h1>Premium</h1>
+  <p class="subtitle">Higher levels require premium access.</p>
 </div>
 
-<!-- COMPLETED -->
-<div id="completed" class="screen">
-  <h2>Completed</h2>
-  <p>You reached the end. Most people don’t.</p>
-  <button id="restartBtn">Restart</button>
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  This is a personal experimental project. It does not provide advice or guarantees.
+  <br>
+  <a onclick="showPolicy()">Privacy</a> · <a onclick="showPolicy()">Terms</a>
 </div>
 
 <script>
-/* ---------------- DATA ---------------- */
-
+/* ===== DATA ===== */
 const challenges = [
-  "Wake up without your phone for 10 minutes.",
-  "Take a cold splash on your face.",
-  "Walk 10 minutes without music.",
-  "Do 20 pushups (or try).",
-  "Write one uncomfortable truth.",
-  "Clean one small area.",
-  "Skip sugar today.",
-  "Sit in silence for 5 minutes.",
-  "Go outside alone.",
-  "Sleep without scrolling."
+  { level: 1, text: "Drink a glass of water" },
+  { level: 1, text: "Make your bed" },
+  { level: 1, text: "Sit quietly for 2 minutes" },
+
+  { level: 2, text: "Take a short walk" },
+  { level: 2, text: "No social media for 1 hour" },
+  { level: 2, text: "Write one sentence" },
+
+  { level: 3, text: "Wash your face with cold water" },
+  { level: 3, text: "Do something slightly uncomfortable" },
+
+  { level: 4, text: "Skip one unnecessary comfort" },
+  { level: 4, text: "Delay gratification once today" },
+
+  { level: 5, text: "Cold shower for 30 seconds (if safe)" },
+  { level: 5, text: "20 minutes without distractions" },
+
+  { level: 6, text: "Sit in silence for 5 minutes" },
+
+  { level: 7, text: "Cold exposure for 30 seconds (hands or face)" }
 ];
 
-const MAX_LEVEL = challenges.length;
-
-/* ---------------- STATE ---------------- */
-
+/* ===== STATE ===== */
 let used = JSON.parse(localStorage.getItem("usedChallenges") || "[]");
-let level = parseInt(localStorage.getItem("level") || "0");
-let lastDay = localStorage.getItem("lastDay");
+let currentIndex = null;
 
-/* ---------------- HELPERS ---------------- */
+function startApp() {
+  show("challengeScreen");
+  loadChallenge();
+}
 
-function today() {
-  return new Date().toDateString();
+function loadChallenge() {
+  const available = challenges
+    .map((c, i) => ({ c, i }))
+    .filter(x => !used.includes(x.i));
+
+  if (available.length === 0) {
+    document.getElementById("levelTitle").innerText = "Completed";
+    document.getElementById("challengeText").innerText = "You completed all challenges.";
+    return;
+  }
+
+  currentIndex = available[0].i;
+  const c = available[0].c;
+
+  document.getElementById("levelTitle").innerText = "LEVEL " + c.level;
+  document.getElementById("challengeText").innerText = c.text;
+}
+
+function completeChallenge() {
+  if (!doneBox.checked) return;
+
+  const c = challenges[currentIndex];
+
+  if (c.level >= 4) {
+    show("premium");
+    return;
+  }
+
+  used.push(currentIndex);
+  localStorage.setItem("usedChallenges", JSON.stringify(used));
+  doneBox.checked = false;
+  loadChallenge();
 }
 
 function show(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
 }
 
-/* ---------------- LOGIC ---------------- */
-
-document.getElementById("startBtn").onclick = () => {
-  if (lastDay === today()) {
-    show("done");
-    return;
-  }
-
-  if (level >= MAX_LEVEL) {
-    show("completed");
-    return;
-  }
-
-  document.getElementById("levelText").innerText = "Level " + (level + 1);
-  document.getElementById("challengeText").innerText = challenges[level];
-  show("challenge");
-};
-
-document.getElementById("doneBtn").onclick = () => {
-  used.push(level);
-  level++;
-  localStorage.setItem("usedChallenges", JSON.stringify(used));
-  localStorage.setItem("level", level);
-  localStorage.setItem("lastDay", today());
-  show("done");
-};
-
-document.getElementById("restartBtn").onclick = () => {
-  localStorage.clear();
-  location.reload();
-};
-
-/* ---------------- INIT ---------------- */
-
-if (lastDay === today()) {
-  show("done");
+function showPolicy() {
+  alert(
+    "ThinSkin – Privacy & Terms\n\n" +
+    "• No personal data is collected\n" +
+    "• Progress is stored locally on your device\n" +
+    "• This is a personal experimental project\n" +
+    "• No advice or guarantees are provided\n\n" +
+    "Use responsibly."
+  );
 }
 </script>
 
