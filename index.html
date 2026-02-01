@@ -1,279 +1,210 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ThinSkin</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>1 Second Choice</title>
 
-<!-- SHARE / PREVIEW FIX (WhatsApp, iMessage, Facebook) -->
-<meta property="og:title" content="ThinSkin" />
-<meta property="og:description" content="One small discomfort challenge per day. No pressure." />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://012-nine.vercel.app" />
-<meta property="og:image" content="https://012-nine.vercel.app/preview.png" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f1220;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+    }
 
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="ThinSkin" />
-<meta name="twitter:description" content="Daily exposure, no pressure." />
-<meta name="twitter:image" content="https://012-nine.vercel.app/preview.png" />
-<!-- END SHARE FIX -->
+    h1 {
+      margin-top: 10px;
+      font-size: 2.2rem;
+    }
 
-<style>
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    background: radial-gradient(circle at top, #0f172a, #020617);
-    color: #e5e7eb;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    h2 {
+      margin: 10px 0;
+      font-weight: 400;
+      opacity: 0.9;
+    }
 
-  .card {
-    background: rgba(15,23,42,0.85);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 28px;
-    width: 90%;
-    max-width: 420px;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-  }
+    button.choice {
+      display: block;
+      width: 90%;
+      max-width: 420px;
+      margin: 12px auto;
+      padding: 20px;
+      font-size: 1.4rem;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      background: #1e90ff;
+      color: #fff;
+      transition: transform 0.05s ease, background 0.2s ease;
+    }
 
-  h1 { margin: 0; font-size: 28px; }
-  .subtitle { opacity: .7; margin: 8px 0 20px; }
+    button.choice:active {
+      transform: scale(0.97);
+      background: #1873cc;
+    }
 
-  .challenge { font-size: 20px; margin-bottom: 14px; }
-  .info {
-    font-size: 14px;
-    opacity: .65;
-    margin-bottom: 20px;
-  }
+    #message {
+      margin-top: 15px;
+      min-height: 24px;
+      opacity: 0.9;
+    }
 
-  button {
-    width: 100%;
-    padding: 14px;
-    border-radius: 14px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-  }
+    #restart {
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      border: none;
+      background: #ff4757;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+    }
 
-  .links {
-    margin-top: 18px;
-    font-size: 14px;
-    opacity: .7;
-  }
-
-  .links span {
-    cursor: pointer;
-    text-decoration: underline;
-  }
-
-  .modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.7);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-
-  .modal-content {
-    background: #020617;
-    padding: 20px;
-    border-radius: 14px;
-    max-width: 500px;
-    font-size: 14px;
-    text-align: left;
-  }
-
-  .modal-content button {
-    margin-top: 14px;
-    background: #334155;
-  }
-</style>
+    footer {
+      margin-top: 40px;
+      font-size: 0.75rem;
+      opacity: 0.45;
+      line-height: 1.4;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="card" id="app"></div>
+  <h1>1 Second Choice</h1>
+  <h2>Score: <span id="score">0</span></h2>
 
-<div class="modal" id="privacyModal">
-  <div class="modal-content">
-    <h3>Privacy Policy</h3>
-    <p>
-      ThinSkin does not collect personal data, track behavior, or store sensitive information.
-      All progress is stored locally on your device.
-    </p>
-    <button onclick="closeModal('privacyModal')">Close</button>
-  </div>
-</div>
+  <button id="btn1" class="choice"></button>
+  <button id="btn2" class="choice"></button>
 
-<div class="modal" id="disclaimerModal">
-  <div class="modal-content">
-    <h3>Disclaimer</h3>
-    <p>
-      This app is for educational and self-reflection purposes only.
-      It is not medical advice, therapy, or mental health treatment.
-      You may skip or stop any challenge at any time.
-      If something feels unsafe, do not do it.
-    </p>
-    <button onclick="closeModal('disclaimerModal')">Close</button>
-  </div>
-</div>
+  <div id="message"></div>
+
+  <button id="restart" style="display:none;">Restart</button>
+
+  <footer>
+    Entertainment only · No advice · GDPR safe<br/>
+    This game is fictional and for fun purposes only.
+  </footer>
 
 <script>
-const challenges = [
-  "Maintain eye contact for 3 seconds.",
-  "Say hello first in a short interaction.",
-  "Speak slightly louder than usual.",
-  "Post something imperfect.",
-  "Leave a short comment online.",
-  "Ask a simple question you already know.",
-  "Share an idea before it feels ready.",
-  "Send a message without overthinking it.",
-  "Smile at a stranger.",
-  "Accept a small mistake without fixing it.",
+/* =========================
+   CONFIG
+========================= */
 
-  "Pause before responding instead of rushing.",
-  "Admit you don't know something.",
-  "Share a draft instead of a final version.",
-  "Let someone finish without interrupting.",
-  "Say 'I’ll get back to you' instead of forcing an answer.",
-  "Leave a typo uncorrected.",
-  "Ask for clarification once.",
-  "Say no to a small request.",
-  "Express a neutral opinion.",
-  "End a conversation politely first.",
+const GAME = {
+  time_ms: 1000,
 
-  "Ask for help with something small.",
-  "Let silence exist for 2 seconds.",
-  "Send a short voice note.",
-  "Share a personal preference.",
-  "Ask someone how their day is.",
-  "Respond without emojis.",
-  "Post without checking likes later.",
-  "Disagree politely once.",
-  "Share something unfinished.",
-  "Speak slower than usual.",
+  feedback: {
+    success: [
+      "Ai ales cu creierul 🧠👏",
+      "Noroc chior, dar merge 😎",
+      "MAMA CE PRO",
+      "Skill pur (sau așa crezi)"
+    ],
+    fail: [
+      "Serios? 🤡",
+      "Bună decizie… în alt univers",
+      "Mama ta a zis NU la asta",
+      "Felicitări, ai pierdut rapid"
+    ],
+    no_win: "Nu există variantă bună. Viața e așa."
+  },
 
-  "Let feedback sit without responding.",
-  "Ask a follow-up question.",
-  "Say ‘that makes sense’ even if unsure.",
-  "Share a thought without justification.",
-  "End a message without softening words.",
-  "Say 'I’m not sure yet.'",
-  "Let someone else lead the conversation.",
-  "Express uncertainty calmly.",
-  "Leave a conversation without overexplaining.",
-  "Do nothing to fix discomfort today."
-];
+  choices: [
+    ["🍕 Pizza gratis", "🥦 Salată misterioasă"],
+    ["💰 £5 acum", "🎁 Cutie „100% sigur”"],
+    ["🐱 Pisică drăguță", "🐶 Câine „care mușcă?”"],
+    ["🟥 Buton ROȘU", "🟩 Buton VERDE"],
+    ["😇 Angel mode", "😈 Devil mode"],
+    ["☕ Cafea", "😴 Somn (la muncă)"],
+    ["📱 Update app", "❌ Remind me later"],
+    ["🍔 Burger", "🍔 Burger „mai mare”"],
+    ["🎲 Dai cu zarul", "🧠 Alegi logic"],
+    ["🕶️ Cool", "🧦 Șosete cu sandale"],
 
-const FREE_LIMIT = 14;
+    ["🚪 Ușa din stânga", "🚪 Ușa din dreapta"],
+    ["🐸 Broască norocoasă", "🐍 Șarpe „prietenos”"],
+    ["📦 Pachet Amazon", "📦 Pachet SHEIN"],
+    ["😁 Zâmbești", "😐 Te faci că n-ai văzut"],
+    ["🔋 5% baterie", "🔌 Încărcător „dubios”"],
+    ["🎧 Muzică bună", "🔊 Volum la maxim"],
+    ["🏃 Fugi", "🧍 Stai pe loc"],
+    ["🍺 O bere", "🍺 „Încă una”"],
+    ["🎮 Continue", "🚪 Quit (laș)"],
+    ["🧻 Hârtie igienică", "💦 Lasă că merge"]
+  ]
+};
 
-const todayKey = new Date().toDateString();
-let doneToday = localStorage.getItem("doneToday") === todayKey;
-let completed = Number(localStorage.getItem("completed") || 0);
+/* =========================
+   STATE
+========================= */
 
-function getTodayChallenge() {
-  return challenges[completed % challenges.length];
+let score = 0;
+let timer = null;
+let gameOver = false;
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const btn1 = document.getElementById("btn1");
+const btn2 = document.getElementById("btn2");
+const scoreEl = document.getElementById("score");
+const messageEl = document.getElementById("message");
+const restartBtn = document.getElementById("restart");
+
+/* =========================
+   GAME LOGIC
+========================= */
+
+function randomChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
+function nextRound() {
+  clearTimeout(timer);
+  messageEl.textContent = "";
 
-  if (completed >= FREE_LIMIT) {
-    app.innerHTML = `
-      <h1>ThinSkin</h1>
-      <p class="subtitle">Premium required</p>
-      <p>Advanced challenges are locked.</p>
-      <div class="links">
-        <span onclick="shareApp()">Share</span> ·
-        <span onclick="openModal('privacyModal')">Privacy</span> ·
-        <span onclick="openModal('disclaimerModal')">Disclaimer</span>
-      </div>
-    `;
-    return;
-  }
+  const pair = randomChoice(GAME.choices);
+  btn1.textContent = pair[0];
+  btn2.textContent = pair[1];
 
-  if (doneToday) {
-    app.innerHTML = `
-      <h1>ThinSkin</h1>
-      <p class="subtitle">Daily exposure, no pressure</p>
-      <p>Done for today. Come back tomorrow.</p>
-      <div class="links">
-        <span onclick="shareApp()">Share</span> ·
-        <span onclick="openModal('privacyModal')">Privacy</span> ·
-        <span onclick="openModal('disclaimerModal')">Disclaimer</span>
-      </div>
-    `;
-    return;
-  }
-
-  app.innerHTML = `
-    <h1>ThinSkin</h1>
-    <p class="subtitle">Daily exposure, no pressure</p>
-
-    <div class="challenge">${getTodayChallenge()}</div>
-
-    <div class="info">
-      Choose a safe, small version. You can skip or stop anytime.
-    </div>
-
-    <button onclick="markDone()">I did it</button>
-
-    <div class="links">
-      <span onclick="shareApp()">Share</span> ·
-      <span onclick="openModal('privacyModal')">Privacy</span> ·
-      <span onclick="openModal('disclaimerModal')">Disclaimer</span>
-    </div>
-  `;
+  timer = setTimeout(() => {
+    lose("⏱ Prea lent");
+  }, GAME.time_ms);
 }
 
-function markDone() {
-  localStorage.setItem("doneToday", todayKey);
-  localStorage.setItem("completed", completed + 1);
-  doneToday = true;
-  completed++;
-  render();
+function win() {
+  clearTimeout(timer);
+  score++;
+  scoreEl.textContent = score;
+  messageEl.textContent = randomChoice(GAME.feedback.success);
+  setTimeout(nextRound, 250);
 }
 
-/* === MODIFICAT DOAR SHARE === */
-function shareApp() {
-  const variants = [
-    "I found this app called ThinSkin.\nOne small discomfort challenge per day.\nNo pressure.\n\nSurprisingly addictive.",
-    "This is weird but interesting.\nThinSkin gives you ONE tiny challenge per day.\nThat’s it.\n\nDidn’t expect to like it.",
-    "ThinSkin.\nDaily discomfort.\nZero pressure.\n\nTry it."
-  ];
-
-  const text = variants[Math.floor(Math.random() * variants.length)];
-
-  if (navigator.share) {
-    navigator.share({
-      title: "ThinSkin",
-      text: text,
-      url: window.location.href
-    });
-  } else {
-    alert(text + "\n\n" + window.location.href);
-  }
-}
-/* === END SHARE === */
-
-function openModal(id) {
-  document.getElementById(id).style.display = "flex";
+function lose(text) {
+  clearTimeout(timer);
+  gameOver = true;
+  messageEl.textContent = text || randomChoice(GAME.feedback.fail);
+  btn1.style.display = "none";
+  btn2.style.display = "none";
+  restartBtn.style.display = "inline-block";
 }
 
-function closeModal(id) {
-  document.getElementById(id).style.display = "none";
-}
+btn1.onclick = () => { if (!gameOver) win(); };
+btn2.onclick = () => { if (!gameOver) win(); };
 
-render();
+restartBtn.onclick = () => location.reload();
+
+/* =========================
+   START
+========================= */
+
+nextRound();
 </script>
+
 </body>
 </html>
