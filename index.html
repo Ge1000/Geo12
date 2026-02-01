@@ -39,6 +39,10 @@ button{
 .secondary{background:#00ff88;color:#000}
 .tertiary{background:#ffd166;color:#000}
 .free{background:#ffffff;color:#000}
+.free:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
 .hidden{display:none}
 .divider{height:1px;background:rgba(255,255,255,.15);margin:18px 0}
 small{opacity:.65}
@@ -48,6 +52,11 @@ small{opacity:.65}
   border-radius:999px;
   background:rgba(255,255,255,.12);
   margin-bottom:10px;
+}
+.cta-soft{
+  margin-top:10px;
+  font-weight:600;
+  opacity:.9;
 }
 </style>
 </head>
@@ -59,9 +68,13 @@ small{opacity:.65}
   <p>A quick reality check for women choosing between love and financial growth.</p>
 
   <!-- FREE HINTS -->
-  <button class="free" onclick="freeHint()">GET A FREE HINT</button>
+  <button id="freeBtn" class="free" onclick="freeHint()">GET A FREE HINT</button>
   <p id="freeResult"></p>
   <small id="freeCount"></small>
+
+  <p id="softCTA" class="cta-soft hidden">
+    You already know the answer. £1 gives clarity.
+  </p>
 
   <div class="divider"></div>
 
@@ -115,11 +128,11 @@ function freeHint(){
     document.getElementById("freeCount").innerText =
       "Free hint " + (freeIndex + 1) + " of 3";
     freeIndex++;
-  } else {
-    document.getElementById("freeResult").innerText =
-      "That’s all the free hints.";
-    document.getElementById("freeCount").innerText =
-      "Get the full answer below.";
+
+    if(freeIndex === freeHints.length){
+      document.getElementById("softCTA").classList.remove("hidden");
+      document.getElementById("freeBtn").disabled = true;
+    }
   }
 }
 
