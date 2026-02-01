@@ -1,225 +1,149 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>1 Second Choice</title>
-
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f1220;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-      margin: 0;
-    }
-
-    h1 {
-      margin-top: 10px;
-      font-size: 2.2rem;
-    }
-
-    h2 {
-      margin: 10px 0;
-      font-weight: 400;
-      opacity: 0.9;
-    }
-
-    button.choice {
-      display: block;
-      width: 90%;
-      max-width: 420px;
-      margin: 12px auto;
-      padding: 20px;
-      font-size: 1.4rem;
-      border-radius: 14px;
-      border: none;
-      cursor: pointer;
-      background: #1e90ff;
-      color: #fff;
-      transition: transform 0.05s ease, background 0.2s ease;
-    }
-
-    button.choice:active {
-      transform: scale(0.97);
-      background: #1873cc;
-    }
-
-    #message {
-      margin-top: 15px;
-      min-height: 24px;
-      opacity: 0.9;
-    }
-
-    #restart {
-      padding: 14px 28px;
-      font-size: 1.1rem;
-      border-radius: 12px;
-      border: none;
-      background: #ff4757;
-      color: white;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-
-    footer {
-      margin-top: 40px;
-      font-size: 0.75rem;
-      opacity: 0.45;
-      line-height: 1.4;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Him or the Money?</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:linear-gradient(135deg,#0b0010,#2b0033);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.card{
+  max-width:460px;
+  width:100%;
+  background:rgba(0,0,0,.45);
+  border-radius:22px;
+  padding:28px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+h1{margin:0 0 8px}
+p{opacity:.9}
+button{
+  width:100%;
+  padding:18px;
+  margin-top:14px;
+  border-radius:14px;
+  border:none;
+  font-size:18px;
+  cursor:pointer;
+}
+.primary{background:#ff5fa2;color:#000}
+.secondary{background:#00ff88;color:#000}
+.tertiary{background:#ffd166;color:#000}
+.free{background:#ffffff;color:#000}
+.hidden{display:none}
+.divider{height:1px;background:rgba(255,255,255,.15);margin:18px 0}
+small{opacity:.65}
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  margin-bottom:10px;
+}
+</style>
 </head>
-
 <body>
 
-  <h1>1 Second Choice</h1>
-  <h2>Score: <span id="score">0</span></h2>
+<div class="card">
+  <span class="badge">UK / US • Relationships & Money</span>
+  <h1>Him or the Money?</h1>
+  <p>A quick reality check for women choosing between love and financial growth.</p>
 
-  <button id="btn1" class="choice"></button>
-  <button id="btn2" class="choice"></button>
+  <!-- FREE HINTS -->
+  <button class="free" onclick="freeHint()">GET A FREE HINT</button>
+  <p id="freeResult"></p>
+  <small id="freeCount"></small>
 
-  <div id="message"></div>
+  <div class="divider"></div>
 
-  <button id="restart" style="display:none;">Restart</button>
+  <!-- STEP 1 PAID -->
+  <p><strong>Want the real answer?</strong></p>
+  <a id="pay1" href="https://buy.stripe.com/XXXXXXXX_STEP1">
+    <button class="primary">PAY £1 — Get the Truth</button>
+  </a>
 
-  <footer>
-    Entertainment only · No advice · GDPR safe<br/>
-    This game is fictional, does not influence real decisions,<br/>
-    collects no personal data and is provided for fun only.
-  </footer>
+  <!-- PAID ANSWER -->
+  <h2 id="paidAnswer" class="hidden"></h2>
+  <small id="note" class="hidden">Reflection & entertainment — not advice.</small>
+
+  <!-- UPSELL £7 -->
+  <div id="upsell7" class="hidden">
+    <div class="divider"></div>
+    <h3>7-Day Clarity Reset</h3>
+    <p>Daily prompts to clear emotions, refocus on money, and set boundaries.</p>
+    <a href="https://buy.stripe.com/XXXXXXXX_STEP2">
+      <button class="secondary">£7 — Start Reset</button>
+    </a>
+  </div>
+
+  <!-- UPSELL £29 -->
+  <div id="upsell29" class="hidden">
+    <div class="divider"></div>
+    <h3>Power Reset</h3>
+    <p>Decisions, confidence, money mindset, relationship standards.</p>
+    <a href="https://buy.stripe.com/XXXXXXXX_STEP3">
+      <button class="tertiary">£29 — Power Reset</button>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+  <small>No account • Instant access • Secure payment</small>
+</div>
 
 <script>
-/* =========================
-   CONFIG
-========================= */
+// FREE HINTS (exactly 3)
+const freeHints = [
+  "If you feel confused, something is already costing you.",
+  "Support should feel like growth, not delay.",
+  "Your future self already knows the answer."
+];
 
-const GAME = {
-  base_time: 1600,
-  min_time: 450,
+let freeIndex = 0;
 
-  feedback: {
-    success: [
-      "Ai ales cu creierul 🧠👏",
-      "Noroc chior, dar merge 😎",
-      "MAMA CE PRO",
-      "Skill pur (sau așa crezi)",
-      "Reflexe de gamer 🎮"
-    ],
-    fail: [
-      "Serios? 🤡",
-      "Bună decizie… în alt univers",
-      "Mama ta a zis NU la asta",
-      "Felicitări, ai pierdut rapid",
-      "Creierul era în pauză"
-    ]
-  },
-
-  choices: [
-    ["🍕 Pizza gratis", "🥦 Salată misterioasă"],
-    ["💰 £5 acum", "🎁 Cutie „100% sigur”"],
-    ["🐱 Pisică drăguță", "🐶 Câine „care mușcă?”"],
-    ["🟥 Buton ROȘU", "🟩 Buton VERDE"],
-    ["😇 Angel mode", "😈 Devil mode"],
-    ["☕ Cafea", "😴 Somn (la muncă)"],
-    ["📱 Update app", "❌ Remind me later"],
-    ["🍔 Burger", "🍔 Burger „mai mare”"],
-    ["🎲 Dai cu zarul", "🧠 Alegi logic"],
-    ["🕶️ Cool", "🧦 Șosete cu sandale"],
-
-    ["🚪 Ușa din stânga", "🚪 Ușa din dreapta"],
-    ["🐸 Broască norocoasă", "🐍 Șarpe „prietenos”"],
-    ["📦 Pachet Amazon", "📦 Pachet SHEIN"],
-    ["😁 Zâmbești", "😐 Te faci că n-ai văzut"],
-    ["🔋 5% baterie", "🔌 Încărcător „dubios”"],
-    ["🎧 Muzică bună", "🔊 Volum la maxim"],
-    ["🏃 Fugi", "🧍 Stai pe loc"],
-    ["🍺 O bere", "🍺 „Încă una”"],
-    ["🎮 Continue", "🚪 Quit (laș)"],
-    ["🧻 Hârtie igienică", "💦 Lasă că merge"],
-
-    /* ADĂUGATE */
-    ["📉 Investiție riscantă", "📈 Dobândă mică"],
-    ["📵 Închizi telefonul", "📲 Mai un scroll"],
-    ["🚗 Uber scump", "🚌 Autobuz dubios"],
-    ["💬 Spui adevărul", "🤐 O minciună mică"],
-    ["⏰ Te trezești devreme", "😴 Snooze x5"],
-    ["🔥 Apeși butonul", "❄️ Aștepți"],
-    ["🎯 Riști tot", "🛡️ Joci safe"]
-  ]
-};
-
-/* =========================
-   STATE
-========================= */
-
-let score = 0;
-let timer = null;
-let gameOver = false;
-
-/* =========================
-   ELEMENTS
-========================= */
-
-const btn1 = document.getElementById("btn1");
-const btn2 = document.getElementById("btn2");
-const scoreEl = document.getElementById("score");
-const messageEl = document.getElementById("message");
-const restartBtn = document.getElementById("restart");
-
-/* =========================
-   LOGIC
-========================= */
-
-function randomChoice(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function freeHint(){
+  if(freeIndex < freeHints.length){
+    document.getElementById("freeResult").innerText = freeHints[freeIndex];
+    document.getElementById("freeCount").innerText =
+      "Free hint " + (freeIndex + 1) + " of 3";
+    freeIndex++;
+  } else {
+    document.getElementById("freeResult").innerText =
+      "That’s all the free hints.";
+    document.getElementById("freeCount").innerText =
+      "Get the full answer below.";
+  }
 }
 
-function currentTimeLimit() {
-  const reduction = Math.floor(score / 3) * 120;
-  return Math.max(GAME.base_time - reduction, GAME.min_time);
+// PAID ANSWERS
+const paidAnswers = [
+  "Choose the money. Love shouldn’t cost your future.",
+  "Choose him — only if he actively supports your growth.",
+  "If he makes you smaller, choose the money.",
+  "Neither. Walk away and reset.",
+  "Money first. Confidence changes everything.",
+  "If you’re asking… it’s already the money."
+];
+
+// After payment redirect to: site.com/#paid
+if (window.location.hash === "#paid") {
+  document.getElementById("pay1").style.display="none";
+  const a = paidAnswers[Math.floor(Math.random()*paidAnswers.length)];
+  const ans = document.getElementById("paidAnswer");
+  ans.innerText = a;
+  ans.classList.remove("hidden");
+  document.getElementById("note").classList.remove("hidden");
+  document.getElementById("upsell7").classList.remove("hidden");
+  document.getElementById("upsell29").classList.remove("hidden");
 }
-
-function nextRound() {
-  clearTimeout(timer);
-  messageEl.textContent = "";
-
-  const pair = randomChoice(GAME.choices);
-  btn1.textContent = pair[0];
-  btn2.textContent = pair[1];
-
-  timer = setTimeout(() => {
-    lose("⏱ Prea lent");
-  }, currentTimeLimit());
-}
-
-function win() {
-  clearTimeout(timer);
-  score++;
-  scoreEl.textContent = score;
-  messageEl.textContent = randomChoice(GAME.feedback.success);
-  setTimeout(nextRound, 300);
-}
-
-function lose(text) {
-  clearTimeout(timer);
-  gameOver = true;
-  messageEl.textContent = text || randomChoice(GAME.feedback.fail);
-  btn1.style.display = "none";
-  btn2.style.display = "none";
-  restartBtn.style.display = "inline-block";
-}
-
-btn1.onclick = () => !gameOver && win();
-btn2.onclick = () => !gameOver && win();
-restartBtn.onclick = () => location.reload();
-
-/* =========================
-   START
-========================= */
-
-nextRound();
 </script>
 
 </body>
