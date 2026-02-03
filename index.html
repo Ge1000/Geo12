@@ -1,161 +1,166 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Him or the Money?</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus</title>
+
+<link rel="manifest" href="data:application/json,{
+  &quot;name&quot;:&quot;Focus&quot;,
+  &quot;short_name&quot;:&quot;Focus&quot;,
+  &quot;start_url&quot;:&quot;.&quot;,
+  &quot;display&quot;:&quot;standalone&quot;,
+  &quot;background_color&quot;:&quot;#0f1220&quot;,
+  &quot;theme_color&quot;:&quot;#0f1220&quot;
+}">
+
 <style>
-body{
-  margin:0;
-  min-height:100vh;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  background:linear-gradient(135deg,#0b0010,#2b0033);
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0f1220;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
 }
-.card{
-  max-width:460px;
-  width:100%;
-  background:rgba(0,0,0,.45);
-  border-radius:22px;
-  padding:28px;
-  text-align:center;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
+
+h1 {
+  font-size: 22px;
+  opacity: 0.85;
 }
-h1{margin:0 0 8px}
-p{opacity:.9}
-button{
-  width:100%;
-  padding:18px;
-  margin-top:14px;
-  border-radius:14px;
-  border:none;
-  font-size:18px;
-  cursor:pointer;
+
+.card {
+  background: #1a1f3a;
+  padding: 20px;
+  border-radius: 16px;
+  margin-top: 20px;
 }
-.primary{background:#ff5fa2;color:#000}
-.secondary{background:#00ff88;color:#000}
-.tertiary{background:#ffd166;color:#000}
-.free{background:#ffffff;color:#000}
-.free:disabled{
-  opacity:.5;
-  cursor:not-allowed;
+
+input, button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
 }
-.hidden{display:none}
-.divider{height:1px;background:rgba(255,255,255,.15);margin:18px 0}
-small{opacity:.65}
-.badge{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.12);
-  margin-bottom:10px;
+
+button {
+  font-weight: bold;
+  background: #2f3cff;
+  color: #fff;
 }
-.cta-soft{
-  margin-top:10px;
-  font-weight:600;
-  opacity:.9;
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.row button {
+  flex: 1;
+}
+
+.green { background:#1e7f43; }
+.red { background:#8b1e1e; }
+.yellow { background:#b58b00; }
+
+.lock {
+  background:#000;
+  color:#ff4d4d;
 }
 </style>
 </head>
+
 <body>
 
+<h1>Focus</h1>
+
 <div class="card">
-  <span class="badge">UK / US • Relationships & Money</span>
-  <h1>Him or the Money?</h1>
-  <p>A quick reality check for women choosing between love and financial growth.</p>
+  <input type="number" id="start" placeholder="Valoare inițială">
+  <input type="number" id="target" placeholder="Limită superioară">
+  <input type="number" id="stoploss" placeholder="Limită inferioară">
+  <button onclick="start()">Start</button>
+</div>
 
-  <!-- FREE HINTS -->
-  <button id="freeBtn" class="free" onclick="freeHint()">GET A FREE HINT</button>
-  <p id="freeResult"></p>
-  <small id="freeCount"></small>
+<div class="card" id="panel" style="display:none">
+  <h2 id="balance">0</h2>
 
-  <p id="softCTA" class="cta-soft hidden">
-    You already know the answer. £1 gives clarity.
-  </p>
-
-  <div class="divider"></div>
-
-  <!-- STEP 1 PAID -->
-  <p><strong>Want the real answer?</strong></p>
-  <a id="pay1" href="https://buy.stripe.com/XXXXXXXX_STEP1">
-    <button class="primary">PAY £1 — Get the Truth</button>
-  </a>
-
-  <!-- PAID ANSWER -->
-  <h2 id="paidAnswer" class="hidden"></h2>
-  <small id="note" class="hidden">Reflection & entertainment — not advice.</small>
-
-  <!-- UPSELL £7 -->
-  <div id="upsell7" class="hidden">
-    <div class="divider"></div>
-    <h3>7-Day Clarity Reset</h3>
-    <p>Daily prompts to clear emotions, refocus on money, and set boundaries.</p>
-    <a href="https://buy.stripe.com/XXXXXXXX_STEP2">
-      <button class="secondary">£7 — Start Reset</button>
-    </a>
+  <div class="row">
+    <button onclick="change(5)">+5</button>
+    <button onclick="change(10)">+10</button>
+    <button onclick="change(20)">+20</button>
   </div>
 
-  <!-- UPSELL £29 -->
-  <div id="upsell29" class="hidden">
-    <div class="divider"></div>
-    <h3>Power Reset</h3>
-    <p>Decisions, confidence, money mindset, relationship standards.</p>
-    <a href="https://buy.stripe.com/XXXXXXXX_STEP3">
-      <button class="tertiary">£29 — Power Reset</button>
-    </a>
+  <div class="row">
+    <button onclick="change(-5)">-5</button>
+    <button onclick="change(-10)">-10</button>
+    <button onclick="change(-20)">-20</button>
   </div>
 
-  <div class="divider"></div>
-  <small>No account • Instant access • Secure payment</small>
+  <div id="status" class="card yellow" style="margin-top:15px">
+    Monitorizare activă
+  </div>
 </div>
 
 <script>
-// FREE HINTS (exactly 3)
-const freeHints = [
-  "If you feel confused, something is already costing you.",
-  "Support should feel like growth, not delay.",
-  "Your future self already knows the answer."
-];
+let startValue = 0;
+let value = 0;
+let target = 0;
+let stoploss = 0;
+let locked = false;
 
-let freeIndex = 0;
+function start() {
+  startValue = Number(start.value);
+  target = Number(targetInput.value = target?.value);
+}
 
-function freeHint(){
-  if(freeIndex < freeHints.length){
-    document.getElementById("freeResult").innerText = freeHints[freeIndex];
-    document.getElementById("freeCount").innerText =
-      "Free hint " + (freeIndex + 1) + " of 3";
-    freeIndex++;
+const targetInput = document.getElementById("target");
+const stopInput = document.getElementById("stoploss");
 
-    if(freeIndex === freeHints.length){
-      document.getElementById("softCTA").classList.remove("hidden");
-      document.getElementById("freeBtn").disabled = true;
-    }
+function start() {
+  startValue = Number(document.getElementById("start").value);
+  target = Number(document.getElementById("target").value);
+  stoploss = Number(document.getElementById("stoploss").value);
+
+  if (!startValue || target <= 0 || stoploss <= 0) {
+    alert("Valori invalide");
+    return;
+  }
+
+  value = startValue;
+  locked = false;
+  document.getElementById("balance").innerText = value.toFixed(2);
+  document.getElementById("panel").style.display = "block";
+  update();
+}
+
+function change(amount) {
+  if (locked) return;
+  value += amount;
+  document.getElementById("balance").innerText = value.toFixed(2);
+  update();
+}
+
+function update() {
+  const diff = value - startValue;
+  const status = document.getElementById("status");
+
+  if (diff >= target) {
+    lock("Limită superioară atinsă");
+  } else if (diff <= -stoploss) {
+    lock("Limită inferioară atinsă");
+  } else {
+    status.className = "card yellow";
+    status.innerText = "În parametri";
   }
 }
 
-// PAID ANSWERS
-const paidAnswers = [
-  "Choose the money. Love shouldn’t cost your future.",
-  "Choose him — only if he actively supports your growth.",
-  "If he makes you smaller, choose the money.",
-  "Neither. Walk away and reset.",
-  "Money first. Confidence changes everything.",
-  "If you’re asking… it’s already the money."
-];
-
-// After payment redirect to: site.com/#paid
-if (window.location.hash === "#paid") {
-  document.getElementById("pay1").style.display="none";
-  const a = paidAnswers[Math.floor(Math.random()*paidAnswers.length)];
-  const ans = document.getElementById("paidAnswer");
-  ans.innerText = a;
-  ans.classList.remove("hidden");
-  document.getElementById("note").classList.remove("hidden");
-  document.getElementById("upsell7").classList.remove("hidden");
-  document.getElementById("upsell29").classList.remove("hidden");
+function lock(message) {
+  locked = true;
+  const status = document.getElementById("status");
+  status.className = "card lock";
+  status.innerHTML = message + "<br>SESIUNE ÎNCHEIATĂ";
+  if (navigator.vibrate) navigator.vibrate([300,200,300]);
 }
 </script>
 
