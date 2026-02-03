@@ -1,165 +1,158 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Focus</title>
+  <!-- 1️⃣ META -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Life Mosaic</title>
 
-<!-- PWA manifest inline -->
-<link rel="manifest" href="data:application/json,{
-  &quot;name&quot;:&quot;Focus&quot;,
-  &quot;short_name&quot;:&quot;Focus&quot;,
-  &quot;start_url&quot;:&quot;.&quot;,
-  &quot;display&quot;:&quot;standalone&quot;,
-  &quot;background_color&quot;:&quot;#0f1220&quot;,
-  &quot;theme_color&quot;:&quot;#0f1220&quot;
-}">
+  <!-- 2️⃣ PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
 
-<style>
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#0f1220;
-  color:#fff;
-  padding:20px;
-  text-align:center;
-}
-h1{font-size:22px;opacity:.85}
-.card{
-  background:#1a1f3a;
-  padding:20px;
-  border-radius:16px;
-  margin-top:20px;
-}
-input,button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border-radius:10px;
-  border:none;
-  font-size:16px;
-}
-button{
-  background:#3a4bff;
-  color:#fff;
-  font-weight:700;
-}
-.row{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
-}
-.row button{flex:1}
-.green{background:#1e7f43}
-.red{background:#8b1e1e}
-.yellow{background:#b58b00}
-.lock{background:#000;color:#ff4d4d}
-.small{font-size:13px;opacity:.6;margin-top:10px}
-</style>
+  <!-- 3️⃣ MAPBOX -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+  <!-- 4️⃣ STYLE -->
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #000;
+      color: #fff;
+    }
+    .screen {
+      display: none;
+      height: 100vh;
+      width: 100vw;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+    .active {
+      display: flex;
+      flex-direction: column;
+    }
+    textarea {
+      width: 100%;
+      max-width: 320px;
+      height: 80px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      max-width: 320px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      background: #fff;
+      color: #000;
+    }
+    #map {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .overlay {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      z-index: 2;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>Focus</h1>
-
-<div class="card" id="setup">
-  <input type="number" id="start" placeholder="Valoare inițială">
-  <input type="number" id="up" placeholder="Limită superioară">
-  <input type="number" id="down" placeholder="Limită inferioară">
-  <button onclick="startSession()">Start</button>
+<!-- 5️⃣ SCREEN 1 – INPUT -->
+<div id="inputScreen" class="screen active">
+  <h2>How does the world feel today?</h2>
+  <textarea id="text" maxlength="140" placeholder="1–2 words are enough"></textarea>
+  <button onclick="submit()">Submit</button>
+  <p style="font-size:12px;opacity:.6;margin-top:10px">
+    Anonymous · No account · No tracking
+  </p>
 </div>
 
-<div class="card" id="session" style="display:none">
-  <h2 id="balance">0</h2>
-
-  <div class="row">
-    <button onclick="change(5)">+5</button>
-    <button onclick="change(10)">+10</button>
-    <button onclick="change(20)">+20</button>
-  </div>
-
-  <div class="row">
-    <button onclick="change(-5)">-5</button>
-    <button onclick="change(-10)">-10</button>
-    <button onclick="change(-20)">-20</button>
-  </div>
-
-  <div id="status" class="card yellow" style="margin-top:15px">
-    Monitorizare activă
-  </div>
+<!-- 6️⃣ SCREEN 2 – MAP -->
+<div id="mapScreen" class="screen">
+  <div id="map"></div>
+  <div class="overlay" id="status">Loading world mood…</div>
 </div>
 
-<p class="small">Datele sunt stocate local pe telefon.</p>
-
+<!-- 7️⃣ SCRIPT -->
 <script>
-let startValue=0,value=0,up=0,down=0,locked=false;
+  // 🔑 MAPBOX TOKEN (PUNE AL TĂU)
+  mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
 
-function save(){
-  localStorage.setItem("focus-data",JSON.stringify({
-    startValue,value,up,down,locked
-  }));
-}
+  let map;
 
-function load(){
-  const d=localStorage.getItem("focus-data");
-  if(!d)return;
-  const o=JSON.parse(d);
-  startValue=o.startValue;
-  value=o.value;
-  up=o.up;
-  down=o.down;
-  locked=o.locked;
-  document.getElementById("setup").style.display="none";
-  document.getElementById("session").style.display="block";
-  document.getElementById("balance").innerText=value.toFixed(2);
-  update();
-}
+  function submit() {
+    const text = document.getElementById("text").value.trim();
+    if (text.length < 2) return;
 
-function startSession(){
-  startValue=Number(start.value);
-  up=Number(document.getElementById("up").value);
-  down=Number(document.getElementById("down").value);
-  if(!startValue||up<=0||down<=0){alert("Valori invalide");return;}
-  value=startValue;
-  locked=false;
-  document.getElementById("setup").style.display="none";
-  document.getElementById("session").style.display="block";
-  document.getElementById("balance").innerText=value.toFixed(2);
-  update();
-  save();
-}
+    // 👉 SIMULARE CLASIFICARE EMOȚIE (MVP)
+    const emotion = classify(text);
 
-function change(a){
-  if(locked)return;
-  value+=a;
-  document.getElementById("balance").innerText=value.toFixed(2);
-  update();
-  save();
-}
+    // 👉 STOCARE LOCALĂ (înlocuiești cu DB ulterior)
+    localStorage.setItem("lastEmotion", emotion);
 
-function update(){
-  const diff=value-startValue;
-  const s=document.getElementById("status");
-  if(diff>=up){
-    lock("Limită superioară atinsă");
-  }else if(diff<=-down){
-    lock("Limită inferioară atinsă");
-  }else{
-    s.className="card yellow";
-    s.innerText="În parametri";
+    // UI switch
+    document.getElementById("inputScreen").classList.remove("active");
+    document.getElementById("mapScreen").classList.add("active");
+
+    initMap(emotion);
   }
-}
 
-function lock(msg){
-  locked=true;
-  const s=document.getElementById("status");
-  s.className="card lock";
-  s.innerHTML=msg+"<br>SESIUNE ÎNCHEIATĂ";
-  if(navigator.vibrate)navigator.vibrate([300,200,300]);
-  save();
-}
+  function classify(text) {
+    text = text.toLowerCase();
+    if (text.includes("happy") || text.includes("fericit")) return "happy";
+    if (text.includes("tired") || text.includes("obosit")) return "tired";
+    if (text.includes("stress") || text.includes("stres")) return "stress";
+    return "neutral";
+  }
 
-load();
+  function initMap(emotion) {
+    map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: [0, 20],
+      zoom: 1.2
+    });
+
+    const color = {
+      happy: "#ffd166",
+      tired: "#6c757d",
+      stress: "#ef476f",
+      neutral: "#118ab2"
+    }[emotion];
+
+    document.getElementById("status").innerText =
+      "Current dominant feeling: " + emotion;
+
+    map.on("load", () => {
+      map.addLayer({
+        id: "world-glow",
+        type: "background",
+        paint: {
+          "background-color": color,
+          "background-opacity": 0.35
+        }
+      });
+    });
+  }
 </script>
 
 </body>
