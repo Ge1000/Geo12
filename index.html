@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Focus</title>
 
+<!-- PWA manifest inline -->
 <link rel="manifest" href="data:application/json,{
   &quot;name&quot;:&quot;Focus&quot;,
   &quot;short_name&quot;:&quot;Focus&quot;,
@@ -15,59 +16,45 @@
 }">
 
 <style>
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0f1220;
-  color: #fff;
-  padding: 20px;
-  text-align: center;
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#0f1220;
+  color:#fff;
+  padding:20px;
+  text-align:center;
 }
-
-h1 {
-  font-size: 22px;
-  opacity: 0.85;
+h1{font-size:22px;opacity:.85}
+.card{
+  background:#1a1f3a;
+  padding:20px;
+  border-radius:16px;
+  margin-top:20px;
 }
-
-.card {
-  background: #1a1f3a;
-  padding: 20px;
-  border-radius: 16px;
-  margin-top: 20px;
+input,button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border-radius:10px;
+  border:none;
+  font-size:16px;
 }
-
-input, button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: none;
-  font-size: 16px;
+button{
+  background:#3a4bff;
+  color:#fff;
+  font-weight:700;
 }
-
-button {
-  font-weight: bold;
-  background: #2f3cff;
-  color: #fff;
+.row{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
 }
-
-.row {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.row button {
-  flex: 1;
-}
-
-.green { background:#1e7f43; }
-.red { background:#8b1e1e; }
-.yellow { background:#b58b00; }
-
-.lock {
-  background:#000;
-  color:#ff4d4d;
-}
+.row button{flex:1}
+.green{background:#1e7f43}
+.red{background:#8b1e1e}
+.yellow{background:#b58b00}
+.lock{background:#000;color:#ff4d4d}
+.small{font-size:13px;opacity:.6;margin-top:10px}
 </style>
 </head>
 
@@ -75,14 +62,14 @@ button {
 
 <h1>Focus</h1>
 
-<div class="card">
+<div class="card" id="setup">
   <input type="number" id="start" placeholder="Valoare inițială">
-  <input type="number" id="target" placeholder="Limită superioară">
-  <input type="number" id="stoploss" placeholder="Limită inferioară">
-  <button onclick="start()">Start</button>
+  <input type="number" id="up" placeholder="Limită superioară">
+  <input type="number" id="down" placeholder="Limită inferioară">
+  <button onclick="startSession()">Start</button>
 </div>
 
-<div class="card" id="panel" style="display:none">
+<div class="card" id="session" style="display:none">
   <h2 id="balance">0</h2>
 
   <div class="row">
@@ -102,66 +89,77 @@ button {
   </div>
 </div>
 
+<p class="small">Datele sunt stocate local pe telefon.</p>
+
 <script>
-let startValue = 0;
-let value = 0;
-let target = 0;
-let stoploss = 0;
-let locked = false;
+let startValue=0,value=0,up=0,down=0,locked=false;
 
-function start() {
-  startValue = Number(start.value);
-  target = Number(targetInput.value = target?.value);
+function save(){
+  localStorage.setItem("focus-data",JSON.stringify({
+    startValue,value,up,down,locked
+  }));
 }
 
-const targetInput = document.getElementById("target");
-const stopInput = document.getElementById("stoploss");
-
-function start() {
-  startValue = Number(document.getElementById("start").value);
-  target = Number(document.getElementById("target").value);
-  stoploss = Number(document.getElementById("stoploss").value);
-
-  if (!startValue || target <= 0 || stoploss <= 0) {
-    alert("Valori invalide");
-    return;
-  }
-
-  value = startValue;
-  locked = false;
-  document.getElementById("balance").innerText = value.toFixed(2);
-  document.getElementById("panel").style.display = "block";
+function load(){
+  const d=localStorage.getItem("focus-data");
+  if(!d)return;
+  const o=JSON.parse(d);
+  startValue=o.startValue;
+  value=o.value;
+  up=o.up;
+  down=o.down;
+  locked=o.locked;
+  document.getElementById("setup").style.display="none";
+  document.getElementById("session").style.display="block";
+  document.getElementById("balance").innerText=value.toFixed(2);
   update();
 }
 
-function change(amount) {
-  if (locked) return;
-  value += amount;
-  document.getElementById("balance").innerText = value.toFixed(2);
+function startSession(){
+  startValue=Number(start.value);
+  up=Number(document.getElementById("up").value);
+  down=Number(document.getElementById("down").value);
+  if(!startValue||up<=0||down<=0){alert("Valori invalide");return;}
+  value=startValue;
+  locked=false;
+  document.getElementById("setup").style.display="none";
+  document.getElementById("session").style.display="block";
+  document.getElementById("balance").innerText=value.toFixed(2);
   update();
+  save();
 }
 
-function update() {
-  const diff = value - startValue;
-  const status = document.getElementById("status");
+function change(a){
+  if(locked)return;
+  value+=a;
+  document.getElementById("balance").innerText=value.toFixed(2);
+  update();
+  save();
+}
 
-  if (diff >= target) {
+function update(){
+  const diff=value-startValue;
+  const s=document.getElementById("status");
+  if(diff>=up){
     lock("Limită superioară atinsă");
-  } else if (diff <= -stoploss) {
+  }else if(diff<=-down){
     lock("Limită inferioară atinsă");
-  } else {
-    status.className = "card yellow";
-    status.innerText = "În parametri";
+  }else{
+    s.className="card yellow";
+    s.innerText="În parametri";
   }
 }
 
-function lock(message) {
-  locked = true;
-  const status = document.getElementById("status");
-  status.className = "card lock";
-  status.innerHTML = message + "<br>SESIUNE ÎNCHEIATĂ";
-  if (navigator.vibrate) navigator.vibrate([300,200,300]);
+function lock(msg){
+  locked=true;
+  const s=document.getElementById("status");
+  s.className="card lock";
+  s.innerHTML=msg+"<br>SESIUNE ÎNCHEIATĂ";
+  if(navigator.vibrate)navigator.vibrate([300,200,300]);
+  save();
 }
+
+load();
 </script>
 
 </body>
