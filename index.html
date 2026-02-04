@@ -1,62 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Global Emotional Index (GEI)</title>
 
 <style>
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#0e1220;
-  color:#ffffff;
-  line-height:1.6;
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0f1220;
+  color: #ffffff;
 }
-header{
-  padding:36px 24px;
-  text-align:center;
-  background:linear-gradient(180deg,#141a33,#0e1220);
+header {
+  padding: 24px;
+  text-align: center;
+  border-bottom: 1px solid #1f2340;
 }
-h1{margin:0;font-size:2.2rem;}
-section{
-  max-width:1100px;
-  margin:32px auto;
-  padding:32px;
+section {
+  padding: 24px;
+  max-width: 1000px;
+  margin: auto;
 }
-.card{
-  background:#151a33;
-  border-radius:14px;
-  padding:28px;
-  margin-bottom:28px;
+.card {
+  background: #151935;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
 }
-.index{
-  font-size:3.2rem;
-  font-weight:700;
+.value {
+  font-size: 52px;
+  font-weight: bold;
 }
-.badge{
-  display:inline-block;
-  margin-top:8px;
-  padding:6px 14px;
-  border-radius:20px;
-  background:#2a2f55;
-  font-size:0.9rem;
+.neutral { color: #f5c542; }
+.small { font-size: 13px; opacity: 0.7; }
+
+svg {
+  width: 100%;
+  height: auto;
 }
-.map{
-  height:320px;
-  border-radius:14px;
-  background:linear-gradient(120deg,#3a7bd5,#3ad59f);
-  opacity:0.85;
+.country {
+  fill: #2a2f55;
+  stroke: #1f2340;
 }
-small{opacity:0.65;}
-footer{
-  max-width:1100px;
-  margin:60px auto 80px auto;
-  padding:0 32px;
-  font-size:0.9rem;
-  opacity:0.75;
+.country:hover {
+  fill: #3a4090;
 }
-footer h3{margin-top:36px;}
+
+canvas {
+  width: 100%;
+  max-height: 300px;
+}
+
+footer {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.6;
+  padding: 30px;
+}
 </style>
 </head>
 
@@ -64,126 +65,102 @@ footer h3{margin-top:36px;}
 
 <header>
   <h1>Global Emotional Index (GEI)</h1>
-  <p><strong>A neutral, non-evaluative global reference indicator</strong></p>
-  <p>
-    GEI provides a contextual view of relative global emotional pressure.
-    It is informational only and designed to coexist with economic,
-    social, and geopolitical indicators.
-  </p>
+  <p class="small">Global contextual reference indicator</p>
 </header>
 
 <section>
 
-  <!-- APPLICATION -->
-  <div class="card">
-    <div class="index">47.3</div>
-    <div class="badge">Neutral Global State</div>
-    <p>
-      The current GEI value indicates a globally neutral emotional pressure range.
-      This does not represent positivity or negativity, but relative stability.
-    </p>
-    <small>
-      Scale reference: 0–40 elevated pressure · 40–60 neutral · 60–100 lower pressure
-    </small>
-  </div>
+<!-- CORE -->
+<div class="card">
+  <div class="value neutral" id="geiValue">47.3</div>
+  <p><strong>Status:</strong> Neutral</p>
+  <p class="small">Relative global emotional pressure (aggregated signals)</p>
+</div>
 
-  <div class="card">
-    <h2>Global Overview</h2>
-    <div class="map"></div>
-    <small>
-      Visual representation only. No country-level evaluation, ranking, or profiling.
-    </small>
-  </div>
+<!-- MAP -->
+<h2>Global View</h2>
+<div class="card">
+  <p class="small">
+    Visual representation of global context.  
+    No country-level evaluation is performed.
+  </p>
 
-  <!-- WHAT IT IS -->
-  <div class="card">
-    <h2>What GEI Is</h2>
-    <p>
-      Global Emotional Index (GEI) is a high-level contextual indicator reflecting
-      relative global emotional pressure derived from aggregated public signals.
-    </p>
-    <p>
-      GEI does not measure emotions, opinions, happiness, or mental health.
-    </p>
-  </div>
+  <!-- Simplified SVG World Map -->
+  <svg viewBox="0 0 1000 500">
+    <rect class="country" x="50" y="150" width="200" height="100" />
+    <rect class="country" x="300" y="120" width="250" height="120" />
+    <rect class="country" x="600" y="170" width="250" height="130" />
+  </svg>
 
-  <!-- WHAT IT IS NOT -->
-  <div class="card">
-    <h2>What GEI Is Not</h2>
-    <ul>
-      <li>Not a psychological or medical tool</li>
-      <li>Not a public opinion or sentiment index</li>
-      <li>Not a country or population ranking</li>
-      <li>Not a prediction, forecast, or advice system</li>
-    </ul>
-  </div>
+  <p class="small">
+    Map is illustrative and non-political. Clicking countries has no effect.
+  </p>
+</div>
 
-  <!-- METHODOLOGY -->
-  <div class="card">
-    <h2>Methodology (High-Level Overview)</h2>
-    <p>
-      GEI is derived from the aggregation and normalization of
-      <strong>publicly observable, non-personal global signals</strong>.
-    </p>
-    <p>
-      These include global media activity patterns, major global events,
-      macro-level indicators, and information density dynamics.
-    </p>
-    <p>
-      All signals are aggregated at a global level without country attribution
-      or individual identification.
-    </p>
-    <p>
-      The resulting value represents a relative global pressure context,
-      not an emotional state.
-    </p>
-  </div>
+<!-- HISTORY -->
+<h2>GEI Historical Trend</h2>
+<div class="card">
+  <canvas id="historyChart"></canvas>
+  <p class="small">
+    Historical values shown for contextual reference only.  
+    Structure supports real-time updates when connected to external signals.
+  </p>
+</div>
+
+<!-- METHODOLOGY -->
+<h2>Methodology</h2>
+<div class="card">
+  GEI aggregates publicly observable, non-personal global information signals
+  such as information flow intensity, event synchronization, and macro-level
+  public indicators. GEI does not analyze news content or user data.
+</div>
+
+<!-- DISCLAIMER -->
+<h2>Disclaimer</h2>
+<div class="card">
+  GEI is provided for informational purposes only. It does not constitute
+  advice, prediction, or evaluation. GEI does not classify countries,
+  institutions, or populations.
+</div>
+
+<!-- PRIVACY -->
+<h2>Privacy</h2>
+<div class="card">
+  No personal data is collected. No cookies, tracking, login, or user input
+  mechanisms are used.
+</div>
 
 </section>
 
 <footer>
-
-<h3>Privacy Policy</h3>
-<p>
-GEI does not collect, store, process, or infer personal data.
-No user accounts, cookies, tracking technologies, location data,
-or biometric information are used.
-</p>
-
-<h3>Media Use Guidelines</h3>
-<p>
-Media entities may reference GEI for contextual purposes only,
-with clear attribution and without misrepresentation.
-GEI does not provide editorial opinion or news judgment.
-</p>
-
-<h3>Government & Institutional Disclaimer</h3>
-<p>
-GEI does not evaluate governments, public policies, elections,
-or political systems. It does not represent national sentiment
-or public opinion.
-</p>
-
-<h3>Countries & Jurisdictions</h3>
-<p>
-GEI makes no claims about any country, region, or population.
-No jurisdictional comparison or classification is provided or implied.
-</p>
-
-<h3>Limitation of Liability</h3>
-<p>
-GEI is provided for informational reference only.
-The creators assume no responsibility for interpretations,
-decisions, or actions based on the index.
-</p>
-
-<h3>Jurisdiction</h3>
-<p>
-GEI is a global informational project and is not subject to
-national emotional, psychological, or political regulatory frameworks.
-</p>
-
+© Global Emotional Index (GEI)
 </footer>
+
+<script>
+// --- DEMO HISTORICAL DATA (REAL-READY STRUCTURE) ---
+const history = [
+  44.1, 45.3, 46.0, 47.2, 48.1, 47.8, 47.3
+];
+
+// Simple chart (no libs, safe)
+const canvas = document.getElementById("historyChart");
+const ctx = canvas.getContext("2d");
+canvas.width = 800;
+canvas.height = 300;
+
+ctx.strokeStyle = "#f5c542";
+ctx.lineWidth = 3;
+ctx.beginPath();
+
+history.forEach((val, i) => {
+  const x = (i / (history.length - 1)) * canvas.width;
+  const y = canvas.height - (val / 100) * canvas.height;
+  if (i === 0) ctx.moveTo(x, y);
+  else ctx.lineTo(x, y);
+});
+
+ctx.stroke();
+</script>
 
 </body>
 </html>
