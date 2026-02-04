@@ -43,6 +43,7 @@ svg {
 .country {
   fill: #2a2f55;
   stroke: #1f2340;
+  cursor: pointer;
 }
 .country:hover {
   fill: #3a4090;
@@ -53,6 +54,29 @@ canvas {
   max-height: 280px;
 }
 
+footer {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.6;
+  padding: 30px;
+}
+
+/* POPUP */
+#popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#popupContent {
+  background: #151935;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 420px;
+  text-align: center;
+}
 button {
   background: #2a2f55;
   color: #fff;
@@ -61,16 +85,7 @@ button {
   border-radius: 8px;
   cursor: pointer;
 }
-button:hover {
-  background: #3a4090;
-}
-
-footer {
-  text-align: center;
-  font-size: 12px;
-  opacity: 0.6;
-  padding: 30px;
-}
+button:hover { background: #3a4090; }
 </style>
 </head>
 
@@ -78,112 +93,93 @@ footer {
 
 <header>
   <h1>Global Information Pressure Index (GIPI)</h1>
-  <p class="small">Non-political • Non-predictive • Contextual reference indicator</p>
+  <p class="small">
+    Non-political • Non-predictive • Non-extractive • Contextual reference only
+  </p>
 </header>
 
 <section>
 
-<!-- CORE VALUE -->
+<!-- INDEX VALUE -->
 <div class="card">
-  <div class="value neutral" id="gipiValue">47.3</div>
+  <div class="value neutral">47.3</div>
   <p><strong>Status:</strong> Neutral</p>
   <p class="small">
-    Reflects relative global information pressure based on aggregated public signals.
+    This value represents the current level of global information pressure.
+    It does not describe events, countries, people, or outcomes.
   </p>
 </div>
 
-<!-- GLOBAL MAP -->
+<!-- MAP -->
 <h2>Global Context Map</h2>
 <div class="card">
   <p class="small">
-    This map is illustrative and non-political.  
-    GIPI does not provide country-level scores or evaluations.
+    This map is illustrative only.  
+    No country-level data, rankings, or evaluations are provided.
   </p>
 
-  <svg viewBox="0 0 1000 500" aria-label="Global context map">
+  <svg viewBox="0 0 1000 500" aria-label="Illustrative world map">
     <rect class="country" x="40" y="160" width="220" height="120" />
     <rect class="country" x="300" y="120" width="260" height="150" />
     <rect class="country" x="620" y="170" width="300" height="150" />
   </svg>
-
-  <p class="small">
-    Clicking or hovering over regions does not reveal country data.
-  </p>
 </div>
 
-<!-- HISTORICAL TREND -->
+<!-- HISTORY -->
 <h2>Historical Trend</h2>
 <div class="card">
-  <canvas id="historyChart"></canvas>
+  <canvas id="chart"></canvas>
   <p class="small">
-    Historical values are provided for contextual reference only.  
-    No forecasting or predictive modeling is performed.
+    Historical values provide context only.  
+    GIPI does not forecast or predict future conditions.
   </p>
 </div>
 
-<!-- MEDIA EXPORT -->
-<h2>Media & Public Use</h2>
+<!-- HOW IT WORKS -->
+<h2>How GIPI Works</h2>
 <div class="card">
   <p>
-    Media outlets may reference GIPI values for contextual purposes with attribution.
-    GIPI does not provide editorial opinions or interpretations.
+    GIPI is a synthetic indicator reflecting normalized global signal variability
+    and temporal synchronization.
   </p>
-  <button onclick="downloadCSV()">Download CSV (Media)</button>
-  <p class="small">
-    Exported data contains global index values only.
+  <p>
+    It does not ingest news, social media, user input, or third-party content.
   </p>
 </div>
 
-<!-- API INFO -->
-<h2>Public API (Informational)</h2>
+<!-- DISCLAIMER – USERS -->
+<h2>User Disclaimer</h2>
 <div class="card">
   <p>
-    GIPI may offer a public read-only API providing global index values and timestamps.
-    The API does not expose raw sources, country-level data, or personal information.
-  </p>
-  <p class="small">
-    API access, if enabled, is rate-limited and intended for informational use only.
+    GIPI is provided for informational and educational purposes only.
+    Users must not rely on this index for decisions of any kind.
   </p>
 </div>
 
-<!-- METHODOLOGY -->
-<h2>Methodology</h2>
+<!-- DISCLAIMER – MEDIA -->
+<h2>Media Disclaimer</h2>
 <div class="card">
   <p>
-    GIPI aggregates publicly observable, non-personal global information signals,
-    including information flow intensity, synchronization of major events,
-    and macro-level public indicators.
-  </p>
-  <p>
-    GIPI does not collect, store, or analyze news content, text, images,
-    personal data, user input, or social media activity.
+    Media organizations may reference GIPI values for contextual background only.
+    Any interpretation or narrative remains the sole responsibility of the publisher.
   </p>
 </div>
 
-<!-- COMPARISON -->
-<h2>Relation to Other Indicators</h2>
-<div class="card">
-  <p>
-    GIPI complements existing economic, social, and analytical indicators.
-    It does not replace, critique, or compete with other methodologies.
-  </p>
-</div>
-
-<!-- GOVERNMENTS -->
+<!-- DISCLAIMER – GOVERNMENTS -->
 <h2>Governments & Institutions</h2>
 <div class="card">
   <p>
-    GIPI is not intended for governance, surveillance, policy-making,
-    enforcement, or decision automation.
+    GIPI is not designed for governance, surveillance, enforcement,
+    policy-making, or national assessment.
   </p>
 </div>
 
-<!-- DISCLAIMER -->
-<h2>Disclaimer</h2>
+<!-- DISCLAIMER – COUNTRIES -->
+<h2>Countries & Regions</h2>
 <div class="card">
   <p>
-    GIPI is provided for informational and contextual reference only.
-    It does not constitute advice, prediction, or evaluation.
+    GIPI does not assign scores, labels, or evaluations to any country,
+    territory, population, or region.
   </p>
 </div>
 
@@ -192,7 +188,7 @@ footer {
 <div class="card">
   <p>
     GIPI does not collect personal data, does not use cookies,
-    does not track users, and does not require registration or login.
+    does not track users, and does not require accounts.
   </p>
 </div>
 
@@ -200,8 +196,8 @@ footer {
 <h2>Limitation of Liability</h2>
 <div class="card">
   <p>
-    The creators and operators of GIPI are not liable for any direct
-    or indirect consequences arising from the use or interpretation of the index.
+    The creators and operators of GIPI assume no liability for any direct
+    or indirect use or interpretation of the index.
   </p>
 </div>
 
@@ -211,18 +207,32 @@ footer {
 © Global Information Pressure Index (GIPI) — Contextual Reference Only
 </footer>
 
-<script>
-// ----------------- HISTORICAL DATA (REAL-READY STRUCTURE) -----------------
-const history = [
-  { date: "2024-12-01", value: 44.1 },
-  { date: "2024-12-15", value: 45.0 },
-  { date: "2025-01-01", value: 46.2 },
-  { date: "2025-01-15", value: 47.0 },
-  { date: "2025-02-01", value: 47.3 }
-];
+<!-- POPUP -->
+<div id="popup">
+  <div id="popupContent">
+    <h3>Map Information</h3>
+    <p class="small">
+      This map is purely illustrative.  
+      GIPI does not provide country-level data or regional analysis.
+    </p>
+    <button onclick="closePopup()">Close</button>
+  </div>
+</div>
 
-// Chart
-const canvas = document.getElementById("historyChart");
+<script>
+// MAP POPUP
+document.querySelectorAll(".country").forEach(el => {
+  el.addEventListener("click", () => {
+    document.getElementById("popup").style.display = "flex";
+  });
+});
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+}
+
+// HISTORY CHART
+const data = [44.1, 45.0, 46.2, 47.0, 47.3];
+const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 canvas.width = 900;
 canvas.height = 280;
@@ -230,29 +240,13 @@ canvas.height = 280;
 ctx.strokeStyle = "#f5c542";
 ctx.lineWidth = 3;
 ctx.beginPath();
-
-history.forEach((point, i) => {
-  const x = (i / (history.length - 1)) * canvas.width;
-  const y = canvas.height - (point.value / 100) * canvas.height;
+data.forEach((v, i) => {
+  const x = (i / (data.length - 1)) * canvas.width;
+  const y = canvas.height - (v / 100) * canvas.height;
   if (i === 0) ctx.moveTo(x, y);
   else ctx.lineTo(x, y);
 });
 ctx.stroke();
-
-// CSV EXPORT (MEDIA SAFE)
-function downloadCSV() {
-  let csv = "date,gipi_value\n";
-  history.forEach(p => {
-    csv += `${p.date},${p.value}\n`;
-  });
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "gipi_history.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
 </script>
 
 </body>
