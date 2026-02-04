@@ -6,47 +6,57 @@
 <title>Global Emotional Index (GEI)</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0e1220;
-  color: #ffffff;
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#0e1220;
+  color:#ffffff;
+  line-height:1.6;
 }
-header {
-  padding: 32px;
-  background: linear-gradient(180deg,#12172b,#0e1220);
+header{
+  padding:36px 24px;
+  text-align:center;
+  background:linear-gradient(180deg,#141a33,#0e1220);
 }
-h1 { margin: 0; font-size: 2rem; }
-section { padding: 32px; max-width: 1100px; margin: auto; }
-.card {
-  background: #151a33;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
+h1{margin:0;font-size:2.2rem;}
+section{
+  max-width:1100px;
+  margin:32px auto;
+  padding:32px;
 }
-.index {
-  font-size: 3rem;
-  font-weight: bold;
+.card{
+  background:#151a33;
+  border-radius:14px;
+  padding:28px;
+  margin-bottom:28px;
 }
-.badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  background: #2a2f55;
-  font-size: 0.9rem;
+.index{
+  font-size:3.2rem;
+  font-weight:700;
 }
-.map {
-  height: 320px;
-  background: linear-gradient(120deg,#3a7bd5,#3ad59f);
-  border-radius: 12px;
-  opacity: 0.85;
+.badge{
+  display:inline-block;
+  margin-top:8px;
+  padding:6px 14px;
+  border-radius:20px;
+  background:#2a2f55;
+  font-size:0.9rem;
 }
-small { opacity: 0.6; }
-footer {
-  padding: 32px;
-  font-size: 0.85rem;
-  opacity: 0.75;
+.map{
+  height:320px;
+  border-radius:14px;
+  background:linear-gradient(120deg,#3a7bd5,#3ad59f);
+  opacity:0.85;
 }
+small{opacity:0.65;}
+footer{
+  max-width:1100px;
+  margin:60px auto 80px auto;
+  padding:0 32px;
+  font-size:0.9rem;
+  opacity:0.75;
+}
+footer h3{margin-top:36px;}
 </style>
 </head>
 
@@ -54,83 +64,123 @@ footer {
 
 <header>
   <h1>Global Emotional Index (GEI)</h1>
-  <p>A neutral, non-evaluative global reference indicator</p>
+  <p><strong>A neutral, non-evaluative global reference indicator</strong></p>
+  <p>
+    GEI provides a contextual view of relative global emotional pressure.
+    It is informational only and designed to coexist with economic,
+    social, and geopolitical indicators.
+  </p>
 </header>
 
 <section>
+
+  <!-- APPLICATION -->
   <div class="card">
     <div class="index">47.3</div>
-    <span class="badge">Neutral Global State</span>
+    <div class="badge">Neutral Global State</div>
     <p>
-      The Global Emotional Index reflects aggregated global emotional pressure.
-      A neutral range (40–60) indicates relative global stability.
+      The current GEI value indicates a globally neutral emotional pressure range.
+      This does not represent positivity or negativity, but relative stability.
     </p>
+    <small>
+      Scale reference: 0–40 elevated pressure · 40–60 neutral · 60–100 lower pressure
+    </small>
   </div>
 
   <div class="card">
     <h2>Global Overview</h2>
     <div class="map"></div>
     <small>
-      Visual representation only. No country-level judgments or rankings.
+      Visual representation only. No country-level evaluation, ranking, or profiling.
     </small>
   </div>
 
+  <!-- WHAT IT IS -->
   <div class="card">
     <h2>What GEI Is</h2>
     <p>
-      GEI is a contextual reference indicator designed to coexist alongside
-      economic, social, and geopolitical metrics. It does not measure individual
-      emotions, happiness, or mental health.
+      Global Emotional Index (GEI) is a high-level contextual indicator reflecting
+      relative global emotional pressure derived from aggregated public signals.
+    </p>
+    <p>
+      GEI does not measure emotions, opinions, happiness, or mental health.
     </p>
   </div>
 
+  <!-- WHAT IT IS NOT -->
   <div class="card">
-    <h2>What GEI Is NOT</h2>
+    <h2>What GEI Is Not</h2>
     <ul>
-      <li>Not a psychological diagnosis</li>
-      <li>Not a political assessment</li>
-      <li>Not advice or prediction</li>
-      <li>Not country ranking or comparison</li>
+      <li>Not a psychological or medical tool</li>
+      <li>Not a public opinion or sentiment index</li>
+      <li>Not a country or population ranking</li>
+      <li>Not a prediction, forecast, or advice system</li>
     </ul>
   </div>
+
+  <!-- METHODOLOGY -->
+  <div class="card">
+    <h2>Methodology (High-Level Overview)</h2>
+    <p>
+      GEI is derived from the aggregation and normalization of
+      <strong>publicly observable, non-personal global signals</strong>.
+    </p>
+    <p>
+      These include global media activity patterns, major global events,
+      macro-level indicators, and information density dynamics.
+    </p>
+    <p>
+      All signals are aggregated at a global level without country attribution
+      or individual identification.
+    </p>
+    <p>
+      The resulting value represents a relative global pressure context,
+      not an emotional state.
+    </p>
+  </div>
+
 </section>
 
 <footer>
 
 <h3>Privacy Policy</h3>
 <p>
-This platform does not collect, store, process, or infer any personal data.
-No cookies, no tracking, no user identifiers. Fully GDPR-compliant by design.
+GEI does not collect, store, process, or infer personal data.
+No user accounts, cookies, tracking technologies, location data,
+or biometric information are used.
 </p>
 
-<h3>Disclaimer</h3>
+<h3>Media Use Guidelines</h3>
 <p>
-GEI is provided for informational and contextual purposes only.
-It must not be used for medical, legal, financial, political, or policy decisions.
+Media entities may reference GEI for contextual purposes only,
+with clear attribution and without misrepresentation.
+GEI does not provide editorial opinion or news judgment.
 </p>
 
-<h3>Media Use</h3>
+<h3>Government & Institutional Disclaimer</h3>
 <p>
-Media entities may reference GEI only with clear attribution and contextual explanation.
-Any misrepresentation voids responsibility of the platform.
-</p>
-
-<h3>Government & Institutional Use</h3>
-<p>
-GEI does not represent official positions, national sentiment, or public opinion.
-No government action or policy should be based solely on this indicator.
+GEI does not evaluate governments, public policies, elections,
+or political systems. It does not represent national sentiment
+or public opinion.
 </p>
 
 <h3>Countries & Jurisdictions</h3>
 <p>
-GEI makes no claims regarding any country, population, or region.
-Jurisdictional restrictions may apply. Use at own discretion.
+GEI makes no claims about any country, region, or population.
+No jurisdictional comparison or classification is provided or implied.
 </p>
 
-<h3>Liability</h3>
+<h3>Limitation of Liability</h3>
 <p>
-The creators assume no liability for interpretation, misuse, or downstream impact.
-Use of this platform constitutes acceptance of all terms.
+GEI is provided for informational reference only.
+The creators assume no responsibility for interpretations,
+decisions, or actions based on the index.
+</p>
+
+<h3>Jurisdiction</h3>
+<p>
+GEI is a global informational project and is not subject to
+national emotional, psychological, or political regulatory frameworks.
 </p>
 
 </footer>
