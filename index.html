@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Global Information Pressure Index (GIPI)</title>
 
 <style>
@@ -31,22 +31,53 @@ section {
 .value {
   font-size: 56px;
   font-weight: bold;
+  color: #f5c542;
 }
-.neutral { color: #f5c542; }
-.small { font-size: 13px; opacity: 0.75; }
+.small {
+  font-size: 13px;
+  opacity: 0.75;
+}
 
-svg {
+/* MAP */
+.map svg {
   width: 100%;
   height: auto;
-  margin-top: 12px;
-}
-.country {
-  fill: #2a2f55;
-  stroke: #1f2340;
   cursor: pointer;
 }
-.country:hover {
+.land {
+  fill: #2a2f55;
+  stroke: #1f2340;
+}
+.land:hover {
   fill: #3a4090;
+}
+
+/* POPUP */
+#popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#popupBox {
+  background: #151935;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 420px;
+  text-align: center;
+}
+button {
+  background: #2a2f55;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover {
+  background: #3a4090;
 }
 
 canvas {
@@ -60,32 +91,6 @@ footer {
   opacity: 0.6;
   padding: 30px;
 }
-
-/* POPUP */
-#popup {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-#popupContent {
-  background: #151935;
-  padding: 24px;
-  border-radius: 12px;
-  max-width: 420px;
-  text-align: center;
-}
-button {
-  background: #2a2f55;
-  color: #fff;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-button:hover { background: #3a4090; }
 </style>
 </head>
 
@@ -100,28 +105,36 @@ button:hover { background: #3a4090; }
 
 <section>
 
-<!-- INDEX VALUE -->
+<!-- INDEX -->
 <div class="card">
-  <div class="value neutral">47.3</div>
+  <div class="value">47.3</div>
   <p><strong>Status:</strong> Neutral</p>
   <p class="small">
+    Reflects overall global information pressure.  
+    No countries, people, or events are evaluated.
+  </p>
+
+  <p class="small">
+    <strong>What this means:</strong><br>
     This value represents the current level of global information pressure.
-    It does not describe events, countries, people, or outcomes.
+    “Neutral” indicates a normal range of global informational activity and
+    does not imply positive or negative outcomes.
   </p>
 </div>
 
 <!-- MAP -->
 <h2>Global Context Map</h2>
-<div class="card">
+<div class="card map">
   <p class="small">
     This map is illustrative only.  
-    No country-level data, rankings, or evaluations are provided.
+    Clicking does not reveal country-level data.
   </p>
 
-  <svg viewBox="0 0 1000 500" aria-label="Illustrative world map">
-    <rect class="country" x="40" y="160" width="220" height="120" />
-    <rect class="country" x="300" y="120" width="260" height="150" />
-    <rect class="country" x="620" y="170" width="300" height="150" />
+  <svg viewBox="0 0 1000 500" onclick="openPopup()">
+    <path class="land" d="M80,220 L180,180 L260,210 L240,260 L150,280 Z"/>
+    <path class="land" d="M300,200 L420,170 L540,210 L520,260 L380,270 Z"/>
+    <path class="land" d="M580,190 L760,180 L900,230 L860,290 L650,270 Z"/>
+    <path class="land" d="M750,330 L820,340 L800,380 L730,370 Z"/>
   </svg>
 </div>
 
@@ -130,8 +143,8 @@ button:hover { background: #3a4090; }
 <div class="card">
   <canvas id="chart"></canvas>
   <p class="small">
-    Historical values provide context only.  
-    GIPI does not forecast or predict future conditions.
+    Historical values are contextual only.  
+    No forecasting or prediction is performed.
   </p>
 </div>
 
@@ -139,66 +152,105 @@ button:hover { background: #3a4090; }
 <h2>How GIPI Works</h2>
 <div class="card">
   <p>
-    GIPI is a synthetic indicator reflecting normalized global signal variability
+    GIPI is a synthetic indicator measuring normalized global signal variability
     and temporal synchronization.
   </p>
   <p>
-    It does not ingest news, social media, user input, or third-party content.
+    It does not ingest news, social media, external databases, or user data.
   </p>
 </div>
 
-<!-- DISCLAIMER – USERS -->
-<h2>User Disclaimer</h2>
+<!-- METHODOLOGY -->
+<h2>Methodology (Simplified)</h2>
 <div class="card">
+  <p><strong>What GIPI Is</strong></p>
   <p>
-    GIPI is provided for informational and educational purposes only.
-    Users must not rely on this index for decisions of any kind.
+    GIPI is a synthetic, non-extractive reference indicator designed to reflect
+    global information pressure at a macro level.
+  </p>
+
+  <p><strong>What GIPI Is Not</strong></p>
+  <p>
+    GIPI is not a news aggregator, political index, country ranking,
+    prediction system, or decision-support tool.
+  </p>
+
+  <p><strong>How the Index Is Generated</strong></p>
+  <p>
+    The index is derived from normalized temporal dynamics and variability
+    patterns over time. No external content is ingested or analyzed.
+  </p>
+
+  <p><strong>Interpretation</strong></p>
+  <p>
+    Higher values indicate increased global information pressure.
+    Lower values indicate reduced pressure. Values do not imply outcomes.
+  </p>
+
+  <p><strong>Intended Use</strong></p>
+  <p>
+    Contextual reference, media background, academic discussion, and public information only.
   </p>
 </div>
 
-<!-- DISCLAIMER – MEDIA -->
-<h2>Media Disclaimer</h2>
+<!-- LEVEL EXPLANATION -->
+<h2>Index Levels Explanation</h2>
 <div class="card">
-  <p>
-    Media organizations may reference GIPI values for contextual background only.
-    Any interpretation or narrative remains the sole responsibility of the publisher.
+  <p><strong>Low (0–30)</strong></p>
+  <p class="small">
+    Indicates reduced global information activity. Signals are sparse,
+    asynchronous, and low in overall pressure.
+  </p>
+
+  <p><strong>Neutral (31–55)</strong></p>
+  <p class="small">
+    Represents a normal range of global information flow.
+    Typical variability without systemic stress indicators.
+  </p>
+
+  <p><strong>Elevated (56–75)</strong></p>
+  <p class="small">
+    Indicates increased global information pressure.
+    Higher synchronization and intensified signal activity.
+  </p>
+
+  <p><strong>High (76–100)</strong></p>
+  <p class="small">
+    Represents extreme global information pressure.
+    Rare conditions with dense, highly synchronized informational dynamics.
   </p>
 </div>
 
-<!-- DISCLAIMER – GOVERNMENTS -->
-<h2>Governments & Institutions</h2>
+<!-- HOW TO CITE -->
+<h2>How to Cite GIPI (Media & Publications)</h2>
 <div class="card">
-  <p>
-    GIPI is not designed for governance, surveillance, enforcement,
-    policy-making, or national assessment.
+  <p class="small">
+    When referencing GIPI, media outlets and publications are encouraged to use
+    the following neutral citation format:
+  </p>
+
+  <p class="small">
+    <em>
+      “According to the Global Information Pressure Index (GIPI), a non-political
+      contextual indicator reflecting global information pressure…”
+    </em>
+  </p>
+
+  <p class="small">
+    GIPI should be cited as contextual background only and not as evidence,
+    prediction, or assessment of specific countries, events, or actors.
   </p>
 </div>
 
-<!-- DISCLAIMER – COUNTRIES -->
-<h2>Countries & Regions</h2>
+<!-- DISCLAIMERS -->
+<h2>Legal & Ethical Disclaimers</h2>
 <div class="card">
-  <p>
-    GIPI does not assign scores, labels, or evaluations to any country,
-    territory, population, or region.
-  </p>
-</div>
-
-<!-- PRIVACY -->
-<h2>Privacy Policy</h2>
-<div class="card">
-  <p>
-    GIPI does not collect personal data, does not use cookies,
-    does not track users, and does not require accounts.
-  </p>
-</div>
-
-<!-- LIABILITY -->
-<h2>Limitation of Liability</h2>
-<div class="card">
-  <p>
-    The creators and operators of GIPI assume no liability for any direct
-    or indirect use or interpretation of the index.
-  </p>
+  <p><strong>Users:</strong> Informational use only. No decisions should be based on GIPI.</p>
+  <p><strong>Media:</strong> May reference GIPI as context. Interpretation is the publisher’s responsibility.</p>
+  <p><strong>Governments & Institutions:</strong> Not designed for governance, surveillance, or policy.</p>
+  <p><strong>Countries:</strong> No country, region, or population is scored or evaluated.</p>
+  <p><strong>Privacy:</strong> No personal data, cookies, tracking, or accounts.</p>
+  <p><strong>Liability:</strong> No responsibility for direct or indirect consequences of use.</p>
 </div>
 
 </section>
@@ -209,29 +261,27 @@ button:hover { background: #3a4090; }
 
 <!-- POPUP -->
 <div id="popup">
-  <div id="popupContent">
-    <h3>Map Information</h3>
+  <div id="popupBox">
+    <h3>Map Explanation</h3>
     <p class="small">
-      This map is purely illustrative.  
-      GIPI does not provide country-level data or regional analysis.
+      This map is symbolic and non-political.  
+      GIPI intentionally does not provide country-level data or comparisons.
     </p>
     <button onclick="closePopup()">Close</button>
   </div>
 </div>
 
 <script>
-// MAP POPUP
-document.querySelectorAll(".country").forEach(el => {
-  el.addEventListener("click", () => {
-    document.getElementById("popup").style.display = "flex";
-  });
-});
+// POPUP
+function openPopup() {
+  document.getElementById("popup").style.display = "flex";
+}
 function closePopup() {
   document.getElementById("popup").style.display = "none";
 }
 
-// HISTORY CHART
-const data = [44.1, 45.0, 46.2, 47.0, 47.3];
+// CHART
+const values = [44.1, 45.0, 46.2, 47.0, 47.3];
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 canvas.width = 900;
@@ -240,8 +290,8 @@ canvas.height = 280;
 ctx.strokeStyle = "#f5c542";
 ctx.lineWidth = 3;
 ctx.beginPath();
-data.forEach((v, i) => {
-  const x = (i / (data.length - 1)) * canvas.width;
+values.forEach((v, i) => {
+  const x = (i / (values.length - 1)) * canvas.width;
   const y = canvas.height - (v / 100) * canvas.height;
   if (i === 0) ctx.moveTo(x, y);
   else ctx.lineTo(x, y);
