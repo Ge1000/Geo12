@@ -1,303 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global Information Pressure Index (GIPI)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Planet Turtle</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0f1220;
-  color: #ffffff;
-}
-header {
-  padding: 24px;
-  text-align: center;
-  border-bottom: 1px solid #1f2340;
-}
-section {
-  padding: 24px;
-  max-width: 1100px;
-  margin: auto;
-}
-.card {
-  background: #151935;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 20px;
-}
-.value {
-  font-size: 56px;
-  font-weight: bold;
-  color: #f5c542;
-}
-.small {
-  font-size: 13px;
-  opacity: 0.75;
+:root{
+  --bg:#0e1a1f;
+  --turtle:#6fbf8f;
+  --shell:#4a8f6b;
+  --eye:#1a2e24;
+  --text:#cfe6dc;
+  --soft:rgba(255,255,255,0.08);
 }
 
-/* MAP */
-.map svg {
-  width: 100%;
-  height: auto;
-  cursor: pointer;
-}
-.land {
-  fill: #2a2f55;
-  stroke: #1f2340;
-}
-.land:hover {
-  fill: #3a4090;
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  height:100vh;
+  background:radial-gradient(circle at top,#243c44,var(--bg));
+  font-family:system-ui;
+  color:var(--text);
+  overflow:hidden;
 }
 
-/* POPUP */
-#popup {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.65);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-#popupBox {
-  background: #151935;
-  padding: 24px;
-  border-radius: 12px;
-  max-width: 420px;
-  text-align: center;
-}
-button {
-  background: #2a2f55;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-button:hover {
-  background: #3a4090;
+.app{
+  width:100%;
+  height:100%;
+  position:relative;
 }
 
-canvas {
-  width: 100%;
-  max-height: 280px;
+/* -------- Turtle -------- */
+.turtle{
+  position:absolute;
+  left:22%;
+  top:32%;
+  width:220px;
+  height:140px;
+  transform:translate(-50%,-50%);
+  animation:float 10s ease-in-out infinite;
 }
 
-footer {
-  text-align: center;
-  font-size: 12px;
-  opacity: 0.6;
-  padding: 30px;
+.shell{
+  position:absolute;
+  width:140px;
+  height:90px;
+  background:var(--shell);
+  border-radius:50%;
+  left:40px;
+  top:30px;
+}
+
+.body{
+  position:absolute;
+  width:160px;
+  height:80px;
+  background:var(--turtle);
+  border-radius:60px;
+  top:40px;
+  left:20px;
+  animation:breath 6s ease-in-out infinite;
+}
+
+.head{
+  position:absolute;
+  width:50px;
+  height:40px;
+  background:var(--turtle);
+  border-radius:50%;
+  left:-10px;
+  top:50px;
+  transform-origin:right center;
+  transition:transform 1.5s ease;
+}
+
+.eye{
+  position:absolute;
+  width:6px;
+  height:6px;
+  background:var(--eye);
+  border-radius:50%;
+  top:14px;
+  left:12px;
+  animation:blink 8s infinite;
+}
+
+/* -------- Vertical Indicator (single) -------- */
+.indicator{
+  position:absolute;
+  left:40px;
+  top:50%;
+  transform:translateY(-50%);
+  width:4px;
+  height:180px;
+  background:var(--soft);
+  border-radius:4px;
+  overflow:hidden;
+}
+
+.indicator-fill{
+  position:absolute;
+  bottom:0;
+  width:100%;
+  height:50%;
+  background:linear-gradient(180deg,#6fbf8f,#a6f0c6);
+  transition:height 2s ease;
+}
+
+/* -------- Text -------- */
+.title{
+  position:absolute;
+  top:20px;
+  left:40px;
+  font-size:16px;
+  opacity:.85;
+}
+
+.subtitle{
+  font-size:13px;
+  opacity:.5;
+}
+
+.legal{
+  position:absolute;
+  bottom:12px;
+  right:16px;
+  font-size:10px;
+  opacity:.35;
+}
+
+/* -------- States -------- */
+.low .head{transform:rotate(-15deg) translateX(-6px)}
+.mid .head{transform:rotate(0deg)}
+.high .head{transform:rotate(12deg) translateX(6px)}
+
+.sleep .eye{height:2px}
+.scratch .shell{animation:scratch 1.2s ease-in-out infinite}
+
+/* -------- Animations -------- */
+@keyframes float{
+  0%,100%{transform:translate(-50%,-50%) translateY(0)}
+  50%{transform:translate(-50%,-50%) translateY(10px)}
+}
+
+@keyframes breath{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.04)}
+}
+
+@keyframes blink{
+  0%,92%,100%{height:6px}
+  95%{height:1px}
+}
+
+@keyframes scratch{
+  0%{transform:rotate(0deg)}
+  50%{transform:rotate(3deg)}
+  100%{transform:rotate(0deg)}
 }
 </style>
 </head>
 
 <body>
+<div class="app mid" id="app">
 
-<header>
-  <h1>Global Information Pressure Index (GIPI)</h1>
-  <p class="small">
-    Non-political • Non-predictive • Non-extractive • Contextual reference only
-  </p>
-</header>
-
-<section>
-
-<!-- INDEX -->
-<div class="card">
-  <div class="value">47.3</div>
-  <p><strong>Status:</strong> Neutral</p>
-  <p class="small">
-    Reflects overall global information pressure.  
-    No countries, people, or events are evaluated.
-  </p>
-
-  <p class="small">
-    <strong>What this means:</strong><br>
-    This value represents the current level of global information pressure.
-    “Neutral” indicates a normal range of global informational activity and
-    does not imply positive or negative outcomes.
-  </p>
-</div>
-
-<!-- MAP -->
-<h2>Global Context Map</h2>
-<div class="card map">
-  <p class="small">
-    This map is illustrative only.  
-    Clicking does not reveal country-level data.
-  </p>
-
-  <svg viewBox="0 0 1000 500" onclick="openPopup()">
-    <path class="land" d="M80,220 L180,180 L260,210 L240,260 L150,280 Z"/>
-    <path class="land" d="M300,200 L420,170 L540,210 L520,260 L380,270 Z"/>
-    <path class="land" d="M580,190 L760,180 L900,230 L860,290 L650,270 Z"/>
-    <path class="land" d="M750,330 L820,340 L800,380 L730,370 Z"/>
-  </svg>
-</div>
-
-<!-- HISTORY -->
-<h2>Historical Trend</h2>
-<div class="card">
-  <canvas id="chart"></canvas>
-  <p class="small">
-    Historical values are contextual only.  
-    No forecasting or prediction is performed.
-  </p>
-</div>
-
-<!-- HOW IT WORKS -->
-<h2>How GIPI Works</h2>
-<div class="card">
-  <p>
-    GIPI is a synthetic indicator measuring normalized global signal variability
-    and temporal synchronization.
-  </p>
-  <p>
-    It does not ingest news, social media, external databases, or user data.
-  </p>
-</div>
-
-<!-- METHODOLOGY -->
-<h2>Methodology (Simplified)</h2>
-<div class="card">
-  <p><strong>What GIPI Is</strong></p>
-  <p>
-    GIPI is a synthetic, non-extractive reference indicator designed to reflect
-    global information pressure at a macro level.
-  </p>
-
-  <p><strong>What GIPI Is Not</strong></p>
-  <p>
-    GIPI is not a news aggregator, political index, country ranking,
-    prediction system, or decision-support tool.
-  </p>
-
-  <p><strong>How the Index Is Generated</strong></p>
-  <p>
-    The index is derived from normalized temporal dynamics and variability
-    patterns over time. No external content is ingested or analyzed.
-  </p>
-
-  <p><strong>Interpretation</strong></p>
-  <p>
-    Higher values indicate increased global information pressure.
-    Lower values indicate reduced pressure. Values do not imply outcomes.
-  </p>
-
-  <p><strong>Intended Use</strong></p>
-  <p>
-    Contextual reference, media background, academic discussion, and public information only.
-  </p>
-</div>
-
-<!-- LEVEL EXPLANATION -->
-<h2>Index Levels Explanation</h2>
-<div class="card">
-  <p><strong>Low (0–30)</strong></p>
-  <p class="small">
-    Indicates reduced global information activity. Signals are sparse,
-    asynchronous, and low in overall pressure.
-  </p>
-
-  <p><strong>Neutral (31–55)</strong></p>
-  <p class="small">
-    Represents a normal range of global information flow.
-    Typical variability without systemic stress indicators.
-  </p>
-
-  <p><strong>Elevated (56–75)</strong></p>
-  <p class="small">
-    Indicates increased global information pressure.
-    Higher synchronization and intensified signal activity.
-  </p>
-
-  <p><strong>High (76–100)</strong></p>
-  <p class="small">
-    Represents extreme global information pressure.
-    Rare conditions with dense, highly synchronized informational dynamics.
-  </p>
-</div>
-
-<!-- HOW TO CITE -->
-<h2>How to Cite GIPI (Media & Publications)</h2>
-<div class="card">
-  <p class="small">
-    When referencing GIPI, media outlets and publications are encouraged to use
-    the following neutral citation format:
-  </p>
-
-  <p class="small">
-    <em>
-      “According to the Global Information Pressure Index (GIPI), a non-political
-      contextual indicator reflecting global information pressure…”
-    </em>
-  </p>
-
-  <p class="small">
-    GIPI should be cited as contextual background only and not as evidence,
-    prediction, or assessment of specific countries, events, or actors.
-  </p>
-</div>
-
-<!-- DISCLAIMERS -->
-<h2>Legal & Ethical Disclaimers</h2>
-<div class="card">
-  <p><strong>Users:</strong> Informational use only. No decisions should be based on GIPI.</p>
-  <p><strong>Media:</strong> May reference GIPI as context. Interpretation is the publisher’s responsibility.</p>
-  <p><strong>Governments & Institutions:</strong> Not designed for governance, surveillance, or policy.</p>
-  <p><strong>Countries:</strong> No country, region, or population is scored or evaluated.</p>
-  <p><strong>Privacy:</strong> No personal data, cookies, tracking, or accounts.</p>
-  <p><strong>Liability:</strong> No responsibility for direct or indirect consequences of use.</p>
-</div>
-
-</section>
-
-<footer>
-© Global Information Pressure Index (GIPI) — Contextual Reference Only
-</footer>
-
-<!-- POPUP -->
-<div id="popup">
-  <div id="popupBox">
-    <h3>Map Explanation</h3>
-    <p class="small">
-      This map is symbolic and non-political.  
-      GIPI intentionally does not provide country-level data or comparisons.
-    </p>
-    <button onclick="closePopup()">Close</button>
+  <div class="title">
+    Planet Turtle<br>
+    <span class="subtitle">A calm visual index</span>
   </div>
+
+  <div class="indicator">
+    <div class="indicator-fill" id="fill"></div>
+  </div>
+
+  <div class="turtle">
+    <div class="shell"></div>
+    <div class="body"></div>
+    <div class="head"><div class="eye"></div></div>
+  </div>
+
+  <div class="legal">Visual experience · No data · No tracking</div>
+
 </div>
 
 <script>
-// POPUP
-function openPopup() {
-  document.getElementById("popup").style.display = "flex";
-}
-function closePopup() {
-  document.getElementById("popup").style.display = "none";
+let index=50;
+const app=document.getElementById("app");
+const fill=document.getElementById("fill");
+
+function updateIndex(){
+  index+=(Math.random()-.5)*8;
+  index=Math.max(10,Math.min(90,index));
+
+  app.classList.remove("low","mid","high");
+  if(index<36)app.classList.add("low");
+  else if(index<66)app.classList.add("mid");
+  else app.classList.add("high");
+
+  fill.style.height=index+"%";
 }
 
-// CHART
-const values = [44.1, 45.0, 46.2, 47.0, 47.3];
-const canvas = document.getElementById("chart");
-const ctx = canvas.getContext("2d");
-canvas.width = 900;
-canvas.height = 280;
+function randomLife(){
+  app.classList.remove("sleep","scratch");
+  const r=Math.random();
+  if(r<0.25) app.classList.add("sleep");
+  else if(r<0.45) app.classList.add("scratch");
+}
 
-ctx.strokeStyle = "#f5c542";
-ctx.lineWidth = 3;
-ctx.beginPath();
-values.forEach((v, i) => {
-  const x = (i / (values.length - 1)) * canvas.width;
-  const y = canvas.height - (v / 100) * canvas.height;
-  if (i === 0) ctx.moveTo(x, y);
-  else ctx.lineTo(x, y);
-});
-ctx.stroke();
+setInterval(updateIndex,4000);
+setInterval(randomLife,12000);
 </script>
 
+<!--
+DISCLAIMER
+Visual representation of an abstract index only.
+
+PRIVACY
+No data. No tracking.
+
+TERMS
+Artistic experience only.
+-->
 </body>
 </html>
