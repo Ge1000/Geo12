@@ -36,6 +36,7 @@ select {
   padding:14px;
   background:#161a33;
   border-radius:10px;
+  display:none;
 }
 
 table {
@@ -53,7 +54,6 @@ th, td {
 }
 
 th { background:#1d2245; }
-
 tr:hover { background:#1b2050; }
 
 .badge {
@@ -104,9 +104,9 @@ footer {
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
-    <option value="earn">💰 Best for affiliate</option>
+    <option value="earn">💰 Highest estimated commission</option>
     <option value="discount">🔥 Best discount</option>
-    <option value="commission">📈 Highest commission</option>
+    <option value="commission">📈 Highest commission rate</option>
     <option value="trust">🛡 Highest trust</option>
   </select>
 
@@ -141,19 +141,13 @@ All decisions remain the responsibility of the user.
 </footer>
 
 <script>
+/* ------------------ Admin mode ------------------ */
+const isAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
+if(isAdmin) document.getElementById("stats").style.display = "block";
+
 /* ------------------ Currency ------------------ */
-
-const rates = {
-  USD: 1,
-  EUR: 0.92,
-  GBP: 0.79
-};
-
-const symbols = {
-  USD: "$",
-  EUR: "€",
-  GBP: "£"
-};
+const rates = { USD:1, EUR:0.92, GBP:0.79 };
+const symbols = { USD:"$", EUR:"€", GBP:"£" };
 
 let currency = localStorage.getItem("currency") || autoCurrency();
 
@@ -161,8 +155,7 @@ function autoCurrency(){
   const lang = navigator.language || "";
   if(lang.includes("en-GB")) return "GBP";
   if(lang.startsWith("en")) return "USD";
-  if(lang.startsWith("de") || lang.startsWith("fr") || lang.startsWith("it") || lang.startsWith("es"))
-    return "EUR";
+  if(lang.match(/de|fr|it|es/)) return "EUR";
   return "USD";
 }
 
@@ -173,12 +166,17 @@ function setCurrency(c){
 }
 
 document.getElementById("currencySelect").value = currency;
-
-function fx(value){
-  return (value * rates[currency]).toFixed(2);
-}
+const fx = v => (v * rates[currency]).toFixed(2);
 
 /* ------------------ Data ------------------ */
+/*
+Feed ready for real affiliate APIs:
+- Amazon PA API
+- Awin
+- CJ
+- Impact
+Map fields → name, price, market, store, trust, commission, url
+*/
 
 let clicks = Number(localStorage.getItem("clicks")) || 0;
 let revenue = Number(localStorage.getItem("revenue")) || 0;
@@ -190,96 +188,68 @@ let feed = [
   { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
 ];
 
-const discount = p =>
-  p.market > 0 ? Math.round((1 - p.price / p.market) * 100) : 0;
-
-const earn = p =>
-  +(p.price * p.commission).toFixed(2);
-
-const isWorthAffiliate = p =>
-  earn(p) >= 2 && discount(p) >= 20 && p.trust >= 70;
+const discount = p => Math.round((1 - p.price / p.market) * 100);
+const earn = p => +(p.price * p.commission).toFixed(2);
+const isWorthAffiliate = p => earn(p)>=2 && discount(p)>=20 && p.trust>=70;
 
 /* ------------------ Verdict ------------------ */
-
 function verdict(p){
-  if(discount(p) >= 40 && earn(p) >= 3 && p.trust >= 85)
-    return { text:"WORTH IT", cls:"green" };
-
-  if(discount(p) >= 25 && earn(p) >= 2)
-    return { text:"OK DEAL", cls:"orange" };
-
-  return { text:"SKIP", cls:"red" };
+  if(discount(p)>=40 && earn(p)>=3 && p.trust>=85) return {text:"WORTH IT",cls:"green"};
+  if(discount(p)>=25 && earn(p)>=2) return {text:"OK DEAL",cls:"orange"};
+  return {text:"SKIP",cls:"red"};
 }
 
 function whyDeal(p){
-  let reasons = [];
-  if(discount(p) >= 40) reasons.push("big discount");
-  if(p.commission >= 0.1) reasons.push("high commission");
-  if(p.trust >= 90) reasons.push("trusted brand");
-  if(reasons.length === 0) reasons.push("balanced value");
-  return "Why this deal: " + reasons.join(", ");
+  let r=[];
+  if(discount(p)>=40) r.push("big discount");
+  if(p.commission>=0.1) r.push("high commission");
+  if(p.trust>=90) r.push("trusted brand");
+  return "Why this deal: " + (r[0]||"balanced value");
 }
 
 /* ------------------ Tracking ------------------ */
-
 function track(p){
   clicks++;
-  revenue += earn(p);
-  localStorage.setItem("clicks", clicks);
-  localStorage.setItem("revenue", revenue);
-  renderStats();
-  window.open(p.url, "_blank");
+  revenue+=earn(p);
+  localStorage.setItem("clicks",clicks);
+  localStorage.setItem("revenue",revenue);
+  if(isAdmin) renderStats();
+  window.open(p.url,"_blank");
 }
 
 function renderStats(){
-  document.getElementById("stats").innerHTML = `
-    🔗 Clicks: <b>${clicks}</b><br>
-    💰 Estimated affiliate revenue: <b>${symbols[currency]}${fx(revenue)}</b>
-  `;
+  document.getElementById("stats").innerHTML =
+    `🔗 Clicks: <b>${clicks}</b><br>💰 Estimated affiliate revenue: <b>${symbols[currency]}${fx(revenue)}</b>`;
 }
 
 /* ------------------ Render ------------------ */
-
 function applySort(){
   let list = feed.filter(isWorthAffiliate);
-  const v = document.getElementById("sortSelect").value;
-
+  const v=document.getElementById("sortSelect").value;
   if(v==="earn") list.sort((a,b)=>earn(b)-earn(a));
   if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
   if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
   if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
-
   render(list);
 }
 
 function render(list){
-  const tb = document.getElementById("tableBody");
-  tb.innerHTML = "";
-
+  const tb=document.getElementById("tableBody");
+  tb.innerHTML="";
   list.forEach(p=>{
-    const v = verdict(p);
-    tb.innerHTML += `
-      <tr>
-        <td>
-          <b>${p.name}</b><br>
-          <small>${p.store}</small>
-          <div class="why">${whyDeal(p)}</div>
-        </td>
-        <td>${symbols[currency]}${fx(p.price)}</td>
-        <td>${symbols[currency]}${fx(p.market)}</td>
-        <td><span class="badge green">-${discount(p)}%</span></td>
-        <td><b>${symbols[currency]}${fx(earn(p))}</b></td>
-        <td>
-          <span class="badge ${v.cls}">${v.text}</span>
-        </td>
-        <td>
-          <button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button>
-        </td>
-      </tr>
-    `;
+    const v=verdict(p);
+    tb.innerHTML+=`
+    <tr>
+      <td><b>${p.name}</b><br><small>${p.store}</small><div class="why">${whyDeal(p)}</div></td>
+      <td>${symbols[currency]}${fx(p.price)}</td>
+      <td>${symbols[currency]}${fx(p.market)}</td>
+      <td><span class="badge green">-${discount(p)}%</span></td>
+      <td><b>${symbols[currency]}${fx(earn(p))}</b></td>
+      <td><span class="badge ${v.cls}">${v.text}</span></td>
+      <td><button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button></td>
+    </tr>`;
   });
-
-  renderStats();
+  if(isAdmin) renderStats();
 }
 
 applySort();
