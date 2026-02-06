@@ -49,6 +49,7 @@
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid #2a2f55;
+      white-space: nowrap;
     }
 
     th { background: #1d2245; font-weight: 600; }
@@ -97,6 +98,12 @@
       max-width: 420px;
       width: 100%;
     }
+
+    /* 🔧 FIX MIC – scroll orizontal pe mobil */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
   </style>
 </head>
 
@@ -117,6 +124,8 @@
   <button onclick="exportCSV()">Export CSV</button>
 </div>
 
+<!-- 🔧 FIX MIC – wrapper pentru tabel -->
+<div class="table-wrap">
 <table>
   <thead>
     <tr>
@@ -133,6 +142,7 @@
   </thead>
   <tbody id="tableBody"></tbody>
 </table>
+</div>
 
 <footer>Information only. No financial or investment advice.</footer>
 
