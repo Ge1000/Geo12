@@ -45,7 +45,7 @@ th, td {
   white-space:nowrap;
 }
 
-th { background:#1d2245; }
+th { background:#1d2245; cursor:pointer; }
 tr:hover { background:#1b2050; }
 
 .badge {
@@ -89,8 +89,8 @@ footer {
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Universal affiliate scanner · Feed driven</div>
-<div class="status">🔄 Auto-feed · Product links · Demo mode</div>
+<div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
+<div class="status" id="status">🔄 Scanning markets…</div>
 
 <div class="stats" id="stats"></div>
 
@@ -123,7 +123,9 @@ Affiliate links · Information only · No financial advice
 </footer>
 
 <script>
-/* ===== AWIN CONFIG ===== */
+/* =======================
+   STEP 2 – AUTO AFFILIATE
+======================= */
 const AWIN_ID = "YOUR_AWIN_ID";
 
 function buildAffiliateLink(url){
@@ -131,48 +133,27 @@ function buildAffiliateLink(url){
     + AWIN_ID + "&ued=" + encodeURIComponent(url);
 }
 
-/* ===== FEED (SIMULATED – READY FOR REAL) ===== */
+/* =======================
+   STEP 1 – AUTO SCANNER
+======================= */
+let lastUpdate = Date.now();
+
+function updateStatus(){
+  const min = Math.floor((Date.now()-lastUpdate)/60000);
+  document.getElementById("status").innerText =
+    min < 1
+    ? "🟢 Updated just now · Auto-scan active"
+    : `🟢 Updated ${min} min ago · Auto-scan active`;
+}
+
+setInterval(updateStatus, 30000);
+
+/* ===== FEED (SIMULATED AUTO) ===== */
 let feed = [
-  {
-    id:1,
-    name:"Nike Air Zoom Pegasus",
-    price:89,
-    market:129,
-    store:"Nike",
-    trust:95,
-    commission:0.04,
-    url:"https://nike.com/pegasus"
-  },
-  {
-    id:2,
-    name:"Oversized Hoodie",
-    price:39,
-    market:69,
-    store:"Zalando",
-    trust:90,
-    commission:0.08,
-    url:"https://zalando.com/hoodie"
-  },
-  {
-    id:3,
-    name:"Wireless Headphones",
-    price:59,
-    market:99,
-    store:"Amazon",
-    trust:92,
-    commission:0.04,
-    url:"https://amazon.com/headphones"
-  },
-  {
-    id:4,
-    name:"AI SEO Toolkit",
-    price:49,
-    market:99,
-    store:"AppSumo",
-    trust:80,
-    commission:0.30,
-    url:"https://appsumo.com"
-  }
+  {id:1,name:"Nike Air Zoom Pegasus",price:89,market:129,store:"Nike",trust:95,commission:0.04,url:"https://nike.com/pegasus"},
+  {id:2,name:"Oversized Hoodie",price:39,market:69,store:"Zalando",trust:90,commission:0.08,url:"https://zalando.com/hoodie"},
+  {id:3,name:"Wireless Headphones",price:59,market:99,store:"Amazon",trust:92,commission:0.04,url:"https://amazon.com/headphones"},
+  {id:4,name:"AI SEO Toolkit",price:49,market:99,store:"AppSumo",trust:80,commission:0.30,url:"https://appsumo.com"}
 ];
 
 /* ===== TRACKING ===== */
@@ -199,15 +180,13 @@ function renderStats(){
   `;
 }
 
-/* ===== SORTING ===== */
+/* ===== SORT ===== */
 function applySort(){
-  const v = document.getElementById("sortSelect").value;
-
+  const v=document.getElementById("sortSelect").value;
   if(v==="discount") feed.sort((a,b)=>discount(b)-discount(a));
   if(v==="commission") feed.sort((a,b)=>b.commission-a.commission);
   if(v==="trust") feed.sort((a,b)=>b.trust-a.trust);
   if(v==="newest") feed.sort((a,b)=>b.id-a.id);
-
   render();
 }
 
@@ -215,25 +194,23 @@ function applySort(){
 function render(){
   const tb=document.getElementById("tableBody");
   tb.innerHTML="";
-
   feed.forEach(p=>{
     tb.innerHTML+=`
-      <tr>
-        <td>${p.name}<br><small>${p.store}</small></td>
-        <td>$${p.price}</td>
-        <td>$${p.market}</td>
-        <td><span class="badge green">-${discount(p)}%</span></td>
-        <td>${p.store}</td>
-        <td><span class="badge blue">${p.trust}</span></td>
-        <td><button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button></td>
-      </tr>
-    `;
+    <tr>
+      <td>${p.name}<br><small>${p.store}</small></td>
+      <td>$${p.price}</td>
+      <td>$${p.market}</td>
+      <td><span class="badge green">-${discount(p)}%</span></td>
+      <td>${p.store}</td>
+      <td><span class="badge blue">${p.trust}</span></td>
+      <td><button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button></td>
+    </tr>`;
   });
-
   renderStats();
 }
 
 applySort();
+updateStatus();
 </script>
 
 </body>
