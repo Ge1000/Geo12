@@ -1,390 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>DealScope – Opportunity Scanner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8" />
+<title>DealScope – Opportunity Scanner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f1220;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-    }
+<style>
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background:#0f1220;
+  color:#fff;
+  margin:0;
+  padding:20px;
+}
 
-    h1 { margin-bottom: 5px; }
-    .subtitle { color: #aaa; margin-bottom: 10px; }
+h1 { margin-bottom:5px; }
+.subtitle { color:#aaa; margin-bottom:10px; }
 
-    .status {
-      font-size: 12px;
-      color: #9ca3af;
-      margin-bottom: 15px;
-    }
+.status { font-size:12px; color:#9ca3af; margin-bottom:15px; }
 
-    .filters {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
+.filters {
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
 
-    input, select, button {
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: none;
-      font-size: 14px;
-    }
+input, select, button {
+  padding:8px 10px;
+  border-radius:6px;
+  border:none;
+  font-size:14px;
+}
 
-    button {
-      background: #4f7cff;
-      color: white;
-      cursor: pointer;
-    }
+button {
+  background:#4f7cff;
+  color:white;
+  cursor:pointer;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #161a33;
-      border-radius: 8px;
-      overflow: hidden;
-    }
+.buy-btn {
+  background:#22c55e;
+  color:#000;
+  font-weight:600;
+}
 
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #2a2f55;
-      white-space: nowrap;
-    }
+table {
+  width:100%;
+  border-collapse:collapse;
+  background:#161a33;
+  border-radius:8px;
+  overflow:hidden;
+}
 
-    th {
-      background: #1d2245;
-      font-weight: 600;
-      cursor: pointer;
-      user-select: none;
-    }
+th, td {
+  padding:12px;
+  border-bottom:1px solid #2a2f55;
+  white-space:nowrap;
+}
 
-    th:hover { background: #242a55; }
-    tr:hover { background: #1b2050; }
+th {
+  background:#1d2245;
+  cursor:pointer;
+}
 
-    @media (max-width: 480px) {
-      th { position: sticky; top: 0; z-index: 2; }
-    }
+tr:hover { background:#1b2050; }
 
-    .green { color: #5dff9b; }
-    .yellow { color: #ffd45d; }
-    .red { color: #ff6b6b; }
+.green { color:#5dff9b; }
 
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
-    }
+.badge {
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:600;
+  display:inline-block;
+}
 
-    .badge.green { background: #1e6f4a; }
-    .badge.yellow { background: #6f5a1e; }
-    .badge.red { background: #6f1e1e; }
-    .badge.ai { background: #2563eb; }
-    .badge.top { background: #22c55e; color:#000; }
+.badge.ai { background:#2563eb; }
+.badge.top { background:#22c55e; color:#000; }
 
-    .top-pick-row { background: rgba(34,197,94,0.12); }
+.top-pick-row { background:rgba(34,197,94,0.12); }
 
-    footer {
-      margin-top: 30px;
-      color: #777;
-      font-size: 12px;
-      text-align: center;
-    }
+footer {
+  margin-top:30px;
+  color:#777;
+  font-size:12px;
+  text-align:center;
+}
 
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
+#landing { text-align:center; margin-top:60px; }
+#app { display:none; }
 
-    .modal-content {
-      background: #161a33;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 420px;
-      width: 100%;
-    }
+.cta {
+  font-size:18px;
+  margin-top:20px;
+  padding:14px 22px;
+  background:#22c55e;
+  color:#000;
+}
 
-    .table-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 30px;
-      color: #9ca3af;
-      font-size: 14px;
-    }
-
-    /* Landing */
-    #landing {
-      max-width: 700px;
-      margin: 60px auto;
-      text-align: center;
-    }
-
-    #app { display: none; }
-
-    .cta {
-      font-size: 18px;
-      margin-top: 20px;
-      padding: 14px 22px;
-      background: #22c55e;
-      color: #000;
-    }
-
-    .saved {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-  </style>
+.stats {
+  margin:15px 0;
+  padding:10px;
+  background:#161a33;
+  border-radius:8px;
+  font-size:14px;
+}
+</style>
 </head>
 
 <body>
 
-<!-- PUBLIC LANDING PAGE -->
+<!-- LANDING -->
 <div id="landing">
   <h1>DealScope</h1>
-  <p class="subtitle">
-    AI-assisted scanner for underpriced digital products.<br>
-    Spot flips, compare margins, track opportunities.
-  </p>
+  <p class="subtitle">AI-assisted scanner for underpriced digital products</p>
   <button class="cta" onclick="enterApp()">Launch Scanner</button>
-  <p class="status">No signup · Demo data · Information only</p>
+  <p class="status">Demo · Affiliate model · Info only</p>
 </div>
 
 <!-- APP -->
 <div id="app">
-
 <h1>DealScope</h1>
 <div class="subtitle">Underpriced digital products – scanned & compared</div>
-<div class="status" id="scannerStatus">🔄 Initializing multi-source scan…</div>
+<div class="status">🔄 Demo scan active</div>
 
-<!-- SAVED VIEWS -->
-<div class="saved">
-  <input id="viewName" placeholder="Save view name">
-  <button onclick="saveView()">Save View</button>
-  <select id="savedViews" onchange="loadView(this.value)">
-    <option value="">Saved views</option>
-  </select>
-</div>
-
-<div class="filters">
-  <input type="number" id="minProfit" placeholder="Min profit ($)">
-  <input type="number" id="minRisk" placeholder="Min risk score">
-  <select id="sourceFilter">
-    <option value="">All sources</option>
-    <option>AppSumo</option>
-    <option>Gumroad</option>
-    <option>ProductHunt</option>
-    <option>IndieHackers</option>
-  </select>
-  <button onclick="exportCSV()">Export CSV</button>
-</div>
+<div class="stats" id="revenueStats"></div>
 
 <div class="table-wrap">
 <table>
-  <thead>
-    <tr>
-      <th onclick="sortBy('name')">Product <span id="s-name"></span></th>
-      <th onclick="sortBy('buyPrice')">Buy <span id="s-buyPrice"></span></th>
-      <th onclick="sortBy('source')">Source <span id="s-source"></span></th>
-      <th onclick="sortBy('sellPrice')">Sell <span id="s-sellPrice"></span></th>
-      <th onclick="sortBy('profit')">Profit <span id="s-profit"></span></th>
-      <th onclick="sortBy('risk')">Risk <span id="s-risk"></span></th>
-      <th onclick="sortBy('ai')">AI <span id="s-ai"></span></th>
-      <th>⭐</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
+<thead>
+<tr>
+  <th>Product</th>
+  <th>Buy</th>
+  <th>Source</th>
+  <th>Sell</th>
+  <th>Profit</th>
+  <th>AI</th>
+  <th>⭐</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
 </table>
 </div>
 
-<footer>Information only. No financial or investment advice.</footer>
-
-</div>
-
-<div class="modal" id="modal">
-  <div class="modal-content" id="modalContent"></div>
+<footer>Information only. No financial advice.</footer>
 </div>
 
 <script>
-/* ================= EXISTING CORE ================= */
+/* ===== DATA ===== */
 
 const products = [
-  { name: "AI SEO Toolkit", buyPrice: 49, source: "AppSumo", sellPrice: 99 },
-  { name: "Email Cleaner Pro", buyPrice: 29, source: "Gumroad", sellPrice: 79 },
-  { name: "Landing Page Builder", buyPrice: 59, source: "ProductHunt", sellPrice: 149 },
-  { name: "Analytics Dashboard", buyPrice: 39, source: "IndieHackers", sellPrice: 59 }
+  {
+    name:"AI SEO Toolkit",
+    buyPrice:49,
+    sellPrice:99,
+    source:"AppSumo",
+    affiliateUrl:"https://appsumo.com/?ref=dealscope",
+    commission:0.3
+  },
+  {
+    name:"Email Cleaner Pro",
+    buyPrice:29,
+    sellPrice:79,
+    source:"Gumroad",
+    affiliateUrl:"https://gumroad.com/?ref=dealscope",
+    commission:0.4
+  },
+  {
+    name:"Landing Page Builder",
+    buyPrice:59,
+    sellPrice:149,
+    source:"ProductHunt",
+    affiliateUrl:"https://www.producthunt.com",
+    commission:0.2
+  },
+  {
+    name:"Analytics Dashboard",
+    buyPrice:39,
+    sellPrice:59,
+    source:"IndieHackers",
+    affiliateUrl:"https://www.indiehackers.com",
+    commission:0.25
+  }
 ];
 
-const trustMap = {
-  AppSumo: 0.9,
-  Gumroad: 0.8,
-  ProductHunt: 0.7,
-  IndieHackers: 0.75
-};
+/* ===== STORAGE ===== */
 
+let clicks = JSON.parse(localStorage.getItem("clicks") || "{}");
+let revenue = JSON.parse(localStorage.getItem("revenue") || "{}");
 let watchlist = JSON.parse(localStorage.getItem("watchlist") || "[]");
-let savedViews = JSON.parse(localStorage.getItem("savedViews") || "{}");
 
-let sortKey = null;
-let sortDir = 1;
-let lastUpdate = Date.now();
+/* ===== LOGIC ===== */
 
-const minProfitInput = document.getElementById("minProfit");
-const minRiskInput = document.getElementById("minRisk");
-const sourceFilter = document.getElementById("sourceFilter");
-
-function riskScore(p) {
-  const profit = p.sellPrice - p.buyPrice;
-  const margin = profit / p.buyPrice;
-  return Math.min(100, Math.floor(margin * 60 + (trustMap[p.source]||0.6) * 40));
-}
-
-function aiSignal(p) {
+function ai(p){
   return Math.min(100, Math.floor((p.sellPrice - p.buyPrice) * 1.2));
 }
 
-function riskClass(score) {
-  if (score >= 80) return "green";
-  if (score >= 50) return "yellow";
-  return "red";
+function trackClick(p){
+  clicks[p.name] = (clicks[p.name] || 0) + 1;
+  revenue[p.name] = (revenue[p.name] || 0) + (p.sellPrice * p.commission);
+  localStorage.setItem("clicks", JSON.stringify(clicks));
+  localStorage.setItem("revenue", JSON.stringify(revenue));
+  updateStats();
+  window.open(p.affiliateUrl, "_blank");
 }
 
-function toggleWatch(name) {
+function toggleWatch(name){
   watchlist.includes(name)
-    ? watchlist = watchlist.filter(n => n !== name)
+    ? watchlist = watchlist.filter(n=>n!==name)
     : watchlist.push(name);
   localStorage.setItem("watchlist", JSON.stringify(watchlist));
   render();
 }
 
-function sortBy(key) {
-  sortDir = sortKey === key ? -sortDir : 1;
-  sortKey = key;
-  render();
+function updateStats(){
+  let totalClicks = 0;
+  let totalRevenue = 0;
+  Object.values(clicks).forEach(c=> totalClicks+=c);
+  Object.values(revenue).forEach(r=> totalRevenue+=r);
+
+  document.getElementById("revenueStats").innerHTML = `
+    🔗 Total clicks: <b>${totalClicks}</b><br>
+    💰 Estimated revenue: <b>$${totalRevenue.toFixed(2)}</b>
+  `;
 }
 
-function render() {
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
+function render(){
+  const tb = document.getElementById("tableBody");
+  tb.innerHTML = "";
 
-  let data = products.map(p => ({
-    ...p,
-    profit: p.sellPrice - p.buyPrice,
-    risk: riskScore(p),
-    ai: aiSignal(p)
-  })).filter(p =>
-    p.profit >= (minProfitInput.value||0) &&
-    p.risk >= (minRiskInput.value||0) &&
-    (!sourceFilter.value || p.source === sourceFilter.value)
-  );
-
-  if (sortKey) {
-    data.sort((a,b)=> (a[sortKey]>b[sortKey]?1:-1)*sortDir);
-    document.querySelectorAll("th span").forEach(s=>s.textContent="");
-    document.getElementById("s-"+sortKey).textContent = sortDir===1?" ▲":" ▼";
-  }
-
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="empty">
-      No opportunities match your filters.
-    </td></tr>`;
-    return;
-  }
-
-  data.forEach((p,i)=>{
-    tbody.innerHTML += `
+  products.forEach((p,i)=>{
+    const profit = p.sellPrice - p.buyPrice;
+    tb.innerHTML += `
       <tr class="${i===0?'top-pick-row':''}">
         <td>${p.name} ${i===0?'<span class="badge top">TOP</span>':''}</td>
         <td>$${p.buyPrice}</td>
         <td>${p.source}</td>
         <td>$${p.sellPrice}</td>
-        <td class="green">+$${p.profit}</td>
-        <td><span class="badge ${riskClass(p.risk)}">${p.risk}</span></td>
-        <td><span class="badge ai">${p.ai}</span></td>
+        <td class="green">+$${profit}</td>
+        <td><span class="badge ai">${ai(p)}</span></td>
         <td><button onclick="toggleWatch('${p.name}')">${watchlist.includes(p.name)?"★":"☆"}</button></td>
-        <td><button onclick='showDetails(${JSON.stringify(p)})'>View</button></td>
-      </tr>`;
+        <td><button class="buy-btn" onclick='trackClick(${JSON.stringify(p)})'>Buy</button></td>
+      </tr>
+    `;
   });
+
+  updateStats();
 }
 
-/* ================= ADDED FEATURES ================= */
-
-/* Saved Views */
-function saveView() {
-  const name = document.getElementById("viewName").value;
-  if (!name) return;
-  savedViews[name] = {
-    minProfit: minProfitInput.value,
-    minRisk: minRiskInput.value,
-    source: sourceFilter.value,
-    sortKey, sortDir
-  };
-  localStorage.setItem("savedViews", JSON.stringify(savedViews));
-  loadSavedViews();
+function enterApp(){
+  landing.style.display="none";
+  app.style.display="block";
 }
 
-function loadView(name) {
-  const v = savedViews[name];
-  if (!v) return;
-  minProfitInput.value = v.minProfit;
-  minRiskInput.value = v.minRisk;
-  sourceFilter.value = v.source;
-  sortKey = v.sortKey;
-  sortDir = v.sortDir;
-  render();
-}
-
-function loadSavedViews() {
-  const sel = document.getElementById("savedViews");
-  sel.innerHTML = `<option value="">Saved views</option>`;
-  Object.keys(savedViews).forEach(v=>{
-    sel.innerHTML += `<option>${v}</option>`;
-  });
-}
-
-/* Fake multi-source scan */
-const sources = ["AppSumo","Gumroad","ProductHunt","IndieHackers"];
-let idx = 0;
-setInterval(()=>{
-  document.getElementById("scannerStatus").textContent =
-    `🔍 Scanning ${sources[idx%sources.length]}…`;
-  idx++;
-},1200);
-
-setTimeout(()=>{
-  document.getElementById("scannerStatus").textContent="✅ All sources synced";
-},5000);
-
-/* Landing toggle */
-function enterApp() {
-  document.getElementById("landing").style.display="none";
-  document.getElementById("app").style.display="block";
-}
-
-/* Init */
-[minProfitInput, minRiskInput, sourceFilter].forEach(el =>
-  el.addEventListener("input", render)
-);
-
-loadSavedViews();
 render();
 </script>
 
