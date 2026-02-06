@@ -98,13 +98,13 @@ footer {
 
 <h1>DealScope</h1>
 <div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 Affiliate-quality filter active · No accounts · No user tracking</div>
+<div class="status">🟢 Algorithmic verdict active · No accounts · No user tracking</div>
 
 <div class="stats" id="stats"></div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
-    <option value="earn">💰 Highest estimated commission</option>
+    <option value="ai">🧠 Best AI verdict</option>
     <option value="discount">🔥 Best discount</option>
     <option value="commission">📈 Highest commission rate</option>
     <option value="trust">🛡 Highest trust</option>
@@ -124,7 +124,6 @@ footer {
   <th>Price</th>
   <th>Market</th>
   <th>Discount</th>
-  <th>We earn (affiliate)</th>
   <th>Verdict</th>
   <th>Action</th>
 </tr>
@@ -135,9 +134,9 @@ footer {
 <footer>
 <strong>Affiliate disclosure (UK/EU):</strong><br>
 DealScope may earn a commission from merchants when users click and purchase via affiliate links.
-Users never pay extra. Prices and earnings shown are estimates only.<br><br>
-This website does not provide financial, investment or purchasing advice.
-All decisions remain the responsibility of the user.
+Users never pay extra. Prices shown are estimates only.<br><br>
+Verdicts are generated algorithmically based on price, discount and merchant trust.
+This website does not provide financial or purchasing advice.
 </footer>
 
 <script>
@@ -169,18 +168,6 @@ document.getElementById("currencySelect").value = currency;
 const fx = v => (v * rates[currency]).toFixed(2);
 
 /* ------------------ Data ------------------ */
-/*
-Feed ready for real affiliate APIs:
-- Amazon PA API
-- Awin
-- CJ
-- Impact
-Map fields → name, price, market, store, trust, commission, url
-*/
-
-let clicks = Number(localStorage.getItem("clicks")) || 0;
-let revenue = Number(localStorage.getItem("revenue")) || 0;
-
 let feed = [
   { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
   { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
@@ -189,44 +176,37 @@ let feed = [
 ];
 
 const discount = p => Math.round((1 - p.price / p.market) * 100);
-const earn = p => +(p.price * p.commission).toFixed(2);
-const isWorthAffiliate = p => earn(p)>=2 && discount(p)>=20 && p.trust>=70;
+
+/* ------------------ AI Scoring (hidden) ------------------ */
+function aiScore(p){
+  let score = 0;
+  score += Math.min(discount(p),50) * 0.8;
+  score += p.trust * 0.4;
+  score += Math.min(p.commission * 100,30) * 0.3;
+  return Math.round(score);
+}
 
 /* ------------------ Verdict ------------------ */
 function verdict(p){
-  if(discount(p)>=40 && earn(p)>=3 && p.trust>=85) return {text:"WORTH IT",cls:"green"};
-  if(discount(p)>=25 && earn(p)>=2) return {text:"OK DEAL",cls:"orange"};
-  return {text:"SKIP",cls:"red"};
+  const s = aiScore(p);
+  if(s >= 80) return { text:"WORTH IT", cls:"green" };
+  if(s >= 60) return { text:"OK DEAL", cls:"orange" };
+  return { text:"SKIP", cls:"red" };
 }
 
 function whyDeal(p){
   let r=[];
-  if(discount(p)>=40) r.push("big discount");
-  if(p.commission>=0.1) r.push("high commission");
-  if(p.trust>=90) r.push("trusted brand");
-  return "Why this deal: " + (r[0]||"balanced value");
-}
-
-/* ------------------ Tracking ------------------ */
-function track(p){
-  clicks++;
-  revenue+=earn(p);
-  localStorage.setItem("clicks",clicks);
-  localStorage.setItem("revenue",revenue);
-  if(isAdmin) renderStats();
-  window.open(p.url,"_blank");
-}
-
-function renderStats(){
-  document.getElementById("stats").innerHTML =
-    `🔗 Clicks: <b>${clicks}</b><br>💰 Estimated affiliate revenue: <b>${symbols[currency]}${fx(revenue)}</b>`;
+  if(discount(p)>=30) r.push("strong discount");
+  if(p.trust>=90) r.push("trusted merchant");
+  if(p.commission>=0.1) r.push("market-aligned incentive");
+  return "Why this verdict: " + (r.join(", ") || "balanced evaluation");
 }
 
 /* ------------------ Render ------------------ */
 function applySort(){
-  let list = feed.filter(isWorthAffiliate);
+  let list=[...feed];
   const v=document.getElementById("sortSelect").value;
-  if(v==="earn") list.sort((a,b)=>earn(b)-earn(a));
+  if(v==="ai") list.sort((a,b)=>aiScore(b)-aiScore(a));
   if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
   if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
   if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
@@ -244,12 +224,10 @@ function render(list){
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
-      <td><b>${symbols[currency]}${fx(earn(p))}</b></td>
       <td><span class="badge ${v.cls}">${v.text}</span></td>
-      <td><button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button></td>
+      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
     </tr>`;
   });
-  if(isAdmin) renderStats();
 }
 
 applySort();
