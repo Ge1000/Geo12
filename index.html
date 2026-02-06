@@ -22,6 +22,7 @@ h1 { margin-bottom:5px; }
   display:flex;
   gap:10px;
   margin:15px 0;
+  flex-wrap:wrap;
 }
 
 select {
@@ -64,7 +65,6 @@ tr:hover { background:#1b2050; }
 }
 
 .badge.green { background:#22c55e; color:#000; }
-.badge.blue { background:#2563eb; }
 .badge.orange { background:#f97316; color:#000; }
 .badge.red { background:#dc2626; }
 
@@ -84,15 +84,12 @@ tr:hover { background:#1b2050; }
   margin-top:6px;
 }
 
-.verdict {
-  margin-top:6px;
-}
-
 footer {
   margin-top:30px;
   font-size:12px;
-  color:#777;
+  color:#9ca3af;
   text-align:center;
+  line-height:1.5;
 }
 </style>
 </head>
@@ -112,6 +109,12 @@ footer {
     <option value="commission">📈 Highest commission</option>
     <option value="trust">🛡 Highest trust</option>
   </select>
+
+  <select id="currencySelect" onchange="setCurrency(this.value)">
+    <option value="USD">USD $</option>
+    <option value="EUR">EUR €</option>
+    <option value="GBP">GBP £</option>
+  </select>
 </div>
 
 <table>
@@ -130,10 +133,53 @@ footer {
 </table>
 
 <footer>
-We earn commission from vendors when users buy · Users never pay extra · No financial advice
+<strong>Affiliate disclosure (UK/EU):</strong><br>
+DealScope may earn a commission from merchants when users click and purchase via affiliate links.
+Users never pay extra. Prices and earnings shown are estimates only.<br><br>
+This website does not provide financial, investment or purchasing advice.
+All decisions remain the responsibility of the user.
 </footer>
 
 <script>
+/* ------------------ Currency ------------------ */
+
+const rates = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79
+};
+
+const symbols = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£"
+};
+
+let currency = localStorage.getItem("currency") || autoCurrency();
+
+function autoCurrency(){
+  const lang = navigator.language || "";
+  if(lang.includes("en-GB")) return "GBP";
+  if(lang.startsWith("en")) return "USD";
+  if(lang.startsWith("de") || lang.startsWith("fr") || lang.startsWith("it") || lang.startsWith("es"))
+    return "EUR";
+  return "USD";
+}
+
+function setCurrency(c){
+  currency = c;
+  localStorage.setItem("currency", c);
+  applySort();
+}
+
+document.getElementById("currencySelect").value = currency;
+
+function fx(value){
+  return (value * rates[currency]).toFixed(2);
+}
+
+/* ------------------ Data ------------------ */
+
 let clicks = Number(localStorage.getItem("clicks")) || 0;
 let revenue = Number(localStorage.getItem("revenue")) || 0;
 
@@ -152,6 +198,8 @@ const earn = p =>
 
 const isWorthAffiliate = p =>
   earn(p) >= 2 && discount(p) >= 20 && p.trust >= 70;
+
+/* ------------------ Verdict ------------------ */
 
 function verdict(p){
   if(discount(p) >= 40 && earn(p) >= 3 && p.trust >= 85)
@@ -172,6 +220,8 @@ function whyDeal(p){
   return "Why this deal: " + reasons.join(", ");
 }
 
+/* ------------------ Tracking ------------------ */
+
 function track(p){
   clicks++;
   revenue += earn(p);
@@ -184,9 +234,11 @@ function track(p){
 function renderStats(){
   document.getElementById("stats").innerHTML = `
     🔗 Clicks: <b>${clicks}</b><br>
-    💰 Estimated affiliate revenue: <b>$${revenue.toFixed(2)}</b>
+    💰 Estimated affiliate revenue: <b>${symbols[currency]}${fx(revenue)}</b>
   `;
 }
+
+/* ------------------ Render ------------------ */
 
 function applySort(){
   let list = feed.filter(isWorthAffiliate);
@@ -213,17 +265,15 @@ function render(list){
           <small>${p.store}</small>
           <div class="why">${whyDeal(p)}</div>
         </td>
-        <td>$${p.price}</td>
-        <td>$${p.market}</td>
+        <td>${symbols[currency]}${fx(p.price)}</td>
+        <td>${symbols[currency]}${fx(p.market)}</td>
         <td><span class="badge green">-${discount(p)}%</span></td>
-        <td><b>$${earn(p)}</b></td>
-        <td class="verdict">
+        <td><b>${symbols[currency]}${fx(earn(p))}</b></td>
+        <td>
           <span class="badge ${v.cls}">${v.text}</span>
         </td>
         <td>
-          <button class="buy-btn" onclick='track(${JSON.stringify(p)})'>
-            Buy
-          </button>
+          <button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button>
         </td>
       </tr>
     `;
