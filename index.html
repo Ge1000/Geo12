@@ -2,27 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>DealScope – Opportunity Scanner</title>
+<title>DealScope – Universal Affiliate Scanner</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
 <style>
-:root{
-  --bg:#0f1220;
-  --panel:#161a33;
-  --panel2:#1d2245;
-  --text:#fff;
-}
-.light{
-  --bg:#f5f7fb;
-  --panel:#ffffff;
-  --panel2:#e5e7eb;
-  --text:#111;
-}
-
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background:var(--bg);
-  color:var(--text);
+  background:#0f1220;
+  color:#fff;
   margin:0;
   padding:20px;
 }
@@ -30,34 +17,30 @@ body {
 h1 { margin-bottom:5px; }
 .subtitle { color:#aaa; margin-bottom:10px; }
 
-.status { font-size:12px; color:#9ca3af; margin-bottom:15px; }
+.status {
+  font-size:12px;
+  color:#9ca3af;
+  margin-bottom:15px;
+}
 
-button {
-  padding:8px 12px;
+.filters {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+select {
+  padding:8px 10px;
   border-radius:6px;
   border:none;
-  cursor:pointer;
-  background:#4f7cff;
-  color:white;
-}
-
-.buy-btn {
-  background:#22c55e;
-  color:#000;
-  font-weight:600;
-}
-
-.toggle {
-  float:right;
-  background:#334155;
-  font-size:12px;
 }
 
 table {
   width:100%;
   border-collapse:collapse;
-  background:var(--panel);
-  border-radius:8px;
+  background:#161a33;
+  border-radius:10px;
   overflow:hidden;
 }
 
@@ -67,71 +50,87 @@ th, td {
   white-space:nowrap;
 }
 
-th { background:var(--panel2); cursor:pointer; }
+th {
+  background:#1d2245;
+}
 
 tr:hover { background:#1b2050; }
-
-.green { color:#22c55e; }
 
 .badge {
   padding:4px 8px;
   border-radius:6px;
   font-size:12px;
   font-weight:600;
+  display:inline-block;
 }
 
-.badge.ai { background:#2563eb; color:#fff; }
-.badge.top { background:#22c55e; color:#000; }
+.badge.green { background:#22c55e; color:#000; }
+.badge.blue { background:#2563eb; }
+.badge.yellow { background:#eab308; color:#000; }
 
-.top-pick-row { background:rgba(34,197,94,0.15); }
+.buy-btn {
+  background:#22c55e;
+  color:#000;
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  font-weight:600;
+  cursor:pointer;
+}
 
 .stats {
   margin:15px 0;
-  padding:10px;
-  background:var(--panel);
+  padding:12px;
+  background:#161a33;
   border-radius:8px;
-  font-size:14px;
 }
 
 footer {
   margin-top:30px;
-  color:#777;
   font-size:12px;
+  color:#777;
   text-align:center;
 }
-
-#landing { text-align:center; margin-top:60px; }
-#app { display:none; }
 </style>
 </head>
 
 <body>
 
-<div id="landing">
-  <h1>DealScope</h1>
-  <p class="subtitle">AI-assisted scanner for underpriced digital products</p>
-  <button onclick="enterApp()">Launch Scanner</button>
-  <p class="status">Demo · Affiliate model · Info only</p>
+<h1>DealScope</h1>
+<div class="subtitle">Universal affiliate deal scanner (Amazon-first)</div>
+<div class="status">✅ Demo · All categories · Affiliate model</div>
+
+<!-- FILTERS (1) -->
+<div class="filters">
+  <select id="categoryFilter" onchange="render()">
+    <option value="all">All categories</option>
+    <option value="Shoes">Shoes</option>
+    <option value="Fashion">Fashion</option>
+    <option value="Electronics">Electronics</option>
+    <option value="Digital">Digital</option>
+  </select>
+
+  <select id="sourceFilter" onchange="render()">
+    <option value="all">All sources</option>
+    <option value="Amazon">Amazon</option>
+    <option value="Zalando">Zalando</option>
+    <option value="AppSumo">AppSumo</option>
+  </select>
 </div>
 
-<div id="app">
-<button class="toggle" onclick="toggleTheme()">Toggle theme</button>
-<h1>DealScope</h1>
-<div class="subtitle">Underpriced digital products – scanned & compared</div>
-<div class="status" id="scanStatus">🔄 Scanning…</div>
-
-<div class="stats" id="revenueStats"></div>
+<div class="stats" id="stats"></div>
 
 <table>
 <thead>
 <tr>
   <th>Product</th>
-  <th>Buy</th>
-  <th>Source</th>
-  <th>Sell</th>
-  <th>Profit</th>
-  <th>AI</th>
-  <th>⭐</th>
+  <th>Price</th>
+  <th>Market</th>
+  <th>Discount</th>
+  <th>Shipping</th>
+  <th>Returns</th>
+  <th>Trust</th>
+  <th>You earn</th>
   <th>Action</th>
 </tr>
 </thead>
@@ -139,98 +138,132 @@ footer {
 </table>
 
 <footer>
-Some links are affiliate links. No financial advice.
+Some links are affiliate links. Information only. No financial advice.
 </footer>
-</div>
 
 <script>
-/* ===== THEME ===== */
-const savedTheme = localStorage.getItem("theme");
-if(savedTheme==="light") document.body.classList.add("light");
+/* ========= PRODUCTS (2) ========= */
 
-function toggleTheme(){
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme",
-    document.body.classList.contains("light")?"light":"dark"
-  );
-}
-
-/* ===== DATA ===== */
 const products = [
-  {name:"AI SEO Toolkit",buyPrice:49,sellPrice:99,source:"AppSumo",affiliateUrl:"https://appsumo.com/?ref=dealscope",commission:0.3},
-  {name:"Email Cleaner Pro",buyPrice:29,sellPrice:79,source:"Gumroad",affiliateUrl:"https://gumroad.com/?ref=dealscope",commission:0.4},
-  {name:"Landing Page Builder",buyPrice:59,sellPrice:149,source:"ProductHunt",affiliateUrl:"https://producthunt.com",commission:0.2},
-  {name:"Analytics Dashboard",buyPrice:39,sellPrice:59,source:"IndieHackers",affiliateUrl:"https://indiehackers.com",commission:0.25}
+  {
+    name:"Nike Air Zoom Pegasus",
+    price:89,
+    marketPrice:129,
+    category:"Shoes",
+    source:"Amazon",
+    affiliate:"https://www.amazon.com/?tag=dealscope-20",
+    shipping:"Fast",
+    returns:"Easy",
+    trust:95,
+    commission:0.04
+  },
+  {
+    name:"Oversized Hoodie",
+    price:39,
+    marketPrice:69,
+    category:"Fashion",
+    source:"Zalando",
+    affiliate:"https://www.zalando.com",
+    shipping:"Standard",
+    returns:"Easy",
+    trust:90,
+    commission:0.08
+  },
+  {
+    name:"Wireless Headphones",
+    price:59,
+    marketPrice:99,
+    category:"Electronics",
+    source:"Amazon",
+    affiliate:"https://www.amazon.com/?tag=dealscope-20",
+    shipping:"Fast",
+    returns:"Easy",
+    trust:92,
+    commission:0.04
+  },
+  {
+    name:"AI SEO Toolkit",
+    price:49,
+    marketPrice:99,
+    category:"Digital",
+    source:"AppSumo",
+    affiliate:"https://appsumo.com/?ref=dealscope",
+    shipping:"Instant",
+    returns:"Limited",
+    trust:80,
+    commission:0.30
+  }
 ];
 
-/* ===== STORAGE ===== */
-let clicks = JSON.parse(localStorage.getItem("clicks")||"{}");
-let revenue = JSON.parse(localStorage.getItem("revenue")||"{}");
-let watchlist = JSON.parse(localStorage.getItem("watchlist")||"[]");
+/* ========= TRACKING (3) ========= */
 
-/* ===== LOGIC ===== */
-function ai(p){
-  return Math.min(100, Math.floor((p.sellPrice-p.buyPrice)*1.2));
+let clicks = Number(localStorage.getItem("clicks") || 0);
+let revenue = Number(localStorage.getItem("revenue") || 0);
+
+function discount(p){
+  return Math.round((1 - p.price / p.marketPrice) * 100);
 }
 
-function trackClick(p){
-  clicks[p.name]=(clicks[p.name]||0)+1;
-  revenue[p.name]=(revenue[p.name]||0)+(p.sellPrice*p.commission);
-  localStorage.setItem("clicks",JSON.stringify(clicks));
-  localStorage.setItem("revenue",JSON.stringify(revenue));
-  updateStats();
-  window.open(p.affiliateUrl,"_blank");
+function badgeShipping(s){
+  return s === "Fast" || s === "Instant"
+    ? `<span class="badge green">${s}</span>`
+    : `<span class="badge blue">${s}</span>`;
 }
 
-function toggleWatch(name){
-  watchlist.includes(name)
-    ? watchlist=watchlist.filter(n=>n!==name)
-    : watchlist.push(name);
-  localStorage.setItem("watchlist",JSON.stringify(watchlist));
-  render();
+function badgeReturns(r){
+  return r === "Easy"
+    ? `<span class="badge green">Easy</span>`
+    : `<span class="badge yellow">Limited</span>`;
 }
 
-function updateStats(){
-  let tc=0,tr=0;
-  Object.values(clicks).forEach(v=>tc+=v);
-  Object.values(revenue).forEach(v=>tr+=v);
-  revenueStats.innerHTML=`🔗 Clicks: <b>${tc}</b> · 💰 Est. revenue: <b>$${tr.toFixed(2)}</b>`;
+function earn(p){
+  return (p.price * p.commission).toFixed(2);
 }
 
-/* ===== RENDER ===== */
+function track(index){
+  const p = products[index];
+  clicks++;
+  revenue += p.price * p.commission;
+  localStorage.setItem("clicks", clicks);
+  localStorage.setItem("revenue", revenue);
+  renderStats();
+  window.open(p.affiliate, "_blank");
+}
+
+function renderStats(){
+  document.getElementById("stats").innerHTML = `
+    🔗 Total clicks: <b>${clicks}</b><br>
+    💰 Estimated earnings: <b>$${revenue.toFixed(2)}</b>
+  `;
+}
+
 function render(){
-  const tb=document.getElementById("tableBody");
-  tb.innerHTML="";
-  const sorted=[...products].sort((a,b)=>(b.sellPrice-b.buyPrice)-(a.sellPrice-a.buyPrice));
-  sorted.forEach((p,i)=>{
-    const profit=p.sellPrice-p.buyPrice;
-    tb.innerHTML+=`
-    <tr class="${i===0?'top-pick-row':''}">
-      <td>${p.name} ${i===0?'<span class="badge top">TOP</span>':''}</td>
-      <td>$${p.buyPrice}</td>
-      <td>${p.source}</td>
-      <td>$${p.sellPrice}</td>
-      <td class="green">+$${profit}</td>
-      <td><span class="badge ai">${ai(p)}</span></td>
-      <td><button onclick="toggleWatch('${p.name}')">${watchlist.includes(p.name)?"★":"☆"}</button></td>
-      <td><button class="buy-btn" onclick='trackClick(${JSON.stringify(p)})'>Buy</button></td>
-    </tr>`;
+  const tb = document.getElementById("tableBody");
+  tb.innerHTML = "";
+
+  const cat = categoryFilter.value;
+  const src = sourceFilter.value;
+
+  products.forEach((p,i)=>{
+    if ((cat !== "all" && p.category !== cat) ||
+        (src !== "all" && p.source !== src)) return;
+
+    tb.innerHTML += `
+      <tr>
+        <td>${p.name}<br><small>${p.category} · ${p.source}</small></td>
+        <td>$${p.price}</td>
+        <td>$${p.marketPrice}</td>
+        <td><span class="badge green">-${discount(p)}%</span></td>
+        <td>${badgeShipping(p.shipping)}</td>
+        <td>${badgeReturns(p.returns)}</td>
+        <td><span class="badge blue">${p.trust}</span></td>
+        <td><b>$${earn(p)}</b></td>
+        <td><button class="buy-btn" onclick="track(${i})">Buy</button></td>
+      </tr>
+    `;
   });
-  updateStats();
-}
 
-/* ===== SCAN STATUS ===== */
-setTimeout(()=>{
-  scanStatus.innerText="✅ Updated just now";
-  let mins=1;
-  setInterval(()=>{
-    scanStatus.innerText=`✅ Updated ${mins++} min ago`;
-  },60000);
-},1500);
-
-function enterApp(){
-  landing.style.display="none";
-  app.style.display="block";
+  renderStats();
 }
 
 render();
