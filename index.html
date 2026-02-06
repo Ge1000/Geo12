@@ -62,10 +62,15 @@
       background: #1d2245;
       font-weight: 600;
       cursor: pointer;
+      user-select: none;
     }
 
     th:hover { background: #242a55; }
     tr:hover { background: #1b2050; }
+
+    @media (max-width: 480px) {
+      th { position: sticky; top: 0; z-index: 2; }
+    }
 
     .green { color: #5dff9b; }
     .yellow { color: #ffd45d; }
@@ -115,14 +120,68 @@
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
+
+    .empty {
+      text-align: center;
+      padding: 30px;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
+    /* Landing */
+    #landing {
+      max-width: 700px;
+      margin: 60px auto;
+      text-align: center;
+    }
+
+    #app { display: none; }
+
+    .cta {
+      font-size: 18px;
+      margin-top: 20px;
+      padding: 14px 22px;
+      background: #22c55e;
+      color: #000;
+    }
+
+    .saved {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 
 <body>
 
+<!-- PUBLIC LANDING PAGE -->
+<div id="landing">
+  <h1>DealScope</h1>
+  <p class="subtitle">
+    AI-assisted scanner for underpriced digital products.<br>
+    Spot flips, compare margins, track opportunities.
+  </p>
+  <button class="cta" onclick="enterApp()">Launch Scanner</button>
+  <p class="status">No signup · Demo data · Information only</p>
+</div>
+
+<!-- APP -->
+<div id="app">
+
 <h1>DealScope</h1>
 <div class="subtitle">Underpriced digital products – scanned & compared</div>
-<div class="status" id="scannerStatus">🔄 Scanner loading…</div>
+<div class="status" id="scannerStatus">🔄 Initializing multi-source scan…</div>
+
+<!-- SAVED VIEWS -->
+<div class="saved">
+  <input id="viewName" placeholder="Save view name">
+  <button onclick="saveView()">Save View</button>
+  <select id="savedViews" onchange="loadView(this.value)">
+    <option value="">Saved views</option>
+  </select>
+</div>
 
 <div class="filters">
   <input type="number" id="minProfit" placeholder="Min profit ($)">
@@ -131,6 +190,8 @@
     <option value="">All sources</option>
     <option>AppSumo</option>
     <option>Gumroad</option>
+    <option>ProductHunt</option>
+    <option>IndieHackers</option>
   </select>
   <button onclick="exportCSV()">Export CSV</button>
 </div>
@@ -139,13 +200,13 @@
 <table>
   <thead>
     <tr>
-      <th onclick="sortBy('name')">Product</th>
-      <th onclick="sortBy('buyPrice')">Buy</th>
-      <th onclick="sortBy('source')">Source</th>
-      <th onclick="sortBy('sellPrice')">Sell</th>
-      <th onclick="sortBy('profit')">Profit</th>
-      <th onclick="sortBy('risk')">Risk</th>
-      <th onclick="sortBy('ai')">AI</th>
+      <th onclick="sortBy('name')">Product <span id="s-name"></span></th>
+      <th onclick="sortBy('buyPrice')">Buy <span id="s-buyPrice"></span></th>
+      <th onclick="sortBy('source')">Source <span id="s-source"></span></th>
+      <th onclick="sortBy('sellPrice')">Sell <span id="s-sellPrice"></span></th>
+      <th onclick="sortBy('profit')">Profit <span id="s-profit"></span></th>
+      <th onclick="sortBy('risk')">Risk <span id="s-risk"></span></th>
+      <th onclick="sortBy('ai')">AI <span id="s-ai"></span></th>
       <th>⭐</th>
       <th></th>
     </tr>
@@ -156,29 +217,44 @@
 
 <footer>Information only. No financial or investment advice.</footer>
 
+</div>
+
 <div class="modal" id="modal">
   <div class="modal-content" id="modalContent"></div>
 </div>
 
 <script>
+/* ================= EXISTING CORE ================= */
+
 const products = [
   { name: "AI SEO Toolkit", buyPrice: 49, source: "AppSumo", sellPrice: 99 },
   { name: "Email Cleaner Pro", buyPrice: 29, source: "Gumroad", sellPrice: 79 },
-  { name: "Landing Page Builder", buyPrice: 59, source: "AppSumo", sellPrice: 149 },
-  { name: "Analytics Dashboard", buyPrice: 39, source: "Gumroad", sellPrice: 59 }
+  { name: "Landing Page Builder", buyPrice: 59, source: "ProductHunt", sellPrice: 149 },
+  { name: "Analytics Dashboard", buyPrice: 39, source: "IndieHackers", sellPrice: 59 }
 ];
 
-const trustMap = { AppSumo: 0.9, Gumroad: 0.8 };
+const trustMap = {
+  AppSumo: 0.9,
+  Gumroad: 0.8,
+  ProductHunt: 0.7,
+  IndieHackers: 0.75
+};
+
 let watchlist = JSON.parse(localStorage.getItem("watchlist") || "[]");
+let savedViews = JSON.parse(localStorage.getItem("savedViews") || "{}");
+
 let sortKey = null;
 let sortDir = 1;
 let lastUpdate = Date.now();
 
+const minProfitInput = document.getElementById("minProfit");
+const minRiskInput = document.getElementById("minRisk");
+const sourceFilter = document.getElementById("sourceFilter");
+
 function riskScore(p) {
   const profit = p.sellPrice - p.buyPrice;
   const margin = profit / p.buyPrice;
-  const trust = trustMap[p.source] || 0.6;
-  return Math.min(100, Math.floor(margin * 60 + trust * 40));
+  return Math.min(100, Math.floor(margin * 60 + (trustMap[p.source]||0.6) * 40));
 }
 
 function aiSignal(p) {
@@ -199,37 +275,6 @@ function toggleWatch(name) {
   render();
 }
 
-function showDetails(p) {
-  const profit = p.sellPrice - p.buyPrice;
-  const margin = Math.round((profit / p.buyPrice) * 100);
-  const risk = riskScore(p);
-
-  modalContent.innerHTML = `
-    <h3>${p.name}</h3>
-    <p><b>Profit:</b> $${profit}</p>
-    <p><b>Margin:</b> ${margin}%</p>
-    <p><b>Risk score:</b> ${risk}</p>
-    <button onclick="closeModal()">Close</button>
-  `;
-  modal.style.display = "flex";
-}
-
-function closeModal() {
-  modal.style.display = "none";
-}
-
-function exportCSV() {
-  let csv = "Product,Buy,Source,Sell,Profit,Risk\n";
-  products.forEach(p => {
-    csv += `${p.name},${p.buyPrice},${p.source},${p.sellPrice},${p.sellPrice-p.buyPrice},${riskScore(p)}\n`;
-  });
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "dealscope.csv";
-  a.click();
-}
-
 function sortBy(key) {
   sortDir = sortKey === key ? -sortDir : 1;
   sortKey = key;
@@ -240,64 +285,106 @@ function render() {
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
 
-  const minProfit = Number(minProfitInput.value || 0);
-  const minRisk = Number(minRiskInput.value || 0);
-  const source = sourceFilter.value;
-
   let data = products.map(p => ({
     ...p,
     profit: p.sellPrice - p.buyPrice,
     risk: riskScore(p),
     ai: aiSignal(p)
-  }));
-
-  data = data.filter(p =>
-    p.profit >= minProfit &&
-    p.risk >= minRisk &&
-    (!source || p.source === source)
+  })).filter(p =>
+    p.profit >= (minProfitInput.value||0) &&
+    p.risk >= (minRiskInput.value||0) &&
+    (!sourceFilter.value || p.source === sourceFilter.value)
   );
 
   if (sortKey) {
-    data.sort((a,b)=> (a[sortKey] > b[sortKey] ? 1 : -1) * sortDir);
+    data.sort((a,b)=> (a[sortKey]>b[sortKey]?1:-1)*sortDir);
+    document.querySelectorAll("th span").forEach(s=>s.textContent="");
+    document.getElementById("s-"+sortKey).textContent = sortDir===1?" ▲":" ▼";
+  }
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty">
+      No opportunities match your filters.
+    </td></tr>`;
+    return;
   }
 
   data.forEach((p,i)=>{
-    const tr = document.createElement("tr");
-    if (i===0) tr.classList.add("top-pick-row");
-
-    tr.innerHTML = `
-      <td>${p.name} ${i===0?'<span class="badge top">TOP</span>':''}</td>
-      <td>$${p.buyPrice}</td>
-      <td>${p.source}</td>
-      <td>$${p.sellPrice}</td>
-      <td class="green">+$${p.profit}</td>
-      <td><span class="badge ${riskClass(p.risk)}">${p.risk}</span></td>
-      <td><span class="badge ai">${p.ai}</span></td>
-      <td><button onclick="toggleWatch('${p.name}')">${watchlist.includes(p.name)?"★":"☆"}</button></td>
-      <td><button onclick='showDetails(${JSON.stringify(p)})'>View</button></td>
-    `;
-    tbody.appendChild(tr);
+    tbody.innerHTML += `
+      <tr class="${i===0?'top-pick-row':''}">
+        <td>${p.name} ${i===0?'<span class="badge top">TOP</span>':''}</td>
+        <td>$${p.buyPrice}</td>
+        <td>${p.source}</td>
+        <td>$${p.sellPrice}</td>
+        <td class="green">+$${p.profit}</td>
+        <td><span class="badge ${riskClass(p.risk)}">${p.risk}</span></td>
+        <td><span class="badge ai">${p.ai}</span></td>
+        <td><button onclick="toggleWatch('${p.name}')">${watchlist.includes(p.name)?"★":"☆"}</button></td>
+        <td><button onclick='showDetails(${JSON.stringify(p)})'>View</button></td>
+      </tr>`;
   });
 }
 
-/* LIVE FILTER */
-minProfitInput = document.getElementById("minProfit");
-minRiskInput = document.getElementById("minRisk");
-sourceFilter = document.getElementById("sourceFilter");
+/* ================= ADDED FEATURES ================= */
+
+/* Saved Views */
+function saveView() {
+  const name = document.getElementById("viewName").value;
+  if (!name) return;
+  savedViews[name] = {
+    minProfit: minProfitInput.value,
+    minRisk: minRiskInput.value,
+    source: sourceFilter.value,
+    sortKey, sortDir
+  };
+  localStorage.setItem("savedViews", JSON.stringify(savedViews));
+  loadSavedViews();
+}
+
+function loadView(name) {
+  const v = savedViews[name];
+  if (!v) return;
+  minProfitInput.value = v.minProfit;
+  minRiskInput.value = v.minRisk;
+  sourceFilter.value = v.source;
+  sortKey = v.sortKey;
+  sortDir = v.sortDir;
+  render();
+}
+
+function loadSavedViews() {
+  const sel = document.getElementById("savedViews");
+  sel.innerHTML = `<option value="">Saved views</option>`;
+  Object.keys(savedViews).forEach(v=>{
+    sel.innerHTML += `<option>${v}</option>`;
+  });
+}
+
+/* Fake multi-source scan */
+const sources = ["AppSumo","Gumroad","ProductHunt","IndieHackers"];
+let idx = 0;
+setInterval(()=>{
+  document.getElementById("scannerStatus").textContent =
+    `🔍 Scanning ${sources[idx%sources.length]}…`;
+  idx++;
+},1200);
+
+setTimeout(()=>{
+  document.getElementById("scannerStatus").textContent="✅ All sources synced";
+},5000);
+
+/* Landing toggle */
+function enterApp() {
+  document.getElementById("landing").style.display="none";
+  document.getElementById("app").style.display="block";
+}
+
+/* Init */
 [minProfitInput, minRiskInput, sourceFilter].forEach(el =>
   el.addEventListener("input", render)
 );
 
-/* MOCK SCANNER STATUS */
-setTimeout(()=> {
-  document.getElementById("scannerStatus").textContent = "✅ Updated just now";
-  setInterval(()=>{
-    const mins = Math.floor((Date.now()-lastUpdate)/60000);
-    document.getElementById("scannerStatus").textContent =
-      `✅ Updated ${mins} min ago`;
-  },60000);
-},1500);
-
+loadSavedViews();
 render();
 </script>
 
