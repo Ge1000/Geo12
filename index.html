@@ -101,7 +101,7 @@ footer {
 
 <h1>DealScope</h1>
 <div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 Affiliate-quality filter active · No accounts · No tracking users</div>
+<div class="status">🟢 Affiliate-quality filter active · No accounts · No user tracking</div>
 
 <div class="stats" id="stats"></div>
 
@@ -121,7 +121,7 @@ footer {
   <th>Price</th>
   <th>Market</th>
   <th>Discount</th>
-  <th>You earn</th>
+  <th>You earn (affiliate)</th>
   <th>Verdict</th>
   <th>Action</th>
 </tr>
@@ -130,15 +130,13 @@ footer {
 </table>
 
 <footer>
-You earn from vendors via affiliate links · No financial advice
+You earn commission from vendors when users buy · Users never pay extra · No financial advice
 </footer>
 
 <script>
-/* ========= SAFE STATE ========= */
 let clicks = Number(localStorage.getItem("clicks")) || 0;
 let revenue = Number(localStorage.getItem("revenue")) || 0;
 
-/* ========= FEED ========= */
 let feed = [
   { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
   { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
@@ -146,18 +144,15 @@ let feed = [
   { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
 ];
 
-/* ========= HELPERS ========= */
 const discount = p =>
   p.market > 0 ? Math.round((1 - p.price / p.market) * 100) : 0;
 
 const earn = p =>
   +(p.price * p.commission).toFixed(2);
 
-/* ========= AFFILIATE FILTER ========= */
 const isWorthAffiliate = p =>
   earn(p) >= 2 && discount(p) >= 20 && p.trust >= 70;
 
-/* ========= VERDICT ENGINE ========= */
 function verdict(p){
   if(discount(p) >= 40 && earn(p) >= 3 && p.trust >= 85)
     return { text:"WORTH IT", cls:"green" };
@@ -168,7 +163,6 @@ function verdict(p){
   return { text:"SKIP", cls:"red" };
 }
 
-/* ========= WHY THIS DEAL ========= */
 function whyDeal(p){
   let reasons = [];
   if(discount(p) >= 40) reasons.push("big discount");
@@ -178,7 +172,6 @@ function whyDeal(p){
   return "Why this deal: " + reasons.join(", ");
 }
 
-/* ========= TRACK ========= */
 function track(p){
   clicks++;
   revenue += earn(p);
@@ -191,11 +184,10 @@ function track(p){
 function renderStats(){
   document.getElementById("stats").innerHTML = `
     🔗 Clicks: <b>${clicks}</b><br>
-    💰 Estimated revenue: <b>$${revenue.toFixed(2)}</b>
+    💰 Estimated affiliate revenue: <b>$${revenue.toFixed(2)}</b>
   `;
 }
 
-/* ========= SORT + RENDER ========= */
 function applySort(){
   let list = feed.filter(isWorthAffiliate);
   const v = document.getElementById("sortSelect").value;
