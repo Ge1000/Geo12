@@ -16,22 +16,17 @@ body {
 
 h1 { margin-bottom:5px; }
 .subtitle { color:#aaa; margin-bottom:10px; }
+.status { font-size:12px; color:#9ca3af; margin-bottom:15px; }
 
-.status {
-  font-size:12px;
-  color:#9ca3af;
-  margin-bottom:15px;
-}
-
-.filters {
+.controls {
   display:flex;
   gap:10px;
+  margin:15px 0;
   flex-wrap:wrap;
-  margin-bottom:15px;
 }
 
 select {
-  padding:8px 10px;
+  padding:8px;
   border-radius:6px;
   border:none;
 }
@@ -50,10 +45,7 @@ th, td {
   white-space:nowrap;
 }
 
-th {
-  background:#1d2245;
-}
-
+th { background:#1d2245; }
 tr:hover { background:#1b2050; }
 
 .badge {
@@ -97,28 +89,19 @@ footer {
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Universal affiliate deal scanner (Amazon-first)</div>
-<div class="status">✅ Demo · All categories · Affiliate model</div>
-
-<!-- FILTERS (1) -->
-<div class="filters">
-  <select id="categoryFilter" onchange="render()">
-    <option value="all">All categories</option>
-    <option value="Shoes">Shoes</option>
-    <option value="Fashion">Fashion</option>
-    <option value="Electronics">Electronics</option>
-    <option value="Digital">Digital</option>
-  </select>
-
-  <select id="sourceFilter" onchange="render()">
-    <option value="all">All sources</option>
-    <option value="Amazon">Amazon</option>
-    <option value="Zalando">Zalando</option>
-    <option value="AppSumo">AppSumo</option>
-  </select>
-</div>
+<div class="subtitle">Universal affiliate scanner · Feed driven</div>
+<div class="status">🔄 Auto-feed · Product links · Demo mode</div>
 
 <div class="stats" id="stats"></div>
+
+<div class="controls">
+  <select id="sortSelect" onchange="applySort()">
+    <option value="discount">🔥 Best Deal</option>
+    <option value="newest">🆕 Newest</option>
+    <option value="commission">💰 Highest Commission</option>
+    <option value="trust">🛡 Highest Trust</option>
+  </select>
+</div>
 
 <table>
 <thead>
@@ -127,10 +110,8 @@ footer {
   <th>Price</th>
   <th>Market</th>
   <th>Discount</th>
-  <th>Shipping</th>
-  <th>Returns</th>
+  <th>Store</th>
   <th>Trust</th>
-  <th>You earn</th>
   <th>Action</th>
 </tr>
 </thead>
@@ -138,127 +119,113 @@ footer {
 </table>
 
 <footer>
-Some links are affiliate links. Information only. No financial advice.
+Affiliate links · Information only · No financial advice
 </footer>
 
 <script>
-/* ========= PRODUCTS (2) ========= */
+/* ===== AWIN CONFIG ===== */
+const AWIN_ID = "YOUR_AWIN_ID";
 
-const products = [
+function buildAffiliateLink(url){
+  return "https://www.awin1.com/cread.php?awinaffid="
+    + AWIN_ID + "&ued=" + encodeURIComponent(url);
+}
+
+/* ===== FEED (SIMULATED – READY FOR REAL) ===== */
+let feed = [
   {
+    id:1,
     name:"Nike Air Zoom Pegasus",
     price:89,
-    marketPrice:129,
-    category:"Shoes",
-    source:"Amazon",
-    affiliate:"https://www.amazon.com/?tag=dealscope-20",
-    shipping:"Fast",
-    returns:"Easy",
+    market:129,
+    store:"Nike",
     trust:95,
-    commission:0.04
+    commission:0.04,
+    url:"https://nike.com/pegasus"
   },
   {
+    id:2,
     name:"Oversized Hoodie",
     price:39,
-    marketPrice:69,
-    category:"Fashion",
-    source:"Zalando",
-    affiliate:"https://www.zalando.com",
-    shipping:"Standard",
-    returns:"Easy",
+    market:69,
+    store:"Zalando",
     trust:90,
-    commission:0.08
+    commission:0.08,
+    url:"https://zalando.com/hoodie"
   },
   {
+    id:3,
     name:"Wireless Headphones",
     price:59,
-    marketPrice:99,
-    category:"Electronics",
-    source:"Amazon",
-    affiliate:"https://www.amazon.com/?tag=dealscope-20",
-    shipping:"Fast",
-    returns:"Easy",
+    market:99,
+    store:"Amazon",
     trust:92,
-    commission:0.04
+    commission:0.04,
+    url:"https://amazon.com/headphones"
   },
   {
+    id:4,
     name:"AI SEO Toolkit",
     price:49,
-    marketPrice:99,
-    category:"Digital",
-    source:"AppSumo",
-    affiliate:"https://appsumo.com/?ref=dealscope",
-    shipping:"Instant",
-    returns:"Limited",
+    market:99,
+    store:"AppSumo",
     trust:80,
-    commission:0.30
+    commission:0.30,
+    url:"https://appsumo.com"
   }
 ];
 
-/* ========= TRACKING (3) ========= */
-
+/* ===== TRACKING ===== */
 let clicks = Number(localStorage.getItem("clicks") || 0);
 let revenue = Number(localStorage.getItem("revenue") || 0);
 
 function discount(p){
-  return Math.round((1 - p.price / p.marketPrice) * 100);
+  return Math.round((1 - p.price / p.market) * 100);
 }
 
-function badgeShipping(s){
-  return s === "Fast" || s === "Instant"
-    ? `<span class="badge green">${s}</span>`
-    : `<span class="badge blue">${s}</span>`;
-}
-
-function badgeReturns(r){
-  return r === "Easy"
-    ? `<span class="badge green">Easy</span>`
-    : `<span class="badge yellow">Limited</span>`;
-}
-
-function earn(p){
-  return (p.price * p.commission).toFixed(2);
-}
-
-function track(index){
-  const p = products[index];
+function track(p){
   clicks++;
   revenue += p.price * p.commission;
   localStorage.setItem("clicks", clicks);
   localStorage.setItem("revenue", revenue);
   renderStats();
-  window.open(p.affiliate, "_blank");
+  window.open(buildAffiliateLink(p.url), "_blank");
 }
 
 function renderStats(){
   document.getElementById("stats").innerHTML = `
-    🔗 Total clicks: <b>${clicks}</b><br>
-    💰 Estimated earnings: <b>$${revenue.toFixed(2)}</b>
+    🔗 Clicks: <b>${clicks}</b><br>
+    💰 Estimated revenue: <b>$${revenue.toFixed(2)}</b>
   `;
 }
 
+/* ===== SORTING ===== */
+function applySort(){
+  const v = document.getElementById("sortSelect").value;
+
+  if(v==="discount") feed.sort((a,b)=>discount(b)-discount(a));
+  if(v==="commission") feed.sort((a,b)=>b.commission-a.commission);
+  if(v==="trust") feed.sort((a,b)=>b.trust-a.trust);
+  if(v==="newest") feed.sort((a,b)=>b.id-a.id);
+
+  render();
+}
+
+/* ===== RENDER ===== */
 function render(){
-  const tb = document.getElementById("tableBody");
-  tb.innerHTML = "";
+  const tb=document.getElementById("tableBody");
+  tb.innerHTML="";
 
-  const cat = categoryFilter.value;
-  const src = sourceFilter.value;
-
-  products.forEach((p,i)=>{
-    if ((cat !== "all" && p.category !== cat) ||
-        (src !== "all" && p.source !== src)) return;
-
-    tb.innerHTML += `
+  feed.forEach(p=>{
+    tb.innerHTML+=`
       <tr>
-        <td>${p.name}<br><small>${p.category} · ${p.source}</small></td>
+        <td>${p.name}<br><small>${p.store}</small></td>
         <td>$${p.price}</td>
-        <td>$${p.marketPrice}</td>
+        <td>$${p.market}</td>
         <td><span class="badge green">-${discount(p)}%</span></td>
-        <td>${badgeShipping(p.shipping)}</td>
-        <td>${badgeReturns(p.returns)}</td>
+        <td>${p.store}</td>
         <td><span class="badge blue">${p.trust}</span></td>
-        <td><b>$${earn(p)}</b></td>
-        <td><button class="buy-btn" onclick="track(${i})">Buy</button></td>
+        <td><button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button></td>
       </tr>
     `;
   });
@@ -266,7 +233,7 @@ function render(){
   renderStats();
 }
 
-render();
+applySort();
 </script>
 
 </body>
