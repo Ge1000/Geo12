@@ -59,13 +59,14 @@ tr:hover { background:#1b2050; }
   padding:4px 8px;
   border-radius:6px;
   font-size:12px;
-  font-weight:600;
+  font-weight:700;
   display:inline-block;
 }
 
 .badge.green { background:#22c55e; color:#000; }
 .badge.blue { background:#2563eb; }
 .badge.orange { background:#f97316; color:#000; }
+.badge.red { background:#dc2626; }
 
 .buy-btn {
   background:#22c55e;
@@ -83,6 +84,10 @@ tr:hover { background:#1b2050; }
   margin-top:6px;
 }
 
+.verdict {
+  margin-top:6px;
+}
+
 footer {
   margin-top:30px;
   font-size:12px;
@@ -96,7 +101,7 @@ footer {
 
 <h1>DealScope</h1>
 <div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 Updated just now · Affiliate-quality filter active</div>
+<div class="status">🟢 Affiliate-quality filter active · No accounts · No tracking users</div>
 
 <div class="stats" id="stats"></div>
 
@@ -117,7 +122,7 @@ footer {
   <th>Market</th>
   <th>Discount</th>
   <th>You earn</th>
-  <th>Trust</th>
+  <th>Verdict</th>
   <th>Action</th>
 </tr>
 </thead>
@@ -125,7 +130,7 @@ footer {
 </table>
 
 <footer>
-Affiliate links · You earn from vendors · No financial advice
+You earn from vendors via affiliate links · No financial advice
 </footer>
 
 <script>
@@ -148,19 +153,28 @@ const discount = p =>
 const earn = p =>
   +(p.price * p.commission).toFixed(2);
 
-/* ========= AFFILIATE QUALITY FILTER ========= */
+/* ========= AFFILIATE FILTER ========= */
 const isWorthAffiliate = p =>
-  earn(p) >= 2 &&
-  discount(p) >= 20 &&
-  p.trust >= 70;
+  earn(p) >= 2 && discount(p) >= 20 && p.trust >= 70;
+
+/* ========= VERDICT ENGINE ========= */
+function verdict(p){
+  if(discount(p) >= 40 && earn(p) >= 3 && p.trust >= 85)
+    return { text:"WORTH IT", cls:"green" };
+
+  if(discount(p) >= 25 && earn(p) >= 2)
+    return { text:"OK DEAL", cls:"orange" };
+
+  return { text:"SKIP", cls:"red" };
+}
 
 /* ========= WHY THIS DEAL ========= */
 function whyDeal(p){
   let reasons = [];
-  if(discount(p) >= 40) reasons.push("big discount vs market price");
-  if(p.commission >= 0.1) reasons.push("high affiliate commission");
+  if(discount(p) >= 40) reasons.push("big discount");
+  if(p.commission >= 0.1) reasons.push("high commission");
   if(p.trust >= 90) reasons.push("trusted brand");
-  if(reasons.length === 0) reasons.push("balanced price & commission");
+  if(reasons.length === 0) reasons.push("balanced value");
   return "Why this deal: " + reasons.join(", ");
 }
 
@@ -181,16 +195,17 @@ function renderStats(){
   `;
 }
 
+/* ========= SORT + RENDER ========= */
 function applySort(){
-  let filtered = feed.filter(isWorthAffiliate);
+  let list = feed.filter(isWorthAffiliate);
   const v = document.getElementById("sortSelect").value;
 
-  if(v==="earn") filtered.sort((a,b)=>earn(b)-earn(a));
-  if(v==="discount") filtered.sort((a,b)=>discount(b)-discount(a));
-  if(v==="commission") filtered.sort((a,b)=>b.commission-a.commission);
-  if(v==="trust") filtered.sort((a,b)=>b.trust-a.trust);
+  if(v==="earn") list.sort((a,b)=>earn(b)-earn(a));
+  if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
+  if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
+  if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
 
-  render(filtered);
+  render(list);
 }
 
 function render(list){
@@ -198,6 +213,7 @@ function render(list){
   tb.innerHTML = "";
 
   list.forEach(p=>{
+    const v = verdict(p);
     tb.innerHTML += `
       <tr>
         <td>
@@ -209,7 +225,9 @@ function render(list){
         <td>$${p.market}</td>
         <td><span class="badge green">-${discount(p)}%</span></td>
         <td><b>$${earn(p)}</b></td>
-        <td><span class="badge blue">${p.trust}</span></td>
+        <td class="verdict">
+          <span class="badge ${v.cls}">${v.text}</span>
+        </td>
         <td>
           <button class="buy-btn" onclick='track(${JSON.stringify(p)})'>
             Buy
