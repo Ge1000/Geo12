@@ -31,14 +31,6 @@ select {
   border:none;
 }
 
-.stats {
-  margin:15px 0;
-  padding:14px;
-  background:#161a33;
-  border-radius:10px;
-  display:none;
-}
-
 table {
   width:100%;
   border-collapse:collapse;
@@ -91,22 +83,41 @@ footer {
   text-align:center;
   line-height:1.5;
 }
+
+/* Cookie banner */
+#cookie {
+  position:fixed;
+  bottom:10px;
+  left:10px;
+  right:10px;
+  background:#161a33;
+  padding:12px;
+  border-radius:10px;
+  font-size:12px;
+  display:none;
+}
+#cookie button {
+  margin-top:6px;
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  background:#22c55e;
+  font-weight:700;
+}
 </style>
 </head>
 
 <body>
 
-<h1>DealScope</h1>
-<div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 Algorithmic verdict active · No accounts · No user tracking</div>
-
-<div class="stats" id="stats"></div>
+<h1 id="t-title">DealScope</h1>
+<div class="subtitle" id="t-subtitle">Universal affiliate scanner · Auto-feed engine</div>
+<div class="status" id="t-status">🟢 Algorithmic verdict active · No accounts · No user tracking</div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
-    <option value="ai">🧠 Best AI verdict</option>
+    <option value="earn">🧠 Best AI verdict</option>
     <option value="discount">🔥 Best discount</option>
-    <option value="commission">📈 Highest commission rate</option>
+    <option value="commission">📈 Highest commission</option>
     <option value="trust">🛡 Highest trust</option>
   </select>
 
@@ -120,12 +131,12 @@ footer {
 <table>
 <thead>
 <tr>
-  <th>Product</th>
-  <th>Price</th>
-  <th>Market</th>
-  <th>Discount</th>
-  <th>Verdict</th>
-  <th>Action</th>
+  <th id="t-product">Product</th>
+  <th id="t-price">Price</th>
+  <th id="t-market">Market</th>
+  <th id="t-discount">Discount</th>
+  <th id="t-verdict">Verdict</th>
+  <th id="t-action">Action</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -135,81 +146,109 @@ footer {
 <strong>Affiliate disclosure (UK/EU):</strong><br>
 DealScope may earn a commission from merchants when users click and purchase via affiliate links.
 Users never pay extra. Prices shown are estimates only.<br><br>
-Verdicts are generated algorithmically based on price, discount and merchant trust.
 This website does not provide financial or purchasing advice.
 </footer>
 
-<script>
-/* ------------------ Admin mode ------------------ */
-const isAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
-if(isAdmin) document.getElementById("stats").style.display = "block";
+<div id="cookie">
+This site uses only essential cookies for language & currency.
+<button onclick="acceptCookie()">OK</button>
+</div>
 
-/* ------------------ Currency ------------------ */
+<script>
+/* ------------------ 1. LANGUAGE (EN / FR / DE) ------------------ */
+const lang = (navigator.language || "en").slice(0,2);
+const i18n = {
+  en:{
+    product:"Product", price:"Price", market:"Market",
+    discount:"Discount", verdict:"Verdict", action:"Action"
+  },
+  fr:{
+    product:"Produit", price:"Prix", market:"Marché",
+    discount:"Remise", verdict:"Verdict", action:"Action"
+  },
+  de:{
+    product:"Produkt", price:"Preis", market:"Markt",
+    discount:"Rabatt", verdict:"Bewertung", action:"Aktion"
+  }
+};
+const t = i18n[lang] || i18n.en;
+Object.keys(t).forEach(k=>{
+  const el=document.getElementById("t-"+k);
+  if(el) el.innerText=t[k];
+});
+
+/* ------------------ 2. GEO LOGIC (currency + language only) ------------------ */
 const rates = { USD:1, EUR:0.92, GBP:0.79 };
 const symbols = { USD:"$", EUR:"€", GBP:"£" };
 
-let currency = localStorage.getItem("currency") || autoCurrency();
-
 function autoCurrency(){
-  const lang = navigator.language || "";
-  if(lang.includes("en-GB")) return "GBP";
-  if(lang.startsWith("en")) return "USD";
-  if(lang.match(/de|fr|it|es/)) return "EUR";
+  if(lang==="de"||lang==="fr") return "EUR";
+  if(navigator.language.includes("en-GB")) return "GBP";
   return "USD";
 }
 
+let currency = localStorage.getItem("currency") || autoCurrency();
+document.getElementById("currencySelect").value = currency;
+
 function setCurrency(c){
-  currency = c;
-  localStorage.setItem("currency", c);
+  currency=c;
+  localStorage.setItem("currency",c);
   applySort();
 }
+const fx=v=>(v*rates[currency]).toFixed(2);
 
-document.getElementById("currencySelect").value = currency;
-const fx = v => (v * rates[currency]).toFixed(2);
-
-/* ------------------ Data ------------------ */
-let feed = [
-  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
-  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
-  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
-  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
-];
-
-const discount = p => Math.round((1 - p.price / p.market) * 100);
-
-/* ------------------ AI Scoring (hidden) ------------------ */
-function aiScore(p){
-  let score = 0;
-  score += Math.min(discount(p),50) * 0.8;
-  score += p.trust * 0.4;
-  score += Math.min(p.commission * 100,30) * 0.3;
-  return Math.round(score);
+/* ------------------ 3. PRIVACY / COOKIE MINIMAL ------------------ */
+if(!localStorage.getItem("cookie-ok")){
+  document.getElementById("cookie").style.display="block";
+}
+function acceptCookie(){
+  localStorage.setItem("cookie-ok","1");
+  document.getElementById("cookie").style.display="none";
 }
 
-/* ------------------ Verdict ------------------ */
+/* ------------------ A/B Verdict ------------------ */
+let verdictVariant=localStorage.getItem("verdictVariant");
+if(!verdictVariant){
+  verdictVariant=Math.random()<0.5?"A":"B";
+  localStorage.setItem("verdictVariant",verdictVariant);
+}
+
+/* ------------------ DATA ------------------ */
+let feed=[
+ { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com"},
+ { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com"},
+ { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com"},
+ { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com"}
+];
+
+const discount=p=>Math.round((1-p.price/p.market)*100);
+const earn=p=>+(p.price*p.commission).toFixed(2);
+const isWorthAffiliate=p=>earn(p)>=2 && discount(p)>=20 && p.trust>=70;
+
+/* ------------------ VERDICT AI ------------------ */
 function verdict(p){
-  const s = aiScore(p);
-  if(s >= 80) return { text:"WORTH IT", cls:"green" };
-  if(s >= 60) return { text:"OK DEAL", cls:"orange" };
-  return { text:"SKIP", cls:"red" };
+  let base="low";
+  if(discount(p)>=40 && earn(p)>=3 && p.trust>=85) base="high";
+  else if(discount(p)>=25 && earn(p)>=2) base="mid";
+
+  const map={
+    A:{high:"WORTH IT",mid:"OK DEAL",low:"SKIP"},
+    B:{high:"STRONG VALUE",mid:"FAIR DEAL",low:"LOW VALUE"}
+  };
+  const cls={high:"green",mid:"orange",low:"red"};
+  return {text:map[verdictVariant][base],cls:cls[base]};
 }
 
 function whyDeal(p){
   let r=[];
-  if(discount(p)>=30) r.push("strong discount");
+  if(discount(p)>=40) r.push("strong discount");
   if(p.trust>=90) r.push("trusted merchant");
-  if(p.commission>=0.1) r.push("market-aligned incentive");
-  return "Why this verdict: " + (r.join(", ") || "balanced evaluation");
+  return "Why this verdict: "+(r.join(", ")||"balanced value");
 }
 
-/* ------------------ Render ------------------ */
+/* ------------------ RENDER ------------------ */
 function applySort(){
-  let list=[...feed];
-  const v=document.getElementById("sortSelect").value;
-  if(v==="ai") list.sort((a,b)=>aiScore(b)-aiScore(a));
-  if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
-  if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
-  if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
+  let list=feed.filter(isWorthAffiliate);
   render(list);
 }
 
@@ -220,7 +259,8 @@ function render(list){
     const v=verdict(p);
     tb.innerHTML+=`
     <tr>
-      <td><b>${p.name}</b><br><small>${p.store}</small><div class="why">${whyDeal(p)}</div></td>
+      <td><b>${p.name}</b><br><small>${p.store}</small>
+      <div class="why">${whyDeal(p)}</div></td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
