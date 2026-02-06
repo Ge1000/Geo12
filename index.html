@@ -14,14 +14,8 @@
       padding: 20px;
     }
 
-    h1 {
-      margin-bottom: 5px;
-    }
-
-    .subtitle {
-      color: #aaa;
-      margin-bottom: 20px;
-    }
+    h1 { margin-bottom: 5px; }
+    .subtitle { color: #aaa; margin-bottom: 20px; }
 
     .filters {
       display: flex;
@@ -57,14 +51,8 @@
       border-bottom: 1px solid #2a2f55;
     }
 
-    th {
-      background: #1d2245;
-      font-weight: 600;
-    }
-
-    tr:hover {
-      background: #1b2050;
-    }
+    th { background: #1d2245; font-weight: 600; }
+    tr:hover { background: #1b2050; }
 
     .green { color: #5dff9b; }
     .yellow { color: #ffd45d; }
@@ -81,6 +69,38 @@
     .badge.yellow { background: #6f5a1e; }
     .badge.red { background: #6f1e1e; }
 
+    .top-pick-row {
+      background: rgba(93,255,155,0.12);
+    }
+
+    .top-pick-badge {
+      background: #22c55e;
+      color: #000;
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      margin-left: 6px;
+      font-weight: bold;
+    }
+
+    /* MODAL */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: #161a33;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
+    }
+
     footer {
       margin-top: 30px;
       color: #777;
@@ -89,12 +109,11 @@
     }
   </style>
 </head>
+
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">
-  Underpriced digital products – scanned & compared
-</div>
+<div class="subtitle">Underpriced digital products – scanned & compared</div>
 
 <div class="filters">
   <input type="number" id="minProfit" placeholder="Min profit ($)">
@@ -116,6 +135,7 @@
       <th>Sell</th>
       <th>Profit</th>
       <th>Risk</th>
+      <th></th>
     </tr>
   </thead>
   <tbody id="tableBody"></tbody>
@@ -125,45 +145,23 @@
   Information only. No financial or investment advice.
 </footer>
 
+<div class="modal" id="modal">
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
 <script>
-  // MOCK DATA (exact ce va veni din scanner mai târziu)
   const products = [
-    {
-      name: "AI SEO Toolkit",
-      buyPrice: 49,
-      source: "AppSumo",
-      sellPrice: 99
-    },
-    {
-      name: "Email Cleaner Pro",
-      buyPrice: 29,
-      source: "Gumroad",
-      sellPrice: 79
-    },
-    {
-      name: "Landing Page Builder",
-      buyPrice: 59,
-      source: "AppSumo",
-      sellPrice: 149
-    },
-    {
-      name: "Analytics Dashboard",
-      buyPrice: 39,
-      source: "Gumroad",
-      sellPrice: 59
-    }
+    { name: "AI SEO Toolkit", buyPrice: 49, source: "AppSumo", sellPrice: 99 },
+    { name: "Email Cleaner Pro", buyPrice: 29, source: "Gumroad", sellPrice: 79 },
+    { name: "Landing Page Builder", buyPrice: 59, source: "AppSumo", sellPrice: 149 },
+    { name: "Analytics Dashboard", buyPrice: 39, source: "Gumroad", sellPrice: 59 }
   ];
 
   function riskScore(p) {
-    let score = 100;
+    const trust = { AppSumo: 0.9, Gumroad: 0.8 }[p.source] || 0.6;
     const profit = p.sellPrice - p.buyPrice;
-    const margin = (profit / p.buyPrice) * 100;
-
-    if (profit < 30) score -= 30;
-    if (margin < 50) score -= 20;
-    if (p.sellPrice > 200) score -= 10;
-
-    return Math.max(0, Math.min(100, score));
+    const margin = profit / p.buyPrice;
+    return Math.min(100, Math.max(0, Math.floor(margin * 60 + trust * 40)));
   }
 
   function riskClass(score) {
@@ -172,32 +170,57 @@
     return "red";
   }
 
-  function render() {
-    const minProfit = Number(document.getElementById("minProfit").value || 0);
-    const minRisk = Number(document.getElementById("minRisk").value || 0);
-    const source = document.getElementById("sourceFilter").value;
+  function showDetails(p, profit, risk) {
+    document.getElementById("modalContent").innerHTML = `
+      <h3>${p.name}</h3>
+      <p>Buy: $${p.buyPrice}</p>
+      <p>Sell: $${p.sellPrice}</p>
+      <p class="green">Profit: +$${profit}</p>
+      <p>Risk score: ${risk}</p>
+      <p><small>Price gap due to platform differences & limited offers.</small></p>
+      <button onclick="closeModal()">Close</button>
+    `;
+    document.getElementById("modal").style.display = "flex";
+  }
 
+  function closeModal() {
+    document.getElementById("modal").style.display = "none";
+  }
+
+  function render() {
     const tbody = document.getElementById("tableBody");
     tbody.innerHTML = "";
+
+    let best = null;
+
+    products.forEach(p => {
+      const profit = p.sellPrice - p.buyPrice;
+      const risk = riskScore(p);
+      const score = profit * 0.6 + risk * 0.4;
+
+      if (!best || score > best.score) {
+        best = { p, profit, risk, score };
+      }
+    });
 
     products.forEach(p => {
       const profit = p.sellPrice - p.buyPrice;
       const risk = riskScore(p);
 
-      if (profit < minProfit) return;
-      if (risk < minRisk) return;
-      if (source && p.source !== source) return;
-
       const tr = document.createElement("tr");
+      if (best && best.p === p) tr.classList.add("top-pick-row");
+
       tr.innerHTML = `
-        <td>${p.name}</td>
+        <td>
+          ${p.name}
+          ${best && best.p === p ? `<span class="top-pick-badge">TOP PICK</span>` : ""}
+        </td>
         <td>$${p.buyPrice}</td>
         <td>${p.source}</td>
         <td>$${p.sellPrice}</td>
         <td class="green">+$${profit}</td>
-        <td>
-          <span class="badge ${riskClass(risk)}">${risk}</span>
-        </td>
+        <td><span class="badge ${riskClass(risk)}">${risk}</span></td>
+        <td><button onclick='showDetails(${JSON.stringify(p)}, ${profit}, ${risk})'>View</button></td>
       `;
       tbody.appendChild(tr);
     });
