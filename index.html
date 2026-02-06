@@ -15,7 +15,13 @@
     }
 
     h1 { margin-bottom: 5px; }
-    .subtitle { color: #aaa; margin-bottom: 20px; }
+    .subtitle { color: #aaa; margin-bottom: 10px; }
+
+    .status {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 15px;
+    }
 
     .filters {
       display: flex;
@@ -52,7 +58,13 @@
       white-space: nowrap;
     }
 
-    th { background: #1d2245; font-weight: 600; }
+    th {
+      background: #1d2245;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    th:hover { background: #242a55; }
     tr:hover { background: #1b2050; }
 
     .green { color: #5dff9b; }
@@ -99,7 +111,6 @@
       width: 100%;
     }
 
-    /* 🔧 FIX MIC – scroll orizontal pe mobil */
     .table-wrap {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -111,6 +122,7 @@
 
 <h1>DealScope</h1>
 <div class="subtitle">Underpriced digital products – scanned & compared</div>
+<div class="status" id="scannerStatus">🔄 Scanner loading…</div>
 
 <div class="filters">
   <input type="number" id="minProfit" placeholder="Min profit ($)">
@@ -120,22 +132,20 @@
     <option>AppSumo</option>
     <option>Gumroad</option>
   </select>
-  <button onclick="render()">Apply filters</button>
   <button onclick="exportCSV()">Export CSV</button>
 </div>
 
-<!-- 🔧 FIX MIC – wrapper pentru tabel -->
 <div class="table-wrap">
 <table>
   <thead>
     <tr>
-      <th>Product</th>
-      <th>Buy</th>
-      <th>Source</th>
-      <th>Sell</th>
-      <th>Profit</th>
-      <th>Risk</th>
-      <th>AI</th>
+      <th onclick="sortBy('name')">Product</th>
+      <th onclick="sortBy('buyPrice')">Buy</th>
+      <th onclick="sortBy('source')">Source</th>
+      <th onclick="sortBy('sellPrice')">Sell</th>
+      <th onclick="sortBy('profit')">Profit</th>
+      <th onclick="sortBy('risk')">Risk</th>
+      <th onclick="sortBy('ai')">AI</th>
       <th>⭐</th>
       <th></th>
     </tr>
@@ -160,6 +170,9 @@ const products = [
 
 const trustMap = { AppSumo: 0.9, Gumroad: 0.8 };
 let watchlist = JSON.parse(localStorage.getItem("watchlist") || "[]");
+let sortKey = null;
+let sortDir = 1;
+let lastUpdate = Date.now();
 
 function riskScore(p) {
   const profit = p.sellPrice - p.buyPrice;
@@ -189,16 +202,13 @@ function toggleWatch(name) {
 function showDetails(p) {
   const profit = p.sellPrice - p.buyPrice;
   const margin = Math.round((profit / p.buyPrice) * 100);
-  const trust = trustMap[p.source] || 0.6;
   const risk = riskScore(p);
 
   modalContent.innerHTML = `
     <h3>${p.name}</h3>
     <p><b>Profit:</b> $${profit}</p>
     <p><b>Margin:</b> ${margin}%</p>
-    <p><b>Source trust:</b> ${trust}</p>
     <p><b>Risk score:</b> ${risk}</p>
-    <p><small>Price gap caused by platform inefficiency.</small></p>
     <button onclick="closeModal()">Close</button>
   `;
   modal.style.display = "flex";
@@ -211,8 +221,7 @@ function closeModal() {
 function exportCSV() {
   let csv = "Product,Buy,Source,Sell,Profit,Risk\n";
   products.forEach(p => {
-    const profit = p.sellPrice - p.buyPrice;
-    csv += `${p.name},${p.buyPrice},${p.source},${p.sellPrice},${profit},${riskScore(p)}\n`;
+    csv += `${p.name},${p.buyPrice},${p.source},${p.sellPrice},${p.sellPrice-p.buyPrice},${riskScore(p)}\n`;
   });
   const blob = new Blob([csv], { type: "text/csv" });
   const a = document.createElement("a");
@@ -221,17 +230,38 @@ function exportCSV() {
   a.click();
 }
 
+function sortBy(key) {
+  sortDir = sortKey === key ? -sortDir : 1;
+  sortKey = key;
+  render();
+}
+
 function render() {
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
 
-  const ranked = [...products].sort((a,b)=>riskScore(b)-riskScore(a));
+  const minProfit = Number(minProfitInput.value || 0);
+  const minRisk = Number(minRiskInput.value || 0);
+  const source = sourceFilter.value;
 
-  ranked.forEach((p,i)=>{
-    const profit = p.sellPrice - p.buyPrice;
-    const risk = riskScore(p);
-    const ai = aiSignal(p);
+  let data = products.map(p => ({
+    ...p,
+    profit: p.sellPrice - p.buyPrice,
+    risk: riskScore(p),
+    ai: aiSignal(p)
+  }));
 
+  data = data.filter(p =>
+    p.profit >= minProfit &&
+    p.risk >= minRisk &&
+    (!source || p.source === source)
+  );
+
+  if (sortKey) {
+    data.sort((a,b)=> (a[sortKey] > b[sortKey] ? 1 : -1) * sortDir);
+  }
+
+  data.forEach((p,i)=>{
     const tr = document.createElement("tr");
     if (i===0) tr.classList.add("top-pick-row");
 
@@ -240,15 +270,33 @@ function render() {
       <td>$${p.buyPrice}</td>
       <td>${p.source}</td>
       <td>$${p.sellPrice}</td>
-      <td class="green">+$${profit}</td>
-      <td><span class="badge ${riskClass(risk)}">${risk}</span></td>
-      <td><span class="badge ai">${ai}</span></td>
+      <td class="green">+$${p.profit}</td>
+      <td><span class="badge ${riskClass(p.risk)}">${p.risk}</span></td>
+      <td><span class="badge ai">${p.ai}</span></td>
       <td><button onclick="toggleWatch('${p.name}')">${watchlist.includes(p.name)?"★":"☆"}</button></td>
       <td><button onclick='showDetails(${JSON.stringify(p)})'>View</button></td>
     `;
     tbody.appendChild(tr);
   });
 }
+
+/* LIVE FILTER */
+minProfitInput = document.getElementById("minProfit");
+minRiskInput = document.getElementById("minRisk");
+sourceFilter = document.getElementById("sourceFilter");
+[minProfitInput, minRiskInput, sourceFilter].forEach(el =>
+  el.addEventListener("input", render)
+);
+
+/* MOCK SCANNER STATUS */
+setTimeout(()=> {
+  document.getElementById("scannerStatus").textContent = "✅ Updated just now";
+  setInterval(()=>{
+    const mins = Math.floor((Date.now()-lastUpdate)/60000);
+    document.getElementById("scannerStatus").textContent =
+      `✅ Updated ${mins} min ago`;
+  },60000);
+},1500);
 
 render();
 </script>
