@@ -1,226 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Planet Turtle</title>
+  <meta charset="UTF-8" />
+  <title>DealScope – Opportunity Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<style>
-:root{
-  --bg:#0e1a1f;
-  --turtle:#6fbf8f;
-  --shell:#4a8f6b;
-  --eye:#1a2e24;
-  --text:#cfe6dc;
-  --soft:rgba(255,255,255,0.08);
-}
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f1220;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
 
-*{box-sizing:border-box}
+    h1 {
+      margin-bottom: 5px;
+    }
 
-body{
-  margin:0;
-  min-height:100svh;
-  background:radial-gradient(circle at top,#243c44,var(--bg));
-  font-family:system-ui;
-  color:var(--text);
-  overflow:hidden;
-}
-.app{
-  min-height:100svh;
-  position:relative;
-  padding-top:env(safe-area-inset-top);
-  box-sizing:border-box;
-}
+    .subtitle {
+      color: #aaa;
+      margin-bottom: 20px;
+    }
 
-/* -------- Turtle -------- */
-.turtle{
-  position:absolute;
-  left:160px;
-  top:50%;
-  transform:translateY(-50%);
-  width:220px;
-  height:140px;
-  animation:float 10s ease-in-out infinite;
-}
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
 
-.shell{
-  position:absolute;
-  width:140px;
-  height:90px;
-  background:var(--shell);
-  border-radius:50%;
-  left:40px;
-  top:30px;
-}
+    input, select, button {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+    }
 
-.body{
-  position:absolute;
-  width:160px;
-  height:80px;
-  background:var(--turtle);
-  border-radius:60px;
-  top:40px;
-  left:20px;
-  animation:breath 6s ease-in-out infinite;
-}
+    button {
+      background: #4f7cff;
+      color: white;
+      cursor: pointer;
+    }
 
-.head{
-  position:absolute;
-  width:50px;
-  height:40px;
-  background:var(--turtle);
-  border-radius:50%;
-  left:-10px;
-  top:50px;
-  transform-origin:right center;
-  transition:transform 1.5s ease;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #161a33;
+      border-radius: 8px;
+      overflow: hidden;
+    }
 
-.eye{
-  position:absolute;
-  width:6px;
-  height:6px;
-  background:var(--eye);
-  border-radius:50%;
-  top:14px;
-  left:12px;
-  animation:blink 8s infinite;
-}
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #2a2f55;
+    }
 
-/* -------- Vertical Indicator (single) -------- */
-.indicator{
-  position:absolute;
-  left:40px;
-  top:50%;
-  transform:translateY(-50%);
-  width:4px;
-  height:180px;
-  background:var(--soft);
-  border-radius:4px;
-  overflow:hidden;
-}
+    th {
+      background: #1d2245;
+      font-weight: 600;
+    }
 
-.indicator-fill{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  height:50%;
-  background:linear-gradient(180deg,#6fbf8f,#a6f0c6);
-  transition:height 2s ease;
-}
+    tr:hover {
+      background: #1b2050;
+    }
 
-/* -------- Text -------- */
-.title{
-  margin-top:16px;
-  margin-left:40px;
-  font-size:16px;
-  opacity:.85;
-}
+    .green { color: #5dff9b; }
+    .yellow { color: #ffd45d; }
+    .red { color: #ff6b6b; }
 
-.subtitle{
-  font-size:13px;
-  opacity:.5;
-}
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
 
-.legal{
-  position:absolute;
-  bottom:12px;
-  right:16px;
-  font-size:10px;
-  opacity:.35;
-}
+    .badge.green { background: #1e6f4a; }
+    .badge.yellow { background: #6f5a1e; }
+    .badge.red { background: #6f1e1e; }
 
-/* -------- States -------- */
-.low .head{transform:rotate(-15deg) translateX(-6px)}
-.mid .head{transform:rotate(0deg)}
-.high .head{transform:rotate(12deg) translateX(6px)}
-
-.sleep .eye{height:2px}
-.scratch .shell{animation:scratch 1.2s ease-in-out infinite}
-
-/* -------- Animations -------- */
-@keyframes float{
-  0%,100%{transform:translate(-50%,-50%) translateY(0)}
-  50%{transform:translate(-50%,-50%) translateY(10px)}
-}
-
-@keyframes breath{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.04)}
-}
-
-@keyframes blink{
-  0%,92%,100%{height:6px}
-  95%{height:1px}
-}
-
-@keyframes scratch{
-  0%{transform:rotate(0deg)}
-  50%{transform:rotate(3deg)}
-  100%{transform:rotate(0deg)}
-}
-</style>
+    footer {
+      margin-top: 30px;
+      color: #777;
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
 </head>
-
 <body>
-<div class="app mid" id="app">
 
-  <div class="title">
-    Planet Turtle<br>
-    <span class="subtitle">A calm visual index</span>
-  </div>
-
-  <div class="indicator">
-    <div class="indicator-fill" id="fill"></div>
-  </div>
-
-  <div class="turtle">
-    <div class="shell"></div>
-    <div class="body"></div>
-    <div class="head"><div class="eye"></div></div>
-  </div>
-
-  <div class="legal">Visual experience · No data · No tracking</div>
-
+<h1>DealScope</h1>
+<div class="subtitle">
+  Underpriced digital products – scanned & compared
 </div>
 
+<div class="filters">
+  <input type="number" id="minProfit" placeholder="Min profit ($)">
+  <input type="number" id="minRisk" placeholder="Min risk score">
+  <select id="sourceFilter">
+    <option value="">All sources</option>
+    <option>AppSumo</option>
+    <option>Gumroad</option>
+  </select>
+  <button onclick="render()">Apply filters</button>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Buy</th>
+      <th>Source</th>
+      <th>Sell</th>
+      <th>Profit</th>
+      <th>Risk</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<footer>
+  Information only. No financial or investment advice.
+</footer>
+
 <script>
-let index=50;
-const app=document.getElementById("app");
-const fill=document.getElementById("fill");
+  // MOCK DATA (exact ce va veni din scanner mai târziu)
+  const products = [
+    {
+      name: "AI SEO Toolkit",
+      buyPrice: 49,
+      source: "AppSumo",
+      sellPrice: 99
+    },
+    {
+      name: "Email Cleaner Pro",
+      buyPrice: 29,
+      source: "Gumroad",
+      sellPrice: 79
+    },
+    {
+      name: "Landing Page Builder",
+      buyPrice: 59,
+      source: "AppSumo",
+      sellPrice: 149
+    },
+    {
+      name: "Analytics Dashboard",
+      buyPrice: 39,
+      source: "Gumroad",
+      sellPrice: 59
+    }
+  ];
 
-function updateIndex(){
-  index+=(Math.random()-.5)*8;
-  index=Math.max(10,Math.min(90,index));
+  function riskScore(p) {
+    let score = 100;
+    const profit = p.sellPrice - p.buyPrice;
+    const margin = (profit / p.buyPrice) * 100;
 
-  app.classList.remove("low","mid","high");
-  if(index<36)app.classList.add("low");
-  else if(index<66)app.classList.add("mid");
-  else app.classList.add("high");
+    if (profit < 30) score -= 30;
+    if (margin < 50) score -= 20;
+    if (p.sellPrice > 200) score -= 10;
 
-  fill.style.height=index+"%";
-}
+    return Math.max(0, Math.min(100, score));
+  }
 
-function randomLife(){
-  app.classList.remove("sleep","scratch");
-  const r=Math.random();
-  if(r<0.25) app.classList.add("sleep");
-  else if(r<0.45) app.classList.add("scratch");
-}
+  function riskClass(score) {
+    if (score >= 80) return "green";
+    if (score >= 50) return "yellow";
+    return "red";
+  }
 
-setInterval(updateIndex,4000);
-setInterval(randomLife,12000);
+  function render() {
+    const minProfit = Number(document.getElementById("minProfit").value || 0);
+    const minRisk = Number(document.getElementById("minRisk").value || 0);
+    const source = document.getElementById("sourceFilter").value;
+
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    products.forEach(p => {
+      const profit = p.sellPrice - p.buyPrice;
+      const risk = riskScore(p);
+
+      if (profit < minProfit) return;
+      if (risk < minRisk) return;
+      if (source && p.source !== source) return;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.name}</td>
+        <td>$${p.buyPrice}</td>
+        <td>${p.source}</td>
+        <td>$${p.sellPrice}</td>
+        <td class="green">+$${profit}</td>
+        <td>
+          <span class="badge ${riskClass(risk)}">${risk}</span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  render();
 </script>
 
-<!--
-DISCLAIMER
-Visual representation of an abstract index only.
-
-PRIVACY
-No data. No tracking.
-
-TERMS
-Artistic experience only.
--->
 </body>
 </html>
