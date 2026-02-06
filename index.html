@@ -5,14 +5,6 @@
 <title>DealScope – Universal Affiliate Scanner</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<!-- ===== SEO & SHARE (POINT 4) ===== -->
-<meta name="description" content="DealScope scans the web for the best affiliate deals in real time. Smart sorting. One click profit." />
-<meta property="og:title" content="DealScope – Best Deals Scanner" />
-<meta property="og:description" content="Auto-feed affiliate deals · Smart ranking · Live clicks tracking" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://dummyimage.com/1200x630/0f1220/22c55e&text=DealScope" />
-<meta name="twitter:card" content="summary_large_image"/>
-
 <style>
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -23,14 +15,13 @@ body {
 }
 
 h1 { margin-bottom:5px; }
-.subtitle { color:#aaa; margin-bottom:10px; }
+.subtitle { color:#aaa; margin-bottom:6px; }
 .status { font-size:12px; color:#9ca3af; margin-bottom:15px; }
 
 .controls {
   display:flex;
   gap:10px;
   margin:15px 0;
-  flex-wrap:wrap;
 }
 
 select {
@@ -39,21 +30,29 @@ select {
   border:none;
 }
 
+.stats {
+  margin:15px 0;
+  padding:14px;
+  background:#161a33;
+  border-radius:10px;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
   background:#161a33;
-  border-radius:10px;
+  border-radius:12px;
   overflow:hidden;
 }
 
 th, td {
   padding:12px;
   border-bottom:1px solid #2a2f55;
-  white-space:nowrap;
+  vertical-align:top;
 }
 
 th { background:#1d2245; }
+
 tr:hover { background:#1b2050; }
 
 .badge {
@@ -66,22 +65,22 @@ tr:hover { background:#1b2050; }
 
 .badge.green { background:#22c55e; color:#000; }
 .badge.blue { background:#2563eb; }
+.badge.orange { background:#f97316; color:#000; }
 
 .buy-btn {
   background:#22c55e;
   color:#000;
   border:none;
-  padding:8px 12px;
+  padding:8px 14px;
   border-radius:6px;
-  font-weight:600;
+  font-weight:700;
   cursor:pointer;
 }
 
-.stats {
-  margin:15px 0;
-  padding:12px;
-  background:#161a33;
-  border-radius:8px;
+.why {
+  font-size:12px;
+  color:#cbd5f5;
+  margin-top:6px;
 }
 
 footer {
@@ -97,16 +96,16 @@ footer {
 
 <h1>DealScope</h1>
 <div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 Updated just now · Auto-scan active</div>
+<div class="status">🟢 Updated just now · Affiliate-quality filter active</div>
 
 <div class="stats" id="stats"></div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
-    <option value="discount">🔥 Best Deal</option>
-    <option value="newest">🆕 Newest</option>
-    <option value="commission">💰 Highest Commission</option>
-    <option value="trust">🛡 Highest Trust</option>
+    <option value="earn">💰 Best for affiliate</option>
+    <option value="discount">🔥 Best discount</option>
+    <option value="commission">📈 Highest commission</option>
+    <option value="trust">🛡 Highest trust</option>
   </select>
 </div>
 
@@ -117,7 +116,7 @@ footer {
   <th>Price</th>
   <th>Market</th>
   <th>Discount</th>
-  <th>Store</th>
+  <th>You earn</th>
   <th>Trust</th>
   <th>Action</th>
 </tr>
@@ -126,49 +125,53 @@ footer {
 </table>
 
 <footer>
-Affiliate links · Information only · No financial advice
+Affiliate links · You earn from vendors · No financial advice
 </footer>
 
 <script>
-/* ===== CONFIG ===== */
-const AWIN_ID = "YOUR_AWIN_ID";
+/* ========= SAFE STATE ========= */
+let clicks = Number(localStorage.getItem("clicks")) || 0;
+let revenue = Number(localStorage.getItem("revenue")) || 0;
 
-/* ===== SAFE STORAGE FIX (NaN KILLER) ===== */
-let clicks = parseInt(localStorage.getItem("clicks"), 10);
-let revenue = parseFloat(localStorage.getItem("revenue"));
-
-if (isNaN(clicks)) clicks = 0;
-if (isNaN(revenue)) revenue = 0;
-
-/* ===== AFFILIATE LINK ===== */
-function buildAffiliateLink(url){
-  return "https://www.awin1.com/cread.php?awinaffid="
-    + AWIN_ID + "&ued=" + encodeURIComponent(url);
-}
-
-/* ===== AUTO-FEED ENGINE (POINT 3) ===== */
-/* ready for real APIs – currently smart demo */
+/* ========= FEED ========= */
 let feed = [
-  { id:1, name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com/pegasus" },
-  { id:2, name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com/hoodie" },
-  { id:3, name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com/headphones" },
-  { id:4, name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
+  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
+  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
+  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
+  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
 ];
 
-/* ===== METRICS ===== */
-function discount(p){
-  return Math.round((1 - p.price / p.market) * 100);
+/* ========= HELPERS ========= */
+const discount = p =>
+  p.market > 0 ? Math.round((1 - p.price / p.market) * 100) : 0;
+
+const earn = p =>
+  +(p.price * p.commission).toFixed(2);
+
+/* ========= AFFILIATE QUALITY FILTER ========= */
+const isWorthAffiliate = p =>
+  earn(p) >= 2 &&
+  discount(p) >= 20 &&
+  p.trust >= 70;
+
+/* ========= WHY THIS DEAL ========= */
+function whyDeal(p){
+  let reasons = [];
+  if(discount(p) >= 40) reasons.push("big discount vs market price");
+  if(p.commission >= 0.1) reasons.push("high affiliate commission");
+  if(p.trust >= 90) reasons.push("trusted brand");
+  if(reasons.length === 0) reasons.push("balanced price & commission");
+  return "Why this deal: " + reasons.join(", ");
 }
 
+/* ========= TRACK ========= */
 function track(p){
   clicks++;
-  revenue += p.price * p.commission;
-
+  revenue += earn(p);
   localStorage.setItem("clicks", clicks);
   localStorage.setItem("revenue", revenue);
-
   renderStats();
-  window.open(buildAffiliateLink(p.url), "_blank");
+  window.open(p.url, "_blank");
 }
 
 function renderStats(){
@@ -178,33 +181,40 @@ function renderStats(){
   `;
 }
 
-/* ===== SORT ===== */
 function applySort(){
+  let filtered = feed.filter(isWorthAffiliate);
   const v = document.getElementById("sortSelect").value;
 
-  if(v==="discount") feed.sort((a,b)=>discount(b)-discount(a));
-  if(v==="commission") feed.sort((a,b)=>b.commission-a.commission);
-  if(v==="trust") feed.sort((a,b)=>b.trust-a.trust);
-  if(v==="newest") feed.sort((a,b)=>b.id-a.id);
+  if(v==="earn") filtered.sort((a,b)=>earn(b)-earn(a));
+  if(v==="discount") filtered.sort((a,b)=>discount(b)-discount(a));
+  if(v==="commission") filtered.sort((a,b)=>b.commission-a.commission);
+  if(v==="trust") filtered.sort((a,b)=>b.trust-a.trust);
 
-  render();
+  render(filtered);
 }
 
-/* ===== RENDER ===== */
-function render(){
-  const tb=document.getElementById("tableBody");
-  tb.innerHTML="";
+function render(list){
+  const tb = document.getElementById("tableBody");
+  tb.innerHTML = "";
 
-  feed.forEach(p=>{
-    tb.innerHTML+=`
+  list.forEach(p=>{
+    tb.innerHTML += `
       <tr>
-        <td>${p.name}<br><small>${p.store}</small></td>
+        <td>
+          <b>${p.name}</b><br>
+          <small>${p.store}</small>
+          <div class="why">${whyDeal(p)}</div>
+        </td>
         <td>$${p.price}</td>
         <td>$${p.market}</td>
         <td><span class="badge green">-${discount(p)}%</span></td>
-        <td>${p.store}</td>
+        <td><b>$${earn(p)}</b></td>
         <td><span class="badge blue">${p.trust}</span></td>
-        <td><button class="buy-btn" onclick='track(${JSON.stringify(p)})'>Buy</button></td>
+        <td>
+          <button class="buy-btn" onclick='track(${JSON.stringify(p)})'>
+            Buy
+          </button>
+        </td>
       </tr>
     `;
   });
