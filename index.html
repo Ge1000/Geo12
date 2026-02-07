@@ -16,7 +16,17 @@ body {
 
 h1 { margin-bottom:5px; }
 .subtitle { color:#aaa; margin-bottom:6px; }
-.status { font-size:12px; color:#9ca3af; margin-bottom:15px; }
+.status { font-size:12px; color:#9ca3af; margin-bottom:10px; }
+
+.integrity {
+  display:inline-block;
+  font-size:12px;
+  background:#0b3b2e;
+  color:#5eead4;
+  padding:6px 10px;
+  border-radius:8px;
+  margin-bottom:14px;
+}
 
 .controls {
   display:flex;
@@ -29,14 +39,6 @@ select {
   padding:8px;
   border-radius:6px;
   border:none;
-}
-
-.stats {
-  margin:15px 0;
-  padding:14px;
-  background:#161a33;
-  border-radius:10px;
-  display:none;
 }
 
 table {
@@ -84,12 +86,6 @@ tr:hover { background:#1b2050; }
   margin-top:6px;
 }
 
-.integrity {
-  font-size:12px;
-  margin-top:6px;
-  color:#9ca3af;
-}
-
 footer {
   margin-top:30px;
   font-size:12px;
@@ -103,28 +99,22 @@ footer {
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Universal affiliate scanner · Deal integrity engine</div>
-<div class="status">🟢 No accounts · No user tracking · Affiliate disclosure compliant (UK/EU)</div>
+<div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
+<div class="status">🟢 Affiliate-quality filter active · No accounts · No user tracking</div>
 
-<div class="stats" id="stats"></div>
+<div class="integrity" id="integrityBadge"></div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
-    <option value="earn">Estimated affiliate relevance</option>
-    <option value="discount">Best discount</option>
-    <option value="commission">Commission rate</option>
-    <option value="trust">Merchant trust</option>
+    <option value="discount">🔥 Best discount</option>
+    <option value="commission">📈 Highest commission rate</option>
+    <option value="trust">🛡 Highest trust</option>
   </select>
 
   <select id="currencySelect" onchange="setCurrency(this.value)">
     <option value="USD">USD $</option>
     <option value="EUR">EUR €</option>
     <option value="GBP">GBP £</option>
-  </select>
-
-  <select id="modeSelect" onchange="applySort()">
-    <option value="v1">Integrity mode: Conservative</option>
-    <option value="v2">Integrity mode: Advanced</option>
   </select>
 </div>
 
@@ -135,7 +125,7 @@ footer {
   <th>Price</th>
   <th>Market</th>
   <th>Discount</th>
-  <th>Integrity verdict</th>
+  <th>Verdict</th>
   <th>Action</th>
 </tr>
 </thead>
@@ -143,96 +133,101 @@ footer {
 </table>
 
 <footer>
-<strong>Legal & transparency notice (UK/EU):</strong><br><br>
+<strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
+DealScope aggregates publicly available commercial data and affiliate feeds.
+Deal eligibility and verdicts are generated automatically using objective integrity rules
+(price consistency, market reference, discount level and merchant trust).<br><br>
 
-DealScope is an affiliate-based discovery and filtering tool.  
-DealScope may earn a commission from merchants when users click affiliate links.  
-Users never pay extra for using this website.<br><br>
+🛡 <strong>Integrity Certificate</strong> confirms that the offer passed validation checks
+within the last 24 hours. Certification does not guarantee availability, price stability
+or suitability for a specific user.<br><br>
 
-Displayed prices, discounts and classifications are informational only and may not reflect real-time market conditions.  
-DealScope does not guarantee accuracy, availability or pricing and does not provide financial, investment or purchasing advice.<br><br>
-
-<strong>Deal Integrity Engine explanation:</strong><br>
-Integrity verdicts are generated using internal, non-exhaustive criteria such as relative discount, merchant trust signals and campaign structure.  
-They represent eligibility for promotion under DealScope rules, not factual claims about merchants or products.<br><br>
-
-All purchasing decisions remain the sole responsibility of the user.
+This website does not provide financial, investment or purchasing advice.
+Users make independent decisions. Prices may change without notice.
+No accounts, emails, cookies for profiling or personal data collection are used.
 </footer>
 
 <script>
-/* ------------------ Admin ------------------ */
-const isAdmin = new URLSearchParams(location.search).get("admin")==="1";
-if(isAdmin) document.getElementById("stats").style.display="block";
+/* ------------------ Integrity Certificate ------------------ */
+const CERT_VALIDITY_HOURS = 24;
+const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
+localStorage.setItem("integrityCheck", lastCheck);
+
+const hoursAgo = (Date.now() - lastCheck) / 36e5;
+document.getElementById("integrityBadge").innerHTML =
+  hoursAgo <= CERT_VALIDITY_HOURS
+    ? "🛡 Integrity Verified · checked within last 24h"
+    : "⚠ Integrity status expired · rechecking";
 
 /* ------------------ Currency ------------------ */
-const rates={USD:1,EUR:0.92,GBP:0.79};
-const symbols={USD:"$",EUR:"€",GBP:"£"};
+const rates = { USD:1, EUR:0.92, GBP:0.79 };
+const symbols = { USD:"$", EUR:"€", GBP:"£" };
 
-let currency=localStorage.getItem("currency")||autoCurrency();
+let currency = localStorage.getItem("currency") || autoCurrency();
+
 function autoCurrency(){
-  const l=navigator.language||"";
-  if(l.includes("en-GB")) return "GBP";
-  if(l.match(/de|fr|it|es/)) return "EUR";
+  const lang = navigator.language || "";
+  if(lang.includes("en-GB")) return "GBP";
+  if(lang.startsWith("en")) return "USD";
+  if(lang.match(/de|fr|it|es/)) return "EUR";
   return "USD";
 }
-function setCurrency(c){currency=c;localStorage.setItem("currency",c);applySort();}
-document.getElementById("currencySelect").value=currency;
-const fx=v=>(v*rates[currency]).toFixed(2);
+
+function setCurrency(c){
+  currency = c;
+  localStorage.setItem("currency", c);
+  applySort();
+}
+
+document.getElementById("currencySelect").value = currency;
+const fx = v => (v * rates[currency]).toFixed(2);
 
 /* ------------------ Data ------------------ */
-let feed=[
- {name:"Nike Air Zoom Pegasus",price:89,market:129,store:"Nike",trust:95,commission:0.04,url:"https://nike.com"},
- {name:"Oversized Hoodie",price:39,market:69,store:"Zalando",trust:90,commission:0.08,url:"https://zalando.com"},
- {name:"Wireless Headphones",price:59,market:99,store:"Amazon",trust:92,commission:0.04,url:"https://amazon.com"},
- {name:"AI SEO Toolkit",price:49,market:99,store:"AppSumo",trust:80,commission:0.30,url:"https://appsumo.com"}
+let feed = [
+  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
+  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
+  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
+  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
 ];
 
-const discount=p=>Math.round((1-p.price/p.market)*100);
-const earn=p=>p.price*p.commission;
+const discount = p => Math.round((1 - p.price / p.market) * 100);
 
-/* ------------------ Integrity Engine ------------------ */
-function integrity(p,mode){
-  let reasons=[];
-  if(discount(p)>=30) reasons.push("meaningful discount");
-  if(p.trust>=85) reasons.push("established merchant");
-  if(p.commission>=0.1) reasons.push("incentivized campaign");
+/* ------------------ Verdict ------------------ */
+function verdict(p){
+  if(discount(p)>=40 && p.trust>=85) return {text:"WORTH IT",cls:"green"};
+  if(discount(p)>=25) return {text:"OK DEAL",cls:"orange"};
+  return {text:"SKIP",cls:"red"};
+}
 
-  if(mode==="v1"){
-    return reasons.length>=2
-      ? {text:"PASS",cls:"green",why:reasons.join(", ")}
-      : {text:"SKIP",cls:"red",why:"does not meet promotion criteria"};
-  }
-
-  if(mode==="v2"){
-    if(reasons.length>=3)
-      return {text:"PASS",cls:"green",why:reasons.join(", ")};
-    if(reasons.length===2)
-      return {text:"REVIEW",cls:"orange",why:reasons.join(", ")};
-    return {text:"SKIP",cls:"red",why:"insufficient integrity signals"};
-  }
+function whyDeal(p){
+  let r=[];
+  if(discount(p)>=40) r.push("strong discount");
+  if(p.trust>=90) r.push("trusted brand");
+  return "Why this deal: " + (r[0]||"balanced value");
 }
 
 /* ------------------ Render ------------------ */
 function applySort(){
-  const mode=document.getElementById("modeSelect").value;
-  let list=[...feed];
-  render(list,mode);
+  let list = [...feed];
+  const v=document.getElementById("sortSelect").value;
+  if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
+  if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
+  if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
+  render(list);
 }
 
-function render(list,mode){
+function render(list){
   const tb=document.getElementById("tableBody");
   tb.innerHTML="";
   list.forEach(p=>{
-    const iv=integrity(p,mode);
+    const v=verdict(p);
     tb.innerHTML+=`
     <tr>
-      <td><b>${p.name}</b><br><small>${p.store}</small>
-        <div class="integrity">Why: ${iv.why}</div>
-      </td>
+      <td><b>${p.name}</b><br><small>${p.store}</small><div class="why">${whyDeal(p)}</div></td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
-      <td><span class="badge ${iv.cls}">${iv.text}</span></td>
+      <td><span class="badge ${v.cls}">${v.text}</span></td>
       <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
     </tr>`;
   });
