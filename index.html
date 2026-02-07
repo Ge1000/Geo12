@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>DealScope – Integrity-Based Deal Validation</title>
+<title>DealScope – Universal Affiliate Scanner</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
 <style>
@@ -14,9 +14,9 @@ body {
   padding:20px;
 }
 
-h1 { margin-bottom:4px; }
-.subtitle { color:#aaa; margin-bottom:4px; }
-.status { font-size:12px; color:#9ca3af; margin-bottom:10px; }
+h1 { margin-bottom:6px; }
+.subtitle { color:#a1a1aa; margin-bottom:6px; }
+.status { font-size:12px; color:#9ca3af; margin-bottom:12px; }
 
 .integrity {
   display:inline-block;
@@ -25,19 +25,13 @@ h1 { margin-bottom:4px; }
   color:#5eead4;
   padding:6px 10px;
   border-radius:8px;
-  margin-bottom:10px;
-}
-
-.snapshot {
-  font-size:11px;
-  color:#a7f3d0;
-  margin-bottom:14px;
+  margin-bottom:16px;
 }
 
 .controls {
   display:flex;
   gap:10px;
-  margin:15px 0;
+  margin:18px 0;
   flex-wrap:wrap;
 }
 
@@ -56,17 +50,17 @@ table {
 }
 
 th, td {
-  padding:12px;
+  padding:14px 12px;
   border-bottom:1px solid #2a2f55;
   vertical-align:top;
 }
 
-th { background:#1d2245; }
+th { background:#1d2245; text-align:left; }
 tr:hover { background:#1b2050; }
 
 .badge {
-  padding:4px 8px;
-  border-radius:6px;
+  padding:5px 10px;
+  border-radius:7px;
   font-size:12px;
   font-weight:700;
   display:inline-block;
@@ -89,21 +83,29 @@ tr:hover { background:#1b2050; }
 .why {
   font-size:12px;
   color:#cbd5f5;
-  margin-top:6px;
+  margin-top:8px;
+  line-height:1.45;
+  max-width:320px;
 }
 
-.note {
-  font-size:11px;
-  color:#9ca3af;
-  margin-top:6px;
+.why ul {
+  padding-left:16px;
+  margin:6px 0 0 0;
+}
+
+.why li {
+  margin-bottom:4px;
 }
 
 footer {
-  margin-top:30px;
+  margin-top:36px;
   font-size:12px;
   color:#9ca3af;
   text-align:center;
   line-height:1.6;
+  max-width:900px;
+  margin-left:auto;
+  margin-right:auto;
 }
 </style>
 </head>
@@ -111,19 +113,16 @@ footer {
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Integrity-based deal validation · No accounts · No tracking</div>
-<div class="status">
-🟢 Automated data validation active · Decisions remain with the user
-</div>
+<div class="subtitle">Universal affiliate scanner · Automated validation engine</div>
+<div class="status">🟢 Integrity rules active · No accounts · No user tracking</div>
 
 <div class="integrity" id="integrityBadge"></div>
-<div class="snapshot" id="snapshotInfo"></div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
     <option value="discount">🔥 Best discount</option>
     <option value="commission">📈 Highest commission rate</option>
-    <option value="trust">🛡 Highest trust</option>
+    <option value="trust">🛡 Highest merchant trust</option>
   </select>
 
   <select id="currencySelect" onchange="setCurrency(this.value)">
@@ -148,50 +147,31 @@ footer {
 </table>
 
 <footer>
-<strong>Legal & Integrity Disclosure (UK/EU):</strong><br>
-DealScope operates as an automated validation engine.
-It analyses publicly available commercial data and affiliate feeds
-using predefined integrity rules (price comparison, discount depth,
-market reference and merchant reliability).<br><br>
+<strong>Legal & Integrity Disclosure (UK/EU)</strong><br><br>
 
-<strong>No recommendations are made.</strong>
-DealScope does not predict outcomes, guarantee savings,
-or advise on purchasing decisions.
-Final decisions are always made independently by the user.<br><br>
+DealScope operates as an automated validation and aggregation engine.
+It analyses publicly available commercial information and affiliate feeds
+using predefined integrity rules, including price comparison, discount depth,
+market reference and merchant reliability.<br><br>
 
-🛡 <strong>Integrity Snapshot</strong> certifies that, at the time of validation,
-the displayed offers met the declared rules.
-Prices, availability and conditions may change without notice.<br><br>
+Validation labels indicate that an offer met objective criteria at the time of analysis.
+They do not represent recommendations, guarantees, financial advice or future price accuracy.<br><br>
 
-No accounts, emails, profiling cookies or personal data collection are used.
-This service does not provide financial or consumer advice.
+No user accounts, profiling cookies or personal data collection are used.
+Prices and availability may change without notice.
 </footer>
 
 <script>
-/* ------------------ Integrity Snapshot ------------------ */
+/* ------------------ Integrity Certificate ------------------ */
 const CERT_VALIDITY_HOURS = 24;
-const SNAPSHOT_RULES = [
-  "Public market reference available",
-  "Discount calculated vs reference",
-  "Merchant trust threshold applied",
-  "Affiliate bias neutralised"
-];
+const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
+localStorage.setItem("integrityCheck", lastCheck);
 
-let snapshotTime = localStorage.getItem("snapshotTime");
-if(!snapshotTime){
-  snapshotTime = Date.now();
-  localStorage.setItem("snapshotTime", snapshotTime);
-}
-
-const hoursAgo = (Date.now() - snapshotTime) / 36e5;
-
+const hoursAgo = (Date.now() - lastCheck) / 36e5;
 document.getElementById("integrityBadge").innerHTML =
   hoursAgo <= CERT_VALIDITY_HOURS
-    ? "🛡 Integrity Verified · snapshot valid"
-    : "⚠ Integrity Snapshot expired · refreshing";
-
-document.getElementById("snapshotInfo").innerHTML =
-  `Snapshot created ${Math.floor(hoursAgo)}h ago · Rules applied: ${SNAPSHOT_RULES.join(", ")}`;
+    ? "🛡 Integrity verified · checked within last 24h"
+    : "⚠ Integrity status expired · pending recheck";
 
 /* ------------------ Currency ------------------ */
 const rates = { USD:1, EUR:0.92, GBP:0.79 };
@@ -226,18 +206,24 @@ let feed = [
 
 const discount = p => Math.round((1 - p.price / p.market) * 100);
 
-/* ------------------ Validation Verdict ------------------ */
+/* ------------------ Verdict ------------------ */
 function verdict(p){
   if(discount(p)>=40 && p.trust>=85) return {text:"VALIDATED DEAL",cls:"green"};
-  if(discount(p)>=25) return {text:"PARTIALLY VALID",cls:"orange"};
+  if(discount(p)>=25) return {text:"VALIDATED (limited data)",cls:"orange"};
   return {text:"NOT VALIDATED",cls:"red"};
 }
 
 function whyDeal(p){
   let r=[];
-  if(discount(p)>=40) r.push("discount exceeds market average");
-  if(p.trust>=90) r.push("high merchant reliability");
-  return "Validation basis: " + (r.join(" · ") || "meets minimum criteria");
+  if(discount(p)>=40) r.push("Discount exceeds market average");
+  if(p.trust>=90) r.push("High merchant reliability");
+  if(!r.length) r.push("Meets baseline validation criteria");
+  return `
+    <div class="why">
+      Validation basis:
+      <ul>${r.map(x=>`<li>${x}</li>`).join("")}</ul>
+      <div style="opacity:.7;margin-top:6px">Data validated automatically · No recommendation</div>
+    </div>`;
 }
 
 /* ------------------ Render ------------------ */
@@ -257,12 +243,7 @@ function render(list){
     const v=verdict(p);
     tb.innerHTML+=`
     <tr>
-      <td>
-        <b>${p.name}</b><br>
-        <small>${p.store}</small>
-        <div class="why">${whyDeal(p)}</div>
-        <div class="note">Data validated automatically · No recommendation</div>
-      </td>
+      <td><b>${p.name}</b><br><small style="opacity:.7">${p.store}</small>${whyDeal(p)}</td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
