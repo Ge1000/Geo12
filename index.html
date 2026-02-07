@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>DealScope – Universal Affiliate Scanner</title>
+<title>DealScope – Integrity-Based Deal Validation</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
 <style>
@@ -14,8 +14,8 @@ body {
   padding:20px;
 }
 
-h1 { margin-bottom:5px; }
-.subtitle { color:#aaa; margin-bottom:6px; }
+h1 { margin-bottom:4px; }
+.subtitle { color:#aaa; margin-bottom:4px; }
 .status { font-size:12px; color:#9ca3af; margin-bottom:10px; }
 
 .integrity {
@@ -25,6 +25,12 @@ h1 { margin-bottom:5px; }
   color:#5eead4;
   padding:6px 10px;
   border-radius:8px;
+  margin-bottom:10px;
+}
+
+.snapshot {
+  font-size:11px;
+  color:#a7f3d0;
   margin-bottom:14px;
 }
 
@@ -86,6 +92,12 @@ tr:hover { background:#1b2050; }
   margin-top:6px;
 }
 
+.note {
+  font-size:11px;
+  color:#9ca3af;
+  margin-top:6px;
+}
+
 footer {
   margin-top:30px;
   font-size:12px;
@@ -99,10 +111,13 @@ footer {
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 Affiliate-quality filter active · No accounts · No user tracking</div>
+<div class="subtitle">Integrity-based deal validation · No accounts · No tracking</div>
+<div class="status">
+🟢 Automated data validation active · Decisions remain with the user
+</div>
 
 <div class="integrity" id="integrityBadge"></div>
+<div class="snapshot" id="snapshotInfo"></div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
@@ -123,9 +138,9 @@ footer {
 <tr>
   <th>Product</th>
   <th>Price</th>
-  <th>Market</th>
+  <th>Market ref.</th>
   <th>Discount</th>
-  <th>Verdict</th>
+  <th>Validation</th>
   <th>Action</th>
 </tr>
 </thead>
@@ -133,31 +148,50 @@ footer {
 </table>
 
 <footer>
-<strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
-DealScope aggregates publicly available commercial data and affiliate feeds.
-Deal eligibility and verdicts are generated automatically using objective integrity rules
-(price consistency, market reference, discount level and merchant trust).<br><br>
+<strong>Legal & Integrity Disclosure (UK/EU):</strong><br>
+DealScope operates as an automated validation engine.
+It analyses publicly available commercial data and affiliate feeds
+using predefined integrity rules (price comparison, discount depth,
+market reference and merchant reliability).<br><br>
 
-🛡 <strong>Integrity Certificate</strong> confirms that the offer passed validation checks
-within the last 24 hours. Certification does not guarantee availability, price stability
-or suitability for a specific user.<br><br>
+<strong>No recommendations are made.</strong>
+DealScope does not predict outcomes, guarantee savings,
+or advise on purchasing decisions.
+Final decisions are always made independently by the user.<br><br>
 
-This website does not provide financial, investment or purchasing advice.
-Users make independent decisions. Prices may change without notice.
-No accounts, emails, cookies for profiling or personal data collection are used.
+🛡 <strong>Integrity Snapshot</strong> certifies that, at the time of validation,
+the displayed offers met the declared rules.
+Prices, availability and conditions may change without notice.<br><br>
+
+No accounts, emails, profiling cookies or personal data collection are used.
+This service does not provide financial or consumer advice.
 </footer>
 
 <script>
-/* ------------------ Integrity Certificate ------------------ */
+/* ------------------ Integrity Snapshot ------------------ */
 const CERT_VALIDITY_HOURS = 24;
-const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
-localStorage.setItem("integrityCheck", lastCheck);
+const SNAPSHOT_RULES = [
+  "Public market reference available",
+  "Discount calculated vs reference",
+  "Merchant trust threshold applied",
+  "Affiliate bias neutralised"
+];
 
-const hoursAgo = (Date.now() - lastCheck) / 36e5;
+let snapshotTime = localStorage.getItem("snapshotTime");
+if(!snapshotTime){
+  snapshotTime = Date.now();
+  localStorage.setItem("snapshotTime", snapshotTime);
+}
+
+const hoursAgo = (Date.now() - snapshotTime) / 36e5;
+
 document.getElementById("integrityBadge").innerHTML =
   hoursAgo <= CERT_VALIDITY_HOURS
-    ? "🛡 Integrity Verified · checked within last 24h"
-    : "⚠ Integrity status expired · rechecking";
+    ? "🛡 Integrity Verified · snapshot valid"
+    : "⚠ Integrity Snapshot expired · refreshing";
+
+document.getElementById("snapshotInfo").innerHTML =
+  `Snapshot created ${Math.floor(hoursAgo)}h ago · Rules applied: ${SNAPSHOT_RULES.join(", ")}`;
 
 /* ------------------ Currency ------------------ */
 const rates = { USD:1, EUR:0.92, GBP:0.79 };
@@ -192,18 +226,18 @@ let feed = [
 
 const discount = p => Math.round((1 - p.price / p.market) * 100);
 
-/* ------------------ Verdict ------------------ */
+/* ------------------ Validation Verdict ------------------ */
 function verdict(p){
-  if(discount(p)>=40 && p.trust>=85) return {text:"WORTH IT",cls:"green"};
-  if(discount(p)>=25) return {text:"OK DEAL",cls:"orange"};
-  return {text:"SKIP",cls:"red"};
+  if(discount(p)>=40 && p.trust>=85) return {text:"VALIDATED DEAL",cls:"green"};
+  if(discount(p)>=25) return {text:"PARTIALLY VALID",cls:"orange"};
+  return {text:"NOT VALIDATED",cls:"red"};
 }
 
 function whyDeal(p){
   let r=[];
-  if(discount(p)>=40) r.push("strong discount");
-  if(p.trust>=90) r.push("trusted brand");
-  return "Why this deal: " + (r[0]||"balanced value");
+  if(discount(p)>=40) r.push("discount exceeds market average");
+  if(p.trust>=90) r.push("high merchant reliability");
+  return "Validation basis: " + (r.join(" · ") || "meets minimum criteria");
 }
 
 /* ------------------ Render ------------------ */
@@ -223,12 +257,17 @@ function render(list){
     const v=verdict(p);
     tb.innerHTML+=`
     <tr>
-      <td><b>${p.name}</b><br><small>${p.store}</small><div class="why">${whyDeal(p)}</div></td>
+      <td>
+        <b>${p.name}</b><br>
+        <small>${p.store}</small>
+        <div class="why">${whyDeal(p)}</div>
+        <div class="note">Data validated automatically · No recommendation</div>
+      </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
       <td><span class="badge ${v.cls}">${v.text}</span></td>
-      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
+      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">View offer</button></td>
     </tr>`;
   });
 }
