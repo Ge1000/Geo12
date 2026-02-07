@@ -31,6 +31,14 @@ select {
   border:none;
 }
 
+.stats {
+  margin:15px 0;
+  padding:14px;
+  background:#161a33;
+  border-radius:10px;
+  display:none;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
@@ -76,49 +84,36 @@ tr:hover { background:#1b2050; }
   margin-top:6px;
 }
 
+.integrity {
+  font-size:12px;
+  margin-top:6px;
+  color:#9ca3af;
+}
+
 footer {
   margin-top:30px;
   font-size:12px;
   color:#9ca3af;
   text-align:center;
-  line-height:1.5;
-}
-
-/* Cookie banner */
-#cookie {
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  right:10px;
-  background:#161a33;
-  padding:12px;
-  border-radius:10px;
-  font-size:12px;
-  display:none;
-}
-#cookie button {
-  margin-top:6px;
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  background:#22c55e;
-  font-weight:700;
+  line-height:1.6;
 }
 </style>
 </head>
 
 <body>
 
-<h1 id="t-title">DealScope</h1>
-<div class="subtitle" id="t-subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status" id="t-status">🟢 Algorithmic verdict active · No accounts · No user tracking</div>
+<h1>DealScope</h1>
+<div class="subtitle">Universal affiliate scanner · Deal integrity engine</div>
+<div class="status">🟢 No accounts · No user tracking · Affiliate disclosure compliant (UK/EU)</div>
+
+<div class="stats" id="stats"></div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
-    <option value="earn">🧠 Best AI verdict</option>
-    <option value="discount">🔥 Best discount</option>
-    <option value="commission">📈 Highest commission</option>
-    <option value="trust">🛡 Highest trust</option>
+    <option value="earn">Estimated affiliate relevance</option>
+    <option value="discount">Best discount</option>
+    <option value="commission">Commission rate</option>
+    <option value="trust">Merchant trust</option>
   </select>
 
   <select id="currencySelect" onchange="setCurrency(this.value)">
@@ -126,145 +121,118 @@ footer {
     <option value="EUR">EUR €</option>
     <option value="GBP">GBP £</option>
   </select>
+
+  <select id="modeSelect" onchange="applySort()">
+    <option value="v1">Integrity mode: Conservative</option>
+    <option value="v2">Integrity mode: Advanced</option>
+  </select>
 </div>
 
 <table>
 <thead>
 <tr>
-  <th id="t-product">Product</th>
-  <th id="t-price">Price</th>
-  <th id="t-market">Market</th>
-  <th id="t-discount">Discount</th>
-  <th id="t-verdict">Verdict</th>
-  <th id="t-action">Action</th>
+  <th>Product</th>
+  <th>Price</th>
+  <th>Market</th>
+  <th>Discount</th>
+  <th>Integrity verdict</th>
+  <th>Action</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
 
 <footer>
-<strong>Affiliate disclosure (UK/EU):</strong><br>
-DealScope may earn a commission from merchants when users click and purchase via affiliate links.
-Users never pay extra. Prices shown are estimates only.<br><br>
-This website does not provide financial or purchasing advice.
+<strong>Legal & transparency notice (UK/EU):</strong><br><br>
+
+DealScope is an affiliate-based discovery and filtering tool.  
+DealScope may earn a commission from merchants when users click affiliate links.  
+Users never pay extra for using this website.<br><br>
+
+Displayed prices, discounts and classifications are informational only and may not reflect real-time market conditions.  
+DealScope does not guarantee accuracy, availability or pricing and does not provide financial, investment or purchasing advice.<br><br>
+
+<strong>Deal Integrity Engine explanation:</strong><br>
+Integrity verdicts are generated using internal, non-exhaustive criteria such as relative discount, merchant trust signals and campaign structure.  
+They represent eligibility for promotion under DealScope rules, not factual claims about merchants or products.<br><br>
+
+All purchasing decisions remain the sole responsibility of the user.
 </footer>
 
-<div id="cookie">
-This site uses only essential cookies for language & currency.
-<button onclick="acceptCookie()">OK</button>
-</div>
-
 <script>
-/* ------------------ 1. LANGUAGE (EN / FR / DE) ------------------ */
-const lang = (navigator.language || "en").slice(0,2);
-const i18n = {
-  en:{
-    product:"Product", price:"Price", market:"Market",
-    discount:"Discount", verdict:"Verdict", action:"Action"
-  },
-  fr:{
-    product:"Produit", price:"Prix", market:"Marché",
-    discount:"Remise", verdict:"Verdict", action:"Action"
-  },
-  de:{
-    product:"Produkt", price:"Preis", market:"Markt",
-    discount:"Rabatt", verdict:"Bewertung", action:"Aktion"
-  }
-};
-const t = i18n[lang] || i18n.en;
-Object.keys(t).forEach(k=>{
-  const el=document.getElementById("t-"+k);
-  if(el) el.innerText=t[k];
-});
+/* ------------------ Admin ------------------ */
+const isAdmin = new URLSearchParams(location.search).get("admin")==="1";
+if(isAdmin) document.getElementById("stats").style.display="block";
 
-/* ------------------ 2. GEO LOGIC (currency + language only) ------------------ */
-const rates = { USD:1, EUR:0.92, GBP:0.79 };
-const symbols = { USD:"$", EUR:"€", GBP:"£" };
+/* ------------------ Currency ------------------ */
+const rates={USD:1,EUR:0.92,GBP:0.79};
+const symbols={USD:"$",EUR:"€",GBP:"£"};
 
+let currency=localStorage.getItem("currency")||autoCurrency();
 function autoCurrency(){
-  if(lang==="de"||lang==="fr") return "EUR";
-  if(navigator.language.includes("en-GB")) return "GBP";
+  const l=navigator.language||"";
+  if(l.includes("en-GB")) return "GBP";
+  if(l.match(/de|fr|it|es/)) return "EUR";
   return "USD";
 }
-
-let currency = localStorage.getItem("currency") || autoCurrency();
-document.getElementById("currencySelect").value = currency;
-
-function setCurrency(c){
-  currency=c;
-  localStorage.setItem("currency",c);
-  applySort();
-}
+function setCurrency(c){currency=c;localStorage.setItem("currency",c);applySort();}
+document.getElementById("currencySelect").value=currency;
 const fx=v=>(v*rates[currency]).toFixed(2);
 
-/* ------------------ 3. PRIVACY / COOKIE MINIMAL ------------------ */
-if(!localStorage.getItem("cookie-ok")){
-  document.getElementById("cookie").style.display="block";
-}
-function acceptCookie(){
-  localStorage.setItem("cookie-ok","1");
-  document.getElementById("cookie").style.display="none";
-}
-
-/* ------------------ A/B Verdict ------------------ */
-let verdictVariant=localStorage.getItem("verdictVariant");
-if(!verdictVariant){
-  verdictVariant=Math.random()<0.5?"A":"B";
-  localStorage.setItem("verdictVariant",verdictVariant);
-}
-
-/* ------------------ DATA ------------------ */
+/* ------------------ Data ------------------ */
 let feed=[
- { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com"},
- { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com"},
- { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com"},
- { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com"}
+ {name:"Nike Air Zoom Pegasus",price:89,market:129,store:"Nike",trust:95,commission:0.04,url:"https://nike.com"},
+ {name:"Oversized Hoodie",price:39,market:69,store:"Zalando",trust:90,commission:0.08,url:"https://zalando.com"},
+ {name:"Wireless Headphones",price:59,market:99,store:"Amazon",trust:92,commission:0.04,url:"https://amazon.com"},
+ {name:"AI SEO Toolkit",price:49,market:99,store:"AppSumo",trust:80,commission:0.30,url:"https://appsumo.com"}
 ];
 
 const discount=p=>Math.round((1-p.price/p.market)*100);
-const earn=p=>+(p.price*p.commission).toFixed(2);
-const isWorthAffiliate=p=>earn(p)>=2 && discount(p)>=20 && p.trust>=70;
+const earn=p=>p.price*p.commission;
 
-/* ------------------ VERDICT AI ------------------ */
-function verdict(p){
-  let base="low";
-  if(discount(p)>=40 && earn(p)>=3 && p.trust>=85) base="high";
-  else if(discount(p)>=25 && earn(p)>=2) base="mid";
+/* ------------------ Integrity Engine ------------------ */
+function integrity(p,mode){
+  let reasons=[];
+  if(discount(p)>=30) reasons.push("meaningful discount");
+  if(p.trust>=85) reasons.push("established merchant");
+  if(p.commission>=0.1) reasons.push("incentivized campaign");
 
-  const map={
-    A:{high:"WORTH IT",mid:"OK DEAL",low:"SKIP"},
-    B:{high:"STRONG VALUE",mid:"FAIR DEAL",low:"LOW VALUE"}
-  };
-  const cls={high:"green",mid:"orange",low:"red"};
-  return {text:map[verdictVariant][base],cls:cls[base]};
+  if(mode==="v1"){
+    return reasons.length>=2
+      ? {text:"PASS",cls:"green",why:reasons.join(", ")}
+      : {text:"SKIP",cls:"red",why:"does not meet promotion criteria"};
+  }
+
+  if(mode==="v2"){
+    if(reasons.length>=3)
+      return {text:"PASS",cls:"green",why:reasons.join(", ")};
+    if(reasons.length===2)
+      return {text:"REVIEW",cls:"orange",why:reasons.join(", ")};
+    return {text:"SKIP",cls:"red",why:"insufficient integrity signals"};
+  }
 }
 
-function whyDeal(p){
-  let r=[];
-  if(discount(p)>=40) r.push("strong discount");
-  if(p.trust>=90) r.push("trusted merchant");
-  return "Why this verdict: "+(r.join(", ")||"balanced value");
-}
-
-/* ------------------ RENDER ------------------ */
+/* ------------------ Render ------------------ */
 function applySort(){
-  let list=feed.filter(isWorthAffiliate);
-  render(list);
+  const mode=document.getElementById("modeSelect").value;
+  let list=[...feed];
+  render(list,mode);
 }
 
-function render(list){
+function render(list,mode){
   const tb=document.getElementById("tableBody");
   tb.innerHTML="";
   list.forEach(p=>{
-    const v=verdict(p);
+    const iv=integrity(p,mode);
     tb.innerHTML+=`
     <tr>
       <td><b>${p.name}</b><br><small>${p.store}</small>
-      <div class="why">${whyDeal(p)}</div></td>
+        <div class="integrity">Why: ${iv.why}</div>
+      </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
-      <td><span class="badge ${v.cls}">${v.text}</span></td>
+      <td><span class="badge ${iv.cls}">${iv.text}</span></td>
       <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
     </tr>`;
   });
