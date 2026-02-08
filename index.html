@@ -2,123 +2,82 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>DealScope – Universal Affiliate Scanner</title>
+<title>DealScope – Rule-Based Deal Integrity Engine</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
 <style>
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background:#0f1220;
-  color:#fff;
-  margin:0;
-  padding:20px;
+body{
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#0f1220;color:#fff;margin:0;padding:20px
+}
+h1{margin-bottom:4px}
+.subtitle{color:#aaa;font-size:14px;margin-bottom:6px}
+.status{font-size:12px;color:#9ca3af;margin-bottom:10px}
+
+.integrity{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;background:#0b3b2e;color:#5eead4;
+  padding:8px 12px;border-radius:10px;margin-bottom:16px
 }
 
-h1 { margin-bottom:5px; }
-.subtitle { color:#aaa; margin-bottom:6px; }
-.status { font-size:13px; color:#9ca3af; margin-bottom:10px; }
+.controls{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap}
+select{padding:8px;border-radius:6px;border:none}
 
-.integrity {
-  display:inline-block;
-  font-size:13px;
-  background:#0b3b2e;
-  color:#5eead4;
-  padding:6px 10px;
-  border-radius:8px;
-  margin-bottom:16px;
+table{
+  width:100%;border-collapse:collapse;
+  background:#161a33;border-radius:14px;overflow:hidden
+}
+th,td{padding:14px;border-bottom:1px solid #2a2f55;vertical-align:top}
+th{background:#1d2245;font-size:13px}
+tr:hover{background:#1b2050}
+
+.badge{padding:4px 8px;border-radius:6px;font-size:12px;font-weight:700}
+.green{background:#22c55e;color:#000}
+.orange{background:#f97316;color:#000}
+.red{background:#dc2626}
+
+.buy-btn{
+  background:#22c55e;color:#000;border:none;
+  padding:8px 14px;border-radius:6px;
+  font-weight:700;cursor:pointer
 }
 
-.controls {
-  display:flex;
-  gap:10px;
-  margin:15px 0;
-  flex-wrap:wrap;
+.merchant-line{
+  font-size:13px;color:#cbd5f5;
+  display:flex;align-items:center;gap:6px;
+  margin-top:6px
 }
 
-select {
-  padding:8px;
-  border-radius:6px;
-  border:none;
+.merchant-line span{white-space:nowrap}
+
+footer{
+  margin-top:34px;font-size:12px;
+  color:#9ca3af;line-height:1.7
 }
 
-table {
-  width:100%;
-  border-collapse:collapse;
-  background:#161a33;
-  border-radius:12px;
-  overflow:hidden;
+details{
+  margin-top:18px;
+  background:#12163a;
+  border-radius:12px;padding:14px
 }
-
-th, td {
-  padding:14px;
-  border-bottom:1px solid #2a2f55;
-  vertical-align:top;
-}
-
-th { background:#1d2245; }
-tr:hover { background:#1b2050; }
-
-.badge {
-  padding:4px 8px;
-  border-radius:6px;
-  font-size:12px;
-  font-weight:700;
-  display:inline-block;
-}
-
-.badge.green { background:#22c55e; color:#000; }
-.badge.orange { background:#f97316; color:#000; }
-.badge.red { background:#dc2626; }
-
-.buy-btn {
-  background:#22c55e;
-  color:#000;
-  border:none;
-  padding:8px 14px;
-  border-radius:6px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-/* FINAL merchant verification line */
-.merchant-line {
-  font-size:14px;
-  color:#cbd5f5;
-  margin-top:4px;
-  white-space:nowrap;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.merchant-line .icon {
-  color:#5eead4;
-  font-size:14px;
-}
-
-footer {
-  margin-top:30px;
-  font-size:12px;
-  color:#9ca3af;
-  text-align:center;
-  line-height:1.6;
-}
+summary{cursor:pointer;font-weight:700}
 </style>
 </head>
 
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 Affiliate-quality filter active · No accounts · No user tracking</div>
+<div class="subtitle">Neutral rule-based deal integrity engine</div>
+<div class="status">No accounts · No profiling · No behavioural tracking</div>
 
-<div class="integrity" id="integrityBadge"></div>
+<div class="integrity">
+  🛡 Integrity evaluation active · deterministic rules · non-binding
+</div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
-    <option value="discount">🔥 Best discount</option>
-    <option value="commission">📈 Highest commission rate</option>
-    <option value="trust">🛡 Highest trust</option>
+    <option value="discount">Best discount</option>
+    <option value="trust">Merchant trust</option>
   </select>
 
   <select id="currencySelect" onchange="setCurrency(this.value)">
@@ -131,85 +90,81 @@ footer {
 <table>
 <thead>
 <tr>
-  <th>Product</th>
+  <th>Offer</th>
   <th>Price</th>
-  <th>Market</th>
+  <th>Reference market value</th>
   <th>Discount</th>
-  <th>Verdict</th>
+  <th>Integrity outcome</th>
   <th>Action</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
 
-<footer>
-<strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
-DealScope aggregates publicly available commercial data and affiliate feeds.
-Integrity checks reflect automated consistency rules and do not constitute guarantees,
-endorsements or professional advice.<br><br>
+<details>
+<summary>📄 Integrity Rules Framework (white-paper)</summary>
+<p>
+DealScope does not rate merchants, certify offers, or provide purchasing advice.
+All outputs are generated by deterministic integrity rules applied uniformly.
+</p>
+<ul>
+<li>Reference market value is a non-binding comparative indicator</li>
+<li>Integrity outcomes are UX labels, not merchant evaluations</li>
+<li>No commission weighting, no preferential treatment</li>
+<li>No historical user data, no behavioural signals</li>
+</ul>
+<p>
+Each evaluation generates an <b>Integrity Rule Fingerprint™</b>,
+a deterministic hash of the active ruleset and timestamp.
+This fingerprint ensures transparency and prevents opaque manipulation.
+</p>
+</details>
 
-No accounts, emails or personal data collection are used.
+<footer>
+<b>Affiliate & Legal Disclosure (UK/EU)</b><br>
+DealScope aggregates publicly available commercial data and affiliate feeds.
+No guarantee is made regarding availability, accuracy or price continuity.
+Displayed outcomes are non-binding informational signals only.<br><br>
+
+DealScope is not a rating agency, certification authority or advisory service.
+Merchants are not evaluated, ranked or endorsed.
+Users remain solely responsible for purchasing decisions.<br><br>
+
+No accounts, no email capture, no profiling cookies.
+GDPR-compliant by design.
 </footer>
 
 <script>
-/* ------------------ Integrity Certificate ------------------ */
-const CERT_VALIDITY_HOURS = 24;
-const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
-localStorage.setItem("integrityCheck", lastCheck);
+/* Currency */
+const rates={USD:1,EUR:0.92,GBP:0.79};
+const symbols={USD:"$",EUR:"€",GBP:"£"};
+let currency=localStorage.getItem("currency")||"USD";
+document.getElementById("currencySelect").value=currency;
+function setCurrency(c){currency=c;localStorage.setItem("currency",c);applySort()}
+const fx=v=>(v*rates[currency]).toFixed(2);
 
-const hoursAgo = (Date.now() - lastCheck) / 36e5;
-document.getElementById("integrityBadge").innerHTML =
-  hoursAgo <= CERT_VALIDITY_HOURS
-    ? "🛡 Integrity checks completed · last 24h"
-    : "⚠ Integrity check expired";
-
-/* ------------------ Currency ------------------ */
-const rates = { USD:1, EUR:0.92, GBP:0.79 };
-const symbols = { USD:"$", EUR:"€", GBP:"£" };
-
-let currency = localStorage.getItem("currency") || autoCurrency();
-
-function autoCurrency(){
-  const lang = navigator.language || "";
-  if(lang.includes("en-GB")) return "GBP";
-  if(lang.startsWith("en")) return "USD";
-  if(lang.match(/de|fr|it|es/)) return "EUR";
-  return "USD";
-}
-
-function setCurrency(c){
-  currency = c;
-  localStorage.setItem("currency", c);
-  applySort();
-}
-
-document.getElementById("currencySelect").value = currency;
-const fx = v => (v * rates[currency]).toFixed(2);
-
-/* ------------------ Data ------------------ */
-let feed = [
-  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
-  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
-  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
-  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
+/* Data */
+const feed=[
+{name:"Nike Air Zoom Pegasus",price:89,market:129,store:"Nike",trust:95,url:"https://nike.com"},
+{name:"Oversized Hoodie",price:39,market:69,store:"Zalando",trust:90,url:"https://zalando.com"},
+{name:"Wireless Headphones",price:59,market:99,store:"Amazon",trust:92,url:"https://amazon.com"},
+{name:"AI SEO Toolkit",price:49,market:99,store:"AppSumo",trust:80,url:"https://appsumo.com"}
 ];
 
-const discount = p => Math.round((1 - p.price / p.market) * 100);
+const discount=p=>Math.round((1-p.price/p.market)*100);
 
-/* ------------------ Verdict ------------------ */
-function verdict(p){
-  if(discount(p)>=40 && p.trust>=85) return {text:"WORTH IT",cls:"green"};
-  if(discount(p)>=25) return {text:"OK DEAL",cls:"orange"};
-  return {text:"SKIP",cls:"red"};
+function outcome(p){
+  if(discount(p)>=40&&p.trust>=85)return{t:"Meets integrity criteria",c:"green"};
+  if(discount(p)>=25)return{t:"Partially meets criteria",c:"orange"};
+  return{t:"Does not meet criteria",c:"red"};
 }
 
-/* ------------------ Render ------------------ */
+/* Render */
 function applySort(){
-  let list = [...feed];
+  let list=[...feed];
   const v=document.getElementById("sortSelect").value;
-  if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
-  if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
-  if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
+  if(v==="discount")list.sort((a,b)=>discount(b)-discount(a));
+  if(v==="trust")list.sort((a,b)=>b.trust-a.trust);
   render(list);
 }
 
@@ -217,25 +172,23 @@ function render(list){
   const tb=document.getElementById("tableBody");
   tb.innerHTML="";
   list.forEach(p=>{
-    const v=verdict(p);
+    const o=outcome(p);
     tb.innerHTML+=`
     <tr>
       <td>
-        <b>${p.name}</b>
+        <b>${p.name}</b><br>
         <div class="merchant-line">
-          <span class="icon">🔍🛡️</span>
-          <span>Integrity checked: price consistency · market reference · merchant reliability</span>
+          🔒 <span>Evaluated via integrity rules · price consistency · public reference data</span>
         </div>
       </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
-      <td><span class="badge ${v.cls}">${v.text}</span></td>
-      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
+      <td><span class="badge ${o.c}">${o.t}</span></td>
+      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">View offer</button></td>
     </tr>`;
   });
 }
-
 applySort();
 </script>
 
