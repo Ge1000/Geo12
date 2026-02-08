@@ -14,7 +14,9 @@
       padding: 20px;
     }
 
-    h1 { margin-bottom: 5px; }
+    h1 {
+      margin-bottom: 5px;
+    }
 
     .subtitle {
       color: #aaa;
@@ -60,7 +62,9 @@
       font-weight: 600;
     }
 
-    tr:hover { background: #1b2050; }
+    tr:hover {
+      background: #1b2050;
+    }
 
     .green { color: #5dff9b; }
     .yellow { color: #ffd45d; }
@@ -71,13 +75,11 @@
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
-      display: inline-block;
     }
 
     .badge.green { background: #1e6f4a; }
     .badge.yellow { background: #6f5a1e; }
     .badge.red { background: #6f1e1e; }
-    .badge.top { background: #4f7cff; }
 
     footer {
       margin-top: 30px;
@@ -114,23 +116,42 @@
       <th>Sell</th>
       <th>Profit</th>
       <th>Risk</th>
-      <th></th>
     </tr>
   </thead>
   <tbody id="tableBody"></tbody>
 </table>
 
 <footer>
-  Information only. No financial, investment or resale advice.
+  Information only. No financial or investment advice.
 </footer>
 
 <script>
-  // MOCK DATA
+  // MOCK DATA (exact ce va veni din scanner mai târziu)
   const products = [
-    { name: "AI SEO Toolkit", buyPrice: 49, source: "AppSumo", sellPrice: 99 },
-    { name: "Email Cleaner Pro", buyPrice: 29, source: "Gumroad", sellPrice: 79 },
-    { name: "Landing Page Builder", buyPrice: 59, source: "AppSumo", sellPrice: 149 },
-    { name: "Analytics Dashboard", buyPrice: 39, source: "Gumroad", sellPrice: 59 }
+    {
+      name: "AI SEO Toolkit",
+      buyPrice: 49,
+      source: "AppSumo",
+      sellPrice: 99
+    },
+    {
+      name: "Email Cleaner Pro",
+      buyPrice: 29,
+      source: "Gumroad",
+      sellPrice: 79
+    },
+    {
+      name: "Landing Page Builder",
+      buyPrice: 59,
+      source: "AppSumo",
+      sellPrice: 149
+    },
+    {
+      name: "Analytics Dashboard",
+      buyPrice: 39,
+      source: "Gumroad",
+      sellPrice: 59
+    }
   ];
 
   function riskScore(p) {
@@ -142,30 +163,13 @@
     if (margin < 50) score -= 20;
     if (p.sellPrice > 200) score -= 10;
 
-    return Math.max(10, Math.min(100, score));
+    return Math.max(0, Math.min(100, score));
   }
 
   function riskClass(score) {
     if (score >= 80) return "green";
     if (score >= 50) return "yellow";
     return "red";
-  }
-
-  function viewDetails(p, profit, risk) {
-    alert(
-`BUY: ${p.source} – $${p.buyPrice}
-SELL: Direct site – $${p.sellPrice}
-
-PROFIT: +$${profit}
-RISK SCORE: ${risk}
-
-Reason:
-Price difference between platforms.
-Limited-time deals & audience mismatch.
-
-Note:
-Prices may change anytime.`
-    );
   }
 
   function render() {
@@ -176,22 +180,7 @@ Prices may change anytime.`
     const tbody = document.getElementById("tableBody");
     tbody.innerHTML = "";
 
-    // calcul TOP PICK
-    let topIndex = -1;
-    let bestScore = -1;
-
-    products.forEach((p, i) => {
-      const profit = p.sellPrice - p.buyPrice;
-      const risk = riskScore(p);
-      const score = profit * 0.6 + risk * 0.4;
-
-      if (score > bestScore) {
-        bestScore = score;
-        topIndex = i;
-      }
-    });
-
-    products.forEach((p, i) => {
+    products.forEach(p => {
       const profit = p.sellPrice - p.buyPrice;
       const risk = riskScore(p);
 
@@ -200,24 +189,16 @@ Prices may change anytime.`
       if (source && p.source !== source) return;
 
       const tr = document.createElement("tr");
-
       tr.innerHTML = `
-        <td>
-          ${p.name}
-          ${i === topIndex ? `<span class="badge top">TOP PICK</span>` : ``}
-        </td>
+        <td>${p.name}</td>
         <td>$${p.buyPrice}</td>
         <td>${p.source}</td>
         <td>$${p.sellPrice}</td>
         <td class="green">+$${profit}</td>
-        <td><span class="badge ${riskClass(risk)}">${risk}</span></td>
         <td>
-          <button onclick='viewDetails(${JSON.stringify(p)}, ${profit}, ${risk})'>
-            View
-          </button>
+          <span class="badge ${riskClass(risk)}">${risk}</span>
         </td>
       `;
-
       tbody.appendChild(tr);
     });
   }
