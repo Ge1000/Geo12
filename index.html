@@ -11,27 +11,27 @@ body {
   background:#0f1220;
   color:#fff;
   margin:0;
-  padding:20px;
+  padding:18px;
 }
 
-h1 { margin-bottom:6px; }
-.subtitle { color:#a1a1aa; margin-bottom:6px; }
-.status { font-size:12px; color:#9ca3af; margin-bottom:12px; }
+h1 { margin-bottom:6px; font-size:26px; }
+.subtitle { color:#a1a1aa; margin-bottom:6px; font-size:14px; }
+.status { font-size:13px; color:#9ca3af; margin-bottom:12px; }
 
 .integrity {
   display:inline-block;
-  font-size:12px;
+  font-size:13px;
   background:#0b3b2e;
   color:#5eead4;
   padding:6px 10px;
   border-radius:8px;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 
 .controls {
   display:flex;
   gap:10px;
-  margin:18px 0;
+  margin:14px 0;
   flex-wrap:wrap;
 }
 
@@ -39,6 +39,7 @@ select {
   padding:8px;
   border-radius:6px;
   border:none;
+  font-size:14px;
 }
 
 table {
@@ -50,18 +51,23 @@ table {
 }
 
 th, td {
-  padding:14px 12px;
+  padding:12px;
   border-bottom:1px solid #2a2f55;
-  vertical-align:top;
+  vertical-align:middle;
 }
 
-th { background:#1d2245; text-align:left; }
+th {
+  background:#1d2245;
+  text-align:left;
+  font-size:14px;
+}
+
 tr:hover { background:#1b2050; }
 
 .badge {
-  padding:5px 10px;
+  padding:6px 10px;
   border-radius:7px;
-  font-size:12px;
+  font-size:13px;
   font-weight:700;
   display:inline-block;
 }
@@ -78,28 +84,35 @@ tr:hover { background:#1b2050; }
   border-radius:6px;
   font-weight:700;
   cursor:pointer;
+  font-size:14px;
 }
 
-.why {
-  font-size:12px;
+/* --- TEXT FIXES HERE --- */
+.product-name {
+  font-size:16px;
+  font-weight:700;
+  line-height:1.25;
+}
+
+.merchant {
+  font-size:14px;
+  opacity:.75;
+  margin-top:2px;
+}
+
+.validation-line {
+  font-size:14px;
   color:#cbd5f5;
-  margin-top:8px;
-  line-height:1.45;
-  max-width:320px;
-}
-
-.why ul {
-  padding-left:16px;
-  margin:6px 0 0 0;
-}
-
-.why li {
-  margin-bottom:4px;
+  margin-top:4px;
+  line-height:1.3;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 footer {
-  margin-top:36px;
-  font-size:12px;
+  margin-top:32px;
+  font-size:13px;
   color:#9ca3af;
   text-align:center;
   line-height:1.6;
@@ -137,7 +150,7 @@ footer {
 <tr>
   <th>Product</th>
   <th>Price</th>
-  <th>Market ref.</th>
+  <th>Market</th>
   <th>Discount</th>
   <th>Validation</th>
   <th>Action</th>
@@ -147,22 +160,15 @@ footer {
 </table>
 
 <footer>
-<strong>Legal & Integrity Disclosure (UK/EU)</strong><br><br>
-
-DealScope operates as an automated validation and aggregation engine.
-It analyses publicly available commercial information and affiliate feeds
-using predefined integrity rules, including price comparison, discount depth,
-market reference and merchant reliability.<br><br>
-
-Validation labels indicate that an offer met objective criteria at the time of analysis.
-They do not represent recommendations, guarantees, financial advice or future price accuracy.<br><br>
-
-No user accounts, profiling cookies or personal data collection are used.
-Prices and availability may change without notice.
+<strong>Legal & Integrity Disclosure (UK/EU):</strong><br>
+DealScope operates as an automated validation engine analysing publicly available commercial
+data and affiliate feeds using predefined integrity rules (price comparison, discount depth,
+market reference and merchant reliability).<br><br>
+No recommendations are made. DealScope does not guarantee pricing accuracy or availability.
+All purchasing decisions remain the sole responsibility of the user.
 </footer>
 
 <script>
-/* ------------------ Integrity Certificate ------------------ */
 const CERT_VALIDITY_HOURS = 24;
 const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
 localStorage.setItem("integrityCheck", lastCheck);
@@ -171,21 +177,14 @@ const hoursAgo = (Date.now() - lastCheck) / 36e5;
 document.getElementById("integrityBadge").innerHTML =
   hoursAgo <= CERT_VALIDITY_HOURS
     ? "🛡 Integrity verified · checked within last 24h"
-    : "⚠ Integrity status expired · pending recheck";
+    : "⚠ Integrity status expired · rechecking";
 
-/* ------------------ Currency ------------------ */
 const rates = { USD:1, EUR:0.92, GBP:0.79 };
 const symbols = { USD:"$", EUR:"€", GBP:"£" };
 
-let currency = localStorage.getItem("currency") || autoCurrency();
-
-function autoCurrency(){
-  const lang = navigator.language || "";
-  if(lang.includes("en-GB")) return "GBP";
-  if(lang.startsWith("en")) return "USD";
-  if(lang.match(/de|fr|it|es/)) return "EUR";
-  return "USD";
-}
+let currency = localStorage.getItem("currency") || "GBP";
+document.getElementById("currencySelect").value = currency;
+const fx = v => (v * rates[currency]).toFixed(2);
 
 function setCurrency(c){
   currency = c;
@@ -193,42 +192,29 @@ function setCurrency(c){
   applySort();
 }
 
-document.getElementById("currencySelect").value = currency;
-const fx = v => (v * rates[currency]).toFixed(2);
-
-/* ------------------ Data ------------------ */
 let feed = [
-  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
-  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
-  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
-  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
+  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"#"},
+  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"#"},
+  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"#"}
 ];
 
 const discount = p => Math.round((1 - p.price / p.market) * 100);
 
-/* ------------------ Verdict ------------------ */
 function verdict(p){
   if(discount(p)>=40 && p.trust>=85) return {text:"VALIDATED DEAL",cls:"green"};
-  if(discount(p)>=25) return {text:"VALIDATED (limited data)",cls:"orange"};
+  if(discount(p)>=25) return {text:"PARTIALLY VALID",cls:"orange"};
   return {text:"NOT VALIDATED",cls:"red"};
 }
 
-function whyDeal(p){
-  let r=[];
-  if(discount(p)>=40) r.push("Discount exceeds market average");
-  if(p.trust>=90) r.push("High merchant reliability");
-  if(!r.length) r.push("Meets baseline validation criteria");
-  return `
-    <div class="why">
-      Validation basis:
-      <ul>${r.map(x=>`<li>${x}</li>`).join("")}</ul>
-      <div style="opacity:.7;margin-top:6px">Data validated automatically · No recommendation</div>
-    </div>`;
+function validationLine(p){
+  let parts=[];
+  if(discount(p)>=25) parts.push("discount above market avg");
+  if(p.trust>=85) parts.push("high merchant reliability");
+  return "Validated automatically · " + parts.join(" · ");
 }
 
-/* ------------------ Render ------------------ */
 function applySort(){
-  let list = [...feed];
+  let list=[...feed];
   const v=document.getElementById("sortSelect").value;
   if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
   if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
@@ -243,12 +229,16 @@ function render(list){
     const v=verdict(p);
     tb.innerHTML+=`
     <tr>
-      <td><b>${p.name}</b><br><small style="opacity:.7">${p.store}</small>${whyDeal(p)}</td>
+      <td>
+        <div class="product-name">${p.name}</div>
+        <div class="merchant">${p.store}</div>
+        <div class="validation-line">${validationLine(p)}</div>
+      </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
       <td><span class="badge ${v.cls}">${v.text}</span></td>
-      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">View offer</button></td>
+      <td><button class="buy-btn">View offer</button></td>
     </tr>`;
   });
 }
