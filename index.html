@@ -80,16 +80,24 @@ tr:hover { background:#1b2050; }
   cursor:pointer;
 }
 
-/* 🔧 FIX IMPORTANT: merchant + verification pe o singură linie */
+/* 🔧 Merchant verification line – refined */
 .merchant-line {
   font-size:14px;
   color:#cbd5f5;
   margin-top:4px;
   white-space:nowrap;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.merchant-line .icon {
+  color:#5eead4;
+  font-size:14px;
 }
 
 .merchant-line span {
-  opacity:0.8;
+  opacity:0.85;
 }
 
 footer {
@@ -141,15 +149,11 @@ footer {
 <footer>
 <strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
 DealScope aggregates publicly available commercial data and affiliate feeds.
-Deal eligibility and verdicts are generated automatically using objective integrity rules
-(price consistency, market reference, discount level and merchant trust).<br><br>
+Deal eligibility and verdicts are generated automatically using objective integrity rules.<br><br>
 
-🛡 <strong>Integrity Certificate</strong> confirms that the offer passed validation checks
-within the last 24 hours. Certification does not guarantee availability, price stability
-or suitability for a specific user.<br><br>
+🛡 <strong>Integrity Certificate</strong> confirms validation within the last 24 hours.
+Certification does not guarantee availability or price stability.<br><br>
 
-This website does not provide financial, investment or purchasing advice.
-Users make independent decisions. Prices may change without notice.
 No accounts, emails or personal data collection are used.
 </footer>
 
@@ -225,7 +229,8 @@ function render(list){
       <td>
         <b>${p.name}</b>
         <div class="merchant-line">
-          ${p.store} <span>· price & trust verified · market compared</span>
+          <span class="icon">🛡️</span>
+          <span>Verified: price checked · market reference · merchant trust</span>
         </div>
       </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
