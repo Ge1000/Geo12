@@ -1,260 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>DealScope – Universal Affiliate Scanner</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <title>DealScope – Opportunity Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<style>
-body{
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#0f1220;
-  color:#fff;
-  margin:0;
-  padding:20px;
-}
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f1220;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
 
-h1{margin-bottom:4px}
-.subtitle{color:#a5b4fc;margin-bottom:4px}
-.status{font-size:12px;color:#9ca3af;margin-bottom:12px}
+    h1 { margin-bottom: 5px; }
 
-.integrity{
-  display:inline-block;
-  font-size:12px;
-  background:#0b3b2e;
-  color:#5eead4;
-  padding:6px 10px;
-  border-radius:8px;
-  margin-bottom:14px;
-}
+    .subtitle {
+      color: #aaa;
+      margin-bottom: 20px;
+    }
 
-.controls{
-  display:flex;
-  gap:10px;
-  margin:16px 0;
-  flex-wrap:wrap;
-}
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
 
-select{
-  padding:8px;
-  border-radius:6px;
-  border:none;
-}
+    input, select, button {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+    }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#161a33;
-  border-radius:12px;
-  overflow:hidden;
-}
+    button {
+      background: #4f7cff;
+      color: white;
+      cursor: pointer;
+    }
 
-th,td{
-  padding:12px;
-  border-bottom:1px solid #2a2f55;
-  vertical-align:top;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #161a33;
+      border-radius: 8px;
+      overflow: hidden;
+    }
 
-th{background:#1d2245}
-tr:hover{background:#1b2050}
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #2a2f55;
+    }
 
-.badge{
-  padding:4px 8px;
-  border-radius:6px;
-  font-size:12px;
-  font-weight:700;
-  display:inline-block;
-  animation:fadeIn .18s ease-out;
-}
+    th {
+      background: #1d2245;
+      font-weight: 600;
+    }
 
-.badge.green{background:#22c55e;color:#000}
-.badge.orange{background:#f97316;color:#000}
-.badge.red{background:#dc2626}
+    tr:hover { background: #1b2050; }
 
-.buy-btn{
-  background:#22c55e;
-  color:#000;
-  border:none;
-  padding:8px 14px;
-  border-radius:6px;
-  font-weight:700;
-  cursor:pointer;
-}
+    .green { color: #5dff9b; }
+    .yellow { color: #ffd45d; }
+    .red { color: #ff6b6b; }
 
-.verify-line{
-  margin-top:4px;
-  font-size:13px;
-  color:#cbd5f5;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  white-space:nowrap;
-  animation:slideFade .2s ease-out;
-}
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
 
-.verify-icon{
-  font-size:14px;
-  opacity:.9;
-}
+    .badge.green { background: #1e6f4a; }
+    .badge.yellow { background: #6f5a1e; }
+    .badge.red { background: #6f1e1e; }
+    .badge.top { background: #4f7cff; }
 
-.info{
-  margin-left:6px;
-  cursor:pointer;
-  font-size:12px;
-  color:#93c5fd;
-}
-
-.info-box{
-  display:none;
-  font-size:12px;
-  color:#c7d2fe;
-  margin-top:4px;
-}
-
-footer{
-  margin-top:32px;
-  font-size:12px;
-  color:#9ca3af;
-  text-align:center;
-  line-height:1.6;
-}
-
-@keyframes slideFade{
-  from{opacity:0;transform:translateY(-4px)}
-  to{opacity:1;transform:none}
-}
-@keyframes fadeIn{
-  from{opacity:0}
-  to{opacity:1}
-}
-</style>
+    footer {
+      margin-top: 30px;
+      color: #777;
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
 </head>
-
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Automated deal validation engine</div>
-<div class="status">🟢 No accounts · No tracking · Automated integrity rules</div>
+<div class="subtitle">
+  Underpriced digital products – scanned & compared
+</div>
 
-<div class="integrity" id="integrityBadge"></div>
-
-<div class="controls">
-<select id="sortSelect" onchange="applySort()">
-  <option value="discount">🔥 Best discount</option>
-  <option value="commission">📈 Highest commission</option>
-  <option value="trust">🛡 Highest trust</option>
-</select>
-
-<select id="currencySelect" onchange="setCurrency(this.value)">
-  <option value="USD">USD $</option>
-  <option value="EUR">EUR €</option>
-  <option value="GBP">GBP £</option>
-</select>
+<div class="filters">
+  <input type="number" id="minProfit" placeholder="Min profit ($)">
+  <input type="number" id="minRisk" placeholder="Min risk score">
+  <select id="sourceFilter">
+    <option value="">All sources</option>
+    <option>AppSumo</option>
+    <option>Gumroad</option>
+  </select>
+  <button onclick="render()">Apply filters</button>
 </div>
 
 <table>
-<thead>
-<tr>
-  <th>Product</th>
-  <th>Price</th>
-  <th>Market ref.</th>
-  <th>Discount</th>
-  <th>Validation</th>
-  <th>Action</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Buy</th>
+      <th>Source</th>
+      <th>Sell</th>
+      <th>Profit</th>
+      <th>Risk</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
 </table>
 
 <footer>
-<strong>Legal & Integrity Disclosure (UK/EU)</strong><br>
-DealScope operates as an automated validation engine analysing publicly available
-commercial and affiliate data using predefined integrity rules.
-No recommendations, guarantees or advice are provided.
+  Information only. No financial, investment or resale advice.
 </footer>
 
 <script>
-/* Integrity certificate */
-const CERT_VALIDITY_HOURS=24;
-const lastCheck=localStorage.getItem("integrityCheck")||Date.now();
-localStorage.setItem("integrityCheck",lastCheck);
-const hoursAgo=(Date.now()-lastCheck)/36e5;
-integrityBadge.textContent=
-hoursAgo<=CERT_VALIDITY_HOURS
-?"🛡 Integrity verified · checked within last 24h"
-:"⚠ Integrity expired · revalidation pending";
+  // MOCK DATA
+  const products = [
+    { name: "AI SEO Toolkit", buyPrice: 49, source: "AppSumo", sellPrice: 99 },
+    { name: "Email Cleaner Pro", buyPrice: 29, source: "Gumroad", sellPrice: 79 },
+    { name: "Landing Page Builder", buyPrice: 59, source: "AppSumo", sellPrice: 149 },
+    { name: "Analytics Dashboard", buyPrice: 39, source: "Gumroad", sellPrice: 59 }
+  ];
 
-/* Currency */
-const rates={USD:1,EUR:.92,GBP:.79};
-const symbols={USD:"$",EUR:"€",GBP:"£"};
-let currency=localStorage.getItem("currency")||"USD";
-currencySelect.value=currency;
-const fx=v=>(v*rates[currency]).toFixed(2);
-function setCurrency(c){currency=c;localStorage.setItem("currency",c);applySort()}
+  function riskScore(p) {
+    let score = 100;
+    const profit = p.sellPrice - p.buyPrice;
+    const margin = (profit / p.buyPrice) * 100;
 
-/* Data */
-let feed=[
-{name:"Nike Air Zoom Pegasus",price:70,market:101,store:"Nike",trust:95,commission:.04,url:"https://nike.com"},
-{name:"Oversized Hoodie",price:30,market:54,store:"Zalando",trust:90,commission:.08,url:"https://zalando.com"},
-{name:"Wireless Headphones",price:46,market:78,store:"Amazon",trust:92,commission:.04,url:"https://amazon.com"}
-];
+    if (profit < 30) score -= 30;
+    if (margin < 50) score -= 20;
+    if (p.sellPrice > 200) score -= 10;
 
-const discount=p=>Math.round((1-p.price/p.market)*100);
+    return Math.max(10, Math.min(100, score));
+  }
 
-/* Verdict */
-function verdict(p){
- if(discount(p)>=40&&p.trust>=85)return{text:"VALIDATED DEAL",cls:"green"};
- if(discount(p)>=25)return{text:"PARTIALLY VALID",cls:"orange"};
- return{text:"NOT VALIDATED",cls:"red"};
-}
+  function riskClass(score) {
+    if (score >= 80) return "green";
+    if (score >= 50) return "yellow";
+    return "red";
+  }
 
-function verifyText(p){
- return "Automatically validated: price consistency, market reference & merchant reliability";
-}
+  function viewDetails(p, profit, risk) {
+    alert(
+`BUY: ${p.source} – $${p.buyPrice}
+SELL: Direct site – $${p.sellPrice}
 
-/* Render */
-function applySort(){
- let list=[...feed];
- const v=sortSelect.value;
- if(v==="discount")list.sort((a,b)=>discount(b)-discount(a));
- if(v==="commission")list.sort((a,b)=>b.commission-a.commission);
- if(v==="trust")list.sort((a,b)=>b.trust-a.trust);
- render(list);
-}
+PROFIT: +$${profit}
+RISK SCORE: ${risk}
 
-function render(list){
- tableBody.innerHTML="";
- list.forEach(p=>{
- const v=verdict(p);
- tableBody.innerHTML+=`
-<tr>
-<td>
-<b>${p.name}</b><br>
-<small>${p.store}</small>
-<div class="verify-line">
-<span class="verify-icon">🛡</span>
-<span>${verifyText(p)}</span>
-<span class="info" onclick="toggleInfo(this)">i</span>
-</div>
-<div class="info-box">
-Data validated automatically. No recommendation or guarantee implied.
-</div>
-</td>
-<td>${symbols[currency]}${fx(p.price)}</td>
-<td>${symbols[currency]}${fx(p.market)}</td>
-<td><span class="badge green">-${discount(p)}%</span></td>
-<td><span class="badge ${v.cls}">${v.text}</span></td>
-<td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">View offer</button></td>
-</tr>`;
- });
-}
+Reason:
+Price difference between platforms.
+Limited-time deals & audience mismatch.
 
-function toggleInfo(el){
- const box=el.parentElement.nextElementSibling;
- box.style.display=box.style.display==="block"?"none":"block";
-}
+Note:
+Prices may change anytime.`
+    );
+  }
 
-applySort();
+  function render() {
+    const minProfit = Number(document.getElementById("minProfit").value || 0);
+    const minRisk = Number(document.getElementById("minRisk").value || 0);
+    const source = document.getElementById("sourceFilter").value;
+
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    // calcul TOP PICK
+    let topIndex = -1;
+    let bestScore = -1;
+
+    products.forEach((p, i) => {
+      const profit = p.sellPrice - p.buyPrice;
+      const risk = riskScore(p);
+      const score = profit * 0.6 + risk * 0.4;
+
+      if (score > bestScore) {
+        bestScore = score;
+        topIndex = i;
+      }
+    });
+
+    products.forEach((p, i) => {
+      const profit = p.sellPrice - p.buyPrice;
+      const risk = riskScore(p);
+
+      if (profit < minProfit) return;
+      if (risk < minRisk) return;
+      if (source && p.source !== source) return;
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>
+          ${p.name}
+          ${i === topIndex ? `<span class="badge top">TOP PICK</span>` : ``}
+        </td>
+        <td>$${p.buyPrice}</td>
+        <td>${p.source}</td>
+        <td>$${p.sellPrice}</td>
+        <td class="green">+$${profit}</td>
+        <td><span class="badge ${riskClass(risk)}">${risk}</span></td>
+        <td>
+          <button onclick='viewDetails(${JSON.stringify(p)}, ${profit}, ${risk})'>
+            View
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  render();
 </script>
 
 </body>
