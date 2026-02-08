@@ -29,10 +29,9 @@ h1 { margin-bottom:6px; font-size:28px; }
   animation: softPulse 3s ease-out infinite;
 }
 
-/* micro animation */
 @keyframes softPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.35); }
-  70%  { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,.35); }
+  70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
   100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
 }
 
@@ -114,6 +113,40 @@ tr:hover { background:#1b2050; }
   white-space:nowrap;
 }
 
+/* INFO ICON */
+.info {
+  display:inline-block;
+  margin-left:6px;
+  position:relative;
+  cursor:help;
+  font-weight:700;
+  color:#93c5fd;
+}
+
+.info::after {
+  content:"Integrity check: price consistency, market reference & merchant trust. Auto-verified within last 24h.";
+  position:absolute;
+  bottom:130%;
+  left:50%;
+  transform:translateX(-50%);
+  background:#020617;
+  color:#e5e7eb;
+  padding:10px 12px;
+  font-size:12px;
+  border-radius:8px;
+  width:260px;
+  line-height:1.5;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease;
+  box-shadow:0 10px 25px rgba(0,0,0,.4);
+}
+
+.info:hover::after {
+  opacity:1;
+  transform:translateX(-50%) translateY(-4px);
+}
+
 footer {
   margin-top:32px;
   font-size:13px;
@@ -163,18 +196,11 @@ footer {
 <footer>
 <strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
 DealScope aggregates publicly available commercial data and affiliate feeds.
-Verdicts are generated automatically using objective integrity rules
-(price consistency, reference market value, discount level and merchant trust).<br><br>
-
-🛡 <strong>Integrity Certificate</strong> indicates the offer passed automated validation
-within the last 24 hours. Certification does not guarantee availability or price stability.<br><br>
-
-This website does not provide financial or purchasing advice.
+Verdicts are generated automatically using objective integrity rules.<br><br>
 No accounts, emails, profiling cookies or personal data collection are used.
 </footer>
 
 <script>
-/* Integrity certificate */
 const CERT_VALIDITY_HOURS = 24;
 const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
 localStorage.setItem("integrityCheck", lastCheck);
@@ -185,55 +211,29 @@ document.getElementById("integrityBadge").innerHTML =
     ? "🛡 Integrity verified · checked within last 24h"
     : "⚠ Integrity expired · rechecking";
 
-/* Currency */
 const rates = { USD:1, EUR:0.92, GBP:0.79 };
 const symbols = { USD:"$", EUR:"€", GBP:"£" };
 
-let currency = localStorage.getItem("currency") || autoCurrency();
-
-function autoCurrency(){
-  const lang = navigator.language || "";
-  if(lang.includes("en-GB")) return "GBP";
-  if(lang.startsWith("en")) return "USD";
-  if(lang.match(/de|fr|it|es/)) return "EUR";
-  return "USD";
-}
-
-function setCurrency(c){
-  currency = c;
-  localStorage.setItem("currency", c);
-  applySort();
-}
-
+let currency = localStorage.getItem("currency") || "USD";
 document.getElementById("currencySelect").value = currency;
+
 const fx = v => (v * rates[currency]).toFixed(2);
 
-/* Data */
 let feed = [
   { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
   { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
-  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
-  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
+  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" }
 ];
 
 const discount = p => Math.round((1 - p.price / p.market) * 100);
 
-/* Verdict */
 function verdict(p){
   if(discount(p)>=40 && p.trust>=85) return {text:"VALIDATED DEAL",cls:"green"};
   if(discount(p)>=25) return {text:"OK DEAL",cls:"orange"};
   return {text:"SKIP",cls:"red"};
 }
 
-/* Render */
-function applySort(){
-  let list=[...feed];
-  const v=document.getElementById("sortSelect").value;
-  if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
-  if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
-  if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
-  render(list);
-}
+function applySort(){ render(feed); }
 
 function render(list){
   const tb=document.getElementById("tableBody");
@@ -245,12 +245,15 @@ function render(list){
       <td>
         <div class="product-name">${p.name}</div>
         <div class="store-line">${p.store}</div>
-        <div class="verify-line">Verified: price consistency · market reference · merchant trust</div>
+        <div class="verify-line">Verified: price · market · trust</div>
       </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
-      <td><span class="badge ${v.cls}">${v.text}</span></td>
+      <td>
+        <span class="badge ${v.cls}">${v.text}</span>
+        <span class="info">ⓘ</span>
+      </td>
       <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
     </tr>`;
   });
