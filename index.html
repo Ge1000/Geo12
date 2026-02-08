@@ -80,7 +80,7 @@ tr:hover { background:#1b2050; }
   cursor:pointer;
 }
 
-/* 🔧 Merchant verification line – refined */
+/* FINAL merchant verification line */
 .merchant-line {
   font-size:14px;
   color:#cbd5f5;
@@ -94,10 +94,6 @@ tr:hover { background:#1b2050; }
 .merchant-line .icon {
   color:#5eead4;
   font-size:14px;
-}
-
-.merchant-line span {
-  opacity:0.85;
 }
 
 footer {
@@ -149,10 +145,8 @@ footer {
 <footer>
 <strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
 DealScope aggregates publicly available commercial data and affiliate feeds.
-Deal eligibility and verdicts are generated automatically using objective integrity rules.<br><br>
-
-🛡 <strong>Integrity Certificate</strong> confirms validation within the last 24 hours.
-Certification does not guarantee availability or price stability.<br><br>
+Integrity checks reflect automated consistency rules and do not constitute guarantees,
+endorsements or professional advice.<br><br>
 
 No accounts, emails or personal data collection are used.
 </footer>
@@ -166,8 +160,8 @@ localStorage.setItem("integrityCheck", lastCheck);
 const hoursAgo = (Date.now() - lastCheck) / 36e5;
 document.getElementById("integrityBadge").innerHTML =
   hoursAgo <= CERT_VALIDITY_HOURS
-    ? "🛡 Integrity Verified · checked within last 24h"
-    : "⚠ Integrity status expired · rechecking";
+    ? "🛡 Integrity checks completed · last 24h"
+    : "⚠ Integrity check expired";
 
 /* ------------------ Currency ------------------ */
 const rates = { USD:1, EUR:0.92, GBP:0.79 };
@@ -229,8 +223,8 @@ function render(list){
       <td>
         <b>${p.name}</b>
         <div class="merchant-line">
-          <span class="icon">🛡️</span>
-          <span>Verified: price checked · market reference · merchant trust</span>
+          <span class="icon">🔍🛡️</span>
+          <span>Integrity checked: price consistency · market reference · merchant reliability</span>
         </div>
       </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
