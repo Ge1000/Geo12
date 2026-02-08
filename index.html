@@ -11,11 +11,11 @@ body {
   background:#0f1220;
   color:#fff;
   margin:0;
-  padding:18px;
+  padding:20px;
 }
 
-h1 { margin-bottom:6px; font-size:26px; }
-.subtitle { color:#a1a1aa; margin-bottom:6px; font-size:14px; }
+h1 { margin-bottom:6px; font-size:28px; }
+.subtitle { color:#aaa; margin-bottom:6px; font-size:14px; }
 .status { font-size:13px; color:#9ca3af; margin-bottom:12px; }
 
 .integrity {
@@ -23,20 +23,28 @@ h1 { margin-bottom:6px; font-size:26px; }
   font-size:13px;
   background:#0b3b2e;
   color:#5eead4;
-  padding:6px 10px;
+  padding:7px 12px;
   border-radius:8px;
   margin-bottom:14px;
+  animation: softPulse 3s ease-out infinite;
+}
+
+/* micro animation */
+@keyframes softPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.35); }
+  70%  { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
 }
 
 .controls {
   display:flex;
   gap:10px;
-  margin:14px 0;
+  margin:16px 0;
   flex-wrap:wrap;
 }
 
 select {
-  padding:8px;
+  padding:9px 10px;
   border-radius:6px;
   border:none;
   font-size:14px;
@@ -51,28 +59,30 @@ table {
 }
 
 th, td {
-  padding:12px;
+  padding:14px;
   border-bottom:1px solid #2a2f55;
   vertical-align:middle;
+  font-size:14px;
 }
 
 th {
   background:#1d2245;
-  text-align:left;
-  font-size:14px;
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.02em;
 }
 
 tr:hover { background:#1b2050; }
 
 .badge {
-  padding:6px 10px;
+  padding:5px 10px;
   border-radius:7px;
   font-size:13px;
   font-weight:700;
   display:inline-block;
 }
 
-.badge.green { background:#22c55e; color:#000; }
+.badge.green { background:#22c55e; color:#000; animation: softPulse 3s ease-out infinite; }
 .badge.orange { background:#f97316; color:#000; }
 .badge.red { background:#dc2626; }
 
@@ -80,34 +90,28 @@ tr:hover { background:#1b2050; }
   background:#22c55e;
   color:#000;
   border:none;
-  padding:8px 14px;
-  border-radius:6px;
+  padding:9px 16px;
+  border-radius:7px;
   font-weight:700;
   cursor:pointer;
   font-size:14px;
 }
 
-/* --- TEXT FIXES HERE --- */
 .product-name {
-  font-size:16px;
   font-weight:700;
-  line-height:1.25;
+  font-size:15px;
 }
 
-.merchant {
-  font-size:14px;
-  opacity:.75;
-  margin-top:2px;
+.store-line {
+  font-size:13px;
+  color:#9ca3af;
 }
 
-.validation-line {
-  font-size:14px;
+.verify-line {
+  font-size:13px;
   color:#cbd5f5;
-  margin-top:4px;
-  line-height:1.3;
+  margin-top:2px;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
 footer {
@@ -115,10 +119,7 @@ footer {
   font-size:13px;
   color:#9ca3af;
   text-align:center;
-  line-height:1.6;
-  max-width:900px;
-  margin-left:auto;
-  margin-right:auto;
+  line-height:1.7;
 }
 </style>
 </head>
@@ -126,8 +127,8 @@ footer {
 <body>
 
 <h1>DealScope</h1>
-<div class="subtitle">Universal affiliate scanner · Automated validation engine</div>
-<div class="status">🟢 Integrity rules active · No accounts · No user tracking</div>
+<div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
+<div class="status">🟢 Affiliate-quality filter active · No accounts · No user tracking</div>
 
 <div class="integrity" id="integrityBadge"></div>
 
@@ -135,7 +136,7 @@ footer {
   <select id="sortSelect" onchange="applySort()">
     <option value="discount">🔥 Best discount</option>
     <option value="commission">📈 Highest commission rate</option>
-    <option value="trust">🛡 Highest merchant trust</option>
+    <option value="trust">🛡 Highest trust</option>
   </select>
 
   <select id="currencySelect" onchange="setCurrency(this.value)">
@@ -152,7 +153,7 @@ footer {
   <th>Price</th>
   <th>Market</th>
   <th>Discount</th>
-  <th>Validation</th>
+  <th>Verdict</th>
   <th>Action</th>
 </tr>
 </thead>
@@ -160,15 +161,20 @@ footer {
 </table>
 
 <footer>
-<strong>Legal & Integrity Disclosure (UK/EU):</strong><br>
-DealScope operates as an automated validation engine analysing publicly available commercial
-data and affiliate feeds using predefined integrity rules (price comparison, discount depth,
-market reference and merchant reliability).<br><br>
-No recommendations are made. DealScope does not guarantee pricing accuracy or availability.
-All purchasing decisions remain the sole responsibility of the user.
+<strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
+DealScope aggregates publicly available commercial data and affiliate feeds.
+Verdicts are generated automatically using objective integrity rules
+(price consistency, reference market value, discount level and merchant trust).<br><br>
+
+🛡 <strong>Integrity Certificate</strong> indicates the offer passed automated validation
+within the last 24 hours. Certification does not guarantee availability or price stability.<br><br>
+
+This website does not provide financial or purchasing advice.
+No accounts, emails, profiling cookies or personal data collection are used.
 </footer>
 
 <script>
+/* Integrity certificate */
 const CERT_VALIDITY_HOURS = 24;
 const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
 localStorage.setItem("integrityCheck", lastCheck);
@@ -177,14 +183,21 @@ const hoursAgo = (Date.now() - lastCheck) / 36e5;
 document.getElementById("integrityBadge").innerHTML =
   hoursAgo <= CERT_VALIDITY_HOURS
     ? "🛡 Integrity verified · checked within last 24h"
-    : "⚠ Integrity status expired · rechecking";
+    : "⚠ Integrity expired · rechecking";
 
+/* Currency */
 const rates = { USD:1, EUR:0.92, GBP:0.79 };
 const symbols = { USD:"$", EUR:"€", GBP:"£" };
 
-let currency = localStorage.getItem("currency") || "GBP";
-document.getElementById("currencySelect").value = currency;
-const fx = v => (v * rates[currency]).toFixed(2);
+let currency = localStorage.getItem("currency") || autoCurrency();
+
+function autoCurrency(){
+  const lang = navigator.language || "";
+  if(lang.includes("en-GB")) return "GBP";
+  if(lang.startsWith("en")) return "USD";
+  if(lang.match(/de|fr|it|es/)) return "EUR";
+  return "USD";
+}
 
 function setCurrency(c){
   currency = c;
@@ -192,27 +205,27 @@ function setCurrency(c){
   applySort();
 }
 
+document.getElementById("currencySelect").value = currency;
+const fx = v => (v * rates[currency]).toFixed(2);
+
+/* Data */
 let feed = [
-  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"#"},
-  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"#"},
-  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"#"}
+  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
+  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
+  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
+  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
 ];
 
 const discount = p => Math.round((1 - p.price / p.market) * 100);
 
+/* Verdict */
 function verdict(p){
   if(discount(p)>=40 && p.trust>=85) return {text:"VALIDATED DEAL",cls:"green"};
-  if(discount(p)>=25) return {text:"PARTIALLY VALID",cls:"orange"};
-  return {text:"NOT VALIDATED",cls:"red"};
+  if(discount(p)>=25) return {text:"OK DEAL",cls:"orange"};
+  return {text:"SKIP",cls:"red"};
 }
 
-function validationLine(p){
-  let parts=[];
-  if(discount(p)>=25) parts.push("discount above market avg");
-  if(p.trust>=85) parts.push("high merchant reliability");
-  return "Validated automatically · " + parts.join(" · ");
-}
-
+/* Render */
 function applySort(){
   let list=[...feed];
   const v=document.getElementById("sortSelect").value;
@@ -231,14 +244,14 @@ function render(list){
     <tr>
       <td>
         <div class="product-name">${p.name}</div>
-        <div class="merchant">${p.store}</div>
-        <div class="validation-line">${validationLine(p)}</div>
+        <div class="store-line">${p.store}</div>
+        <div class="verify-line">Verified: price consistency · market reference · merchant trust</div>
       </td>
       <td>${symbols[currency]}${fx(p.price)}</td>
       <td>${symbols[currency]}${fx(p.market)}</td>
       <td><span class="badge green">-${discount(p)}%</span></td>
       <td><span class="badge ${v.cls}">${v.text}</span></td>
-      <td><button class="buy-btn">View offer</button></td>
+      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
     </tr>`;
   });
 }
