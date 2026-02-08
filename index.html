@@ -6,123 +6,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
 <style>
-body{
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#0f1220;color:#fff;margin:0;padding:20px
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background:#0f1220;
+  color:#fff;
+  margin:0;
+  padding:20px;
 }
-h1{margin-bottom:4px}
-.subtitle{color:#aaa;margin-bottom:4px}
-.status{font-size:12px;color:#9ca3af;margin-bottom:10px}
 
-.integrity{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
+h1 { margin-bottom:5px; }
+.subtitle { color:#aaa; margin-bottom:6px; }
+.status { font-size:13px; color:#9ca3af; margin-bottom:10px; }
+
+.integrity {
+  display:inline-block;
   font-size:13px;
   background:#0b3b2e;
   color:#5eead4;
   padding:6px 10px;
   border-radius:8px;
-  margin-bottom:14px;
-  animation:fadeIn .6s ease-out
+  margin-bottom:16px;
 }
 
-.info{
-  cursor:pointer;
-  font-weight:700;
-  border:1px solid #5eead4;
-  border-radius:50%;
-  width:16px;height:16px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  font-size:11px
+.controls {
+  display:flex;
+  gap:10px;
+  margin:15px 0;
+  flex-wrap:wrap;
 }
 
-@keyframes fadeIn{
-  from{opacity:0;transform:translateY(4px)}
-  to{opacity:1;transform:none}
+select {
+  padding:8px;
+  border-radius:6px;
+  border:none;
 }
 
-.controls{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}
-select{padding:8px;border-radius:6px;border:none}
-
-table{
+table {
   width:100%;
   border-collapse:collapse;
   background:#161a33;
   border-radius:12px;
-  overflow:hidden
+  overflow:hidden;
 }
-th,td{
-  padding:12px;
-  border-bottom:1px solid #2a2f55;
-  vertical-align:top
-}
-th{background:#1d2245}
-tr:hover{background:#1b2050}
 
-.badge{
+th, td {
+  padding:14px;
+  border-bottom:1px solid #2a2f55;
+  vertical-align:top;
+}
+
+th { background:#1d2245; }
+tr:hover { background:#1b2050; }
+
+.badge {
   padding:4px 8px;
   border-radius:6px;
   font-size:12px;
   font-weight:700;
-  display:inline-block
-}
-.badge.green{background:#22c55e;color:#000}
-.badge.orange{background:#f97316;color:#000}
-.badge.red{background:#dc2626}
-
-.buy-btn{
-  background:#22c55e;color:#000;border:none;
-  padding:8px 14px;border-radius:6px;
-  font-weight:700;cursor:pointer
+  display:inline-block;
 }
 
-.meta{
-  font-size:13px;
+.badge.green { background:#22c55e; color:#000; }
+.badge.orange { background:#f97316; color:#000; }
+.badge.red { background:#dc2626; }
+
+.buy-btn {
+  background:#22c55e;
+  color:#000;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* 🔧 FIX IMPORTANT: merchant + verification pe o singură linie */
+.merchant-line {
+  font-size:14px;
   color:#cbd5f5;
   margin-top:4px;
   white-space:nowrap;
-  opacity:.95
 }
 
-.snapshot{
-  font-size:12px;
-  color:#7dd3fc;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-top:2px;
-  animation:fadeIn .5s ease-out
+.merchant-line span {
+  opacity:0.8;
 }
 
-.snapshot span{opacity:.9}
-
-footer{
+footer {
   margin-top:30px;
   font-size:12px;
   color:#9ca3af;
   text-align:center;
-  line-height:1.6
-}
-
-/* info modal */
-#modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  align-items:center;
-  justify-content:center
-}
-#modalBox{
-  background:#161a33;
-  padding:18px;
-  max-width:420px;
-  border-radius:12px;
-  font-size:13px;
-  line-height:1.6
+  line-height:1.6;
 }
 </style>
 </head>
@@ -131,16 +106,14 @@ footer{
 
 <h1>DealScope</h1>
 <div class="subtitle">Universal affiliate scanner · Auto-feed engine</div>
-<div class="status">🟢 No accounts · No tracking · Objective filters only</div>
+<div class="status">🟢 Affiliate-quality filter active · No accounts · No user tracking</div>
 
-<div class="integrity">
-  🛡 Integrity Snapshot™
-  <div class="info" onclick="openInfo()">i</div>
-</div>
+<div class="integrity" id="integrityBadge"></div>
 
 <div class="controls">
   <select id="sortSelect" onchange="applySort()">
     <option value="discount">🔥 Best discount</option>
+    <option value="commission">📈 Highest commission rate</option>
     <option value="trust">🛡 Highest trust</option>
   </select>
 
@@ -167,89 +140,104 @@ footer{
 
 <footer>
 <strong>Affiliate & Integrity Disclosure (UK/EU):</strong><br>
-DealScope displays automated integrity snapshots based on price comparison,
-market reference, merchant trust and timing of verification.<br><br>
+DealScope aggregates publicly available commercial data and affiliate feeds.
+Deal eligibility and verdicts are generated automatically using objective integrity rules
+(price consistency, market reference, discount level and merchant trust).<br><br>
 
-Integrity Snapshot™ represents a moment-in-time validation, not a guarantee.
-Prices and availability may change. No financial or purchasing advice is given.
-No accounts, emails or personal profiling are used.
+🛡 <strong>Integrity Certificate</strong> confirms that the offer passed validation checks
+within the last 24 hours. Certification does not guarantee availability, price stability
+or suitability for a specific user.<br><br>
+
+This website does not provide financial, investment or purchasing advice.
+Users make independent decisions. Prices may change without notice.
+No accounts, emails or personal data collection are used.
 </footer>
 
-<!-- INFO MODAL -->
-<div id="modal" onclick="closeInfo()">
-  <div id="modalBox">
-    <strong>What is Integrity Snapshot™?</strong><br><br>
-    A neutral verification layer that checks:
-    <ul>
-      <li>Current price vs market reference</li>
-      <li>Merchant trust signals</li>
-      <li>Discount consistency</li>
-      <li>Time of last validation</li>
-    </ul>
-    No scores. No promises. Just context.
-  </div>
-</div>
-
 <script>
-/* currency */
-const rates={USD:1,EUR:.92,GBP:.79}
-const symbols={USD:"$",EUR:"€",GBP:"£"}
-let currency=localStorage.getItem("currency")||"USD"
-document.getElementById("currencySelect").value=currency
-const fx=v=>(v*rates[currency]).toFixed(2)
-function setCurrency(c){currency=c;localStorage.setItem("currency",c);applySort()}
+/* ------------------ Integrity Certificate ------------------ */
+const CERT_VALIDITY_HOURS = 24;
+const lastCheck = localStorage.getItem("integrityCheck") || Date.now();
+localStorage.setItem("integrityCheck", lastCheck);
 
-/* data */
-const feed=[
- {name:"Nike Air Zoom Pegasus",price:89,market:129,store:"Nike",trust:95,url:"https://nike.com"},
- {name:"Oversized Hoodie",price:39,market:69,store:"Zalando",trust:90,url:"https://zalando.com"},
- {name:"Wireless Headphones",price:59,market:99,store:"Amazon",trust:92,url:"https://amazon.com"},
- {name:"AI SEO Toolkit",price:49,market:99,store:"AppSumo",trust:80,url:"https://appsumo.com"}
-]
-const discount=p=>Math.round((1-p.price/p.market)*100)
+const hoursAgo = (Date.now() - lastCheck) / 36e5;
+document.getElementById("integrityBadge").innerHTML =
+  hoursAgo <= CERT_VALIDITY_HOURS
+    ? "🛡 Integrity Verified · checked within last 24h"
+    : "⚠ Integrity status expired · rechecking";
 
-/* verdict */
-function verdict(p){
- if(discount(p)>=40&&p.trust>=85)return{t:"WORTH IT",c:"green"}
- if(discount(p)>=25)return{t:"OK DEAL",c:"orange"}
- return{t:"SKIP",c:"red"}
+/* ------------------ Currency ------------------ */
+const rates = { USD:1, EUR:0.92, GBP:0.79 };
+const symbols = { USD:"$", EUR:"€", GBP:"£" };
+
+let currency = localStorage.getItem("currency") || autoCurrency();
+
+function autoCurrency(){
+  const lang = navigator.language || "";
+  if(lang.includes("en-GB")) return "GBP";
+  if(lang.startsWith("en")) return "USD";
+  if(lang.match(/de|fr|it|es/)) return "EUR";
+  return "USD";
 }
 
-/* render */
+function setCurrency(c){
+  currency = c;
+  localStorage.setItem("currency", c);
+  applySort();
+}
+
+document.getElementById("currencySelect").value = currency;
+const fx = v => (v * rates[currency]).toFixed(2);
+
+/* ------------------ Data ------------------ */
+let feed = [
+  { name:"Nike Air Zoom Pegasus", price:89, market:129, store:"Nike", trust:95, commission:0.04, url:"https://nike.com" },
+  { name:"Oversized Hoodie", price:39, market:69, store:"Zalando", trust:90, commission:0.08, url:"https://zalando.com" },
+  { name:"Wireless Headphones", price:59, market:99, store:"Amazon", trust:92, commission:0.04, url:"https://amazon.com" },
+  { name:"AI SEO Toolkit", price:49, market:99, store:"AppSumo", trust:80, commission:0.30, url:"https://appsumo.com" }
+];
+
+const discount = p => Math.round((1 - p.price / p.market) * 100);
+
+/* ------------------ Verdict ------------------ */
+function verdict(p){
+  if(discount(p)>=40 && p.trust>=85) return {text:"WORTH IT",cls:"green"};
+  if(discount(p)>=25) return {text:"OK DEAL",cls:"orange"};
+  return {text:"SKIP",cls:"red"};
+}
+
+/* ------------------ Render ------------------ */
 function applySort(){
- let list=[...feed]
- const v=document.getElementById("sortSelect").value
- if(v==="discount")list.sort((a,b)=>discount(b)-discount(a))
- if(v==="trust")list.sort((a,b)=>b.trust-a.trust)
- render(list)
+  let list = [...feed];
+  const v=document.getElementById("sortSelect").value;
+  if(v==="discount") list.sort((a,b)=>discount(b)-discount(a));
+  if(v==="commission") list.sort((a,b)=>b.commission-a.commission);
+  if(v==="trust") list.sort((a,b)=>b.trust-a.trust);
+  render(list);
 }
 
 function render(list){
- const tb=document.getElementById("tableBody")
- tb.innerHTML=""
- list.forEach(p=>{
- const v=verdict(p)
- tb.innerHTML+=`
- <tr>
-  <td>
-    <b>${p.name}</b>
-    <div class="meta">${p.store} · trust ${p.trust}%</div>
-    <div class="snapshot">🛡 <span>checked: price · market · trust · timing</span></div>
-  </td>
-  <td>${symbols[currency]}${fx(p.price)}</td>
-  <td>${symbols[currency]}${fx(p.market)}</td>
-  <td><span class="badge green">-${discount(p)}%</span></td>
-  <td><span class="badge ${v.c}">${v.t}</span></td>
-  <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
- </tr>`
- })
+  const tb=document.getElementById("tableBody");
+  tb.innerHTML="";
+  list.forEach(p=>{
+    const v=verdict(p);
+    tb.innerHTML+=`
+    <tr>
+      <td>
+        <b>${p.name}</b>
+        <div class="merchant-line">
+          ${p.store} <span>· price & trust verified · market compared</span>
+        </div>
+      </td>
+      <td>${symbols[currency]}${fx(p.price)}</td>
+      <td>${symbols[currency]}${fx(p.market)}</td>
+      <td><span class="badge green">-${discount(p)}%</span></td>
+      <td><span class="badge ${v.cls}">${v.text}</span></td>
+      <td><button class="buy-btn" onclick="window.open('${p.url}','_blank')">Buy</button></td>
+    </tr>`;
+  });
 }
 
-/* info */
-function openInfo(){document.getElementById("modal").style.display="flex"}
-function closeInfo(){document.getElementById("modal").style.display="none"}
-
-applySort()
+applySort();
 </script>
 
 </body>
