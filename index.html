@@ -1,209 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>DealScope – Opportunity Scanner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<title>BOMBO – Offer Integrity Check</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0f1220;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-    }
+<style>
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0f1220;
+    color: #ffffff;
+    padding: 20px;
+  }
+  h1 { margin-bottom: 4px; }
+  .sub { color:#aaa; margin-bottom:20px; }
 
-    h1 {
-      margin-bottom: 5px;
-    }
+  button {
+    padding: 10px 14px;
+    background: #4f7cff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
 
-    .subtitle {
-      color: #aaa;
-      margin-bottom: 20px;
-    }
+  .box {
+    margin-top: 20px;
+    padding: 16px;
+    background: #161a33;
+    border-radius: 8px;
+  }
 
-    .filters {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
+  .green { color: #5dff9b; }
+  .yellow { color: #ffd45d; }
+  .red { color: #ff6b6b; }
 
-    input, select, button {
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: none;
-      font-size: 14px;
-    }
+  ul { margin-top: 10px; }
+  li { margin-bottom: 6px; }
 
-    button {
-      background: #4f7cff;
-      color: white;
-      cursor: pointer;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #161a33;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #2a2f55;
-    }
-
-    th {
-      background: #1d2245;
-      font-weight: 600;
-    }
-
-    tr:hover {
-      background: #1b2050;
-    }
-
-    .green { color: #5dff9b; }
-    .yellow { color: #ffd45d; }
-    .red { color: #ff6b6b; }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .badge.green { background: #1e6f4a; }
-    .badge.yellow { background: #6f5a1e; }
-    .badge.red { background: #6f1e1e; }
-
-    footer {
-      margin-top: 30px;
-      color: #777;
-      font-size: 12px;
-      text-align: center;
-    }
-  </style>
+  footer {
+    margin-top: 30px;
+    font-size: 12px;
+    color: #777;
+  }
+</style>
 </head>
+
 <body>
 
-<h1>DealScope</h1>
-<div class="subtitle">
-  Underpriced digital products – scanned & compared
-</div>
+<h1>BOMBO</h1>
+<div class="sub">Independent offer integrity check – no tracking, no cookies</div>
 
-<div class="filters">
-  <input type="number" id="minProfit" placeholder="Min profit ($)">
-  <input type="number" id="minRisk" placeholder="Min risk score">
-  <select id="sourceFilter">
-    <option value="">All sources</option>
-    <option>AppSumo</option>
-    <option>Gumroad</option>
-  </select>
-  <button onclick="render()">Apply filters</button>
-</div>
+<button onclick="scan()">Scan current page</button>
 
-<table>
-  <thead>
-    <tr>
-      <th>Product</th>
-      <th>Buy</th>
-      <th>Source</th>
-      <th>Sell</th>
-      <th>Profit</th>
-      <th>Risk</th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
-</table>
+<div id="result" class="box"></div>
 
 <footer>
-  Information only. No financial or investment advice.
+  Signals only. No financial, legal or purchase advice.
 </footer>
 
 <script>
-  // MOCK DATA (exact ce va veni din scanner mai târziu)
-  const products = [
-    {
-      name: "AI SEO Toolkit",
-      buyPrice: 49,
-      source: "AppSumo",
-      sellPrice: 99
-    },
-    {
-      name: "Email Cleaner Pro",
-      buyPrice: 29,
-      source: "Gumroad",
-      sellPrice: 79
-    },
-    {
-      name: "Landing Page Builder",
-      buyPrice: 59,
-      source: "AppSumo",
-      sellPrice: 149
-    },
-    {
-      name: "Analytics Dashboard",
-      buyPrice: 39,
-      source: "Gumroad",
-      sellPrice: 59
-    }
+function scan() {
+  const text = document.body.innerText.toLowerCase();
+  const html = document.body.innerHTML.toLowerCase();
+  const url  = location.href.toLowerCase();
+
+  let score = 100;
+  const reasons = [];
+
+  /* =========================
+     R1 – DISCOUNT FĂRĂ BAZĂ
+  ========================== */
+  const hasDiscount =
+    /-\d+%|\d+% off|save \d+%/.test(text);
+
+  const hasOldPrice =
+    /was \$|\bwas\b|\bbefore\b|<del|<s>/.test(html);
+
+  if (hasDiscount && !hasOldPrice) {
+    score -= 25;
+    reasons.push("Discount shown without a verifiable reference price");
+  }
+
+  /* =========================
+     R2 – URGENȚĂ ARTIFICIALĂ
+  ========================== */
+  const urgencyPatterns = [
+    "ends today",
+    "last chance",
+    "only today",
+    "hours left",
+    "ending soon"
   ];
 
-  function riskScore(p) {
-    let score = 100;
-    const profit = p.sellPrice - p.buyPrice;
-    const margin = (profit / p.buyPrice) * 100;
-
-    if (profit < 30) score -= 30;
-    if (margin < 50) score -= 20;
-    if (p.sellPrice > 200) score -= 10;
-
-    return Math.max(0, Math.min(100, score));
+  if (urgencyPatterns.some(p => text.includes(p))) {
+    score -= 20;
+    reasons.push("Psychological urgency language detected");
   }
 
-  function riskClass(score) {
-    if (score >= 80) return "green";
-    if (score >= 50) return "yellow";
-    return "red";
+  /* =========================
+     R3 – COUNTDOWN JS (heuristic)
+  ========================== */
+  if (html.includes("countdown") || html.includes("timer")) {
+    score -= 20;
+    reasons.push("Countdown timer detected (often used as pressure)");
   }
 
-  function render() {
-    const minProfit = Number(document.getElementById("minProfit").value || 0);
-    const minRisk = Number(document.getElementById("minRisk").value || 0);
-    const source = document.getElementById("sourceFilter").value;
+  /* =========================
+     R4 – STOC FALS (digital)
+  ========================== */
+  const scarcity =
+    /only \d+ left|limited spots|few remaining/.test(text);
 
-    const tbody = document.getElementById("tableBody");
-    tbody.innerHTML = "";
+  const digitalContext =
+    /download|software|saas|license|access|online/.test(text);
 
-    products.forEach(p => {
-      const profit = p.sellPrice - p.buyPrice;
-      const risk = riskScore(p);
-
-      if (profit < minProfit) return;
-      if (risk < minRisk) return;
-      if (source && p.source !== source) return;
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${p.name}</td>
-        <td>$${p.buyPrice}</td>
-        <td>${p.source}</td>
-        <td>$${p.sellPrice}</td>
-        <td class="green">+$${profit}</td>
-        <td>
-          <span class="badge ${riskClass(risk)}">${risk}</span>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+  if (scarcity && digitalContext) {
+    score -= 25;
+    reasons.push("Artificial scarcity on digital product");
   }
 
-  render();
+  /* =========================
+     R5 – SOCIAL PROOF SLAB
+  ========================== */
+  if (
+    /10,000\+ users|rated 4\.9|trusted by/.test(text) &&
+    !/reviews|testimonials|trustpilot|g2|capterra/.test(text)
+  ) {
+    score -= 10;
+    reasons.push("Social proof claims without verifiable source");
+  }
+
+  /* =========================
+     R6 – AFILIERE DETECTATĂ
+  ========================== */
+  if (
+    url.includes("utm_") ||
+    url.includes("aff") ||
+    url.includes("ref=")
+  ) {
+    score -= 10;
+    reasons.push("Affiliate tracking parameters detected");
+  }
+
+  /* =========================
+     NORMALIZARE SCOR
+  ========================== */
+  score = Math.max(0, Math.min(100, score));
+
+  let verdict = "HIGH INTEGRITY";
+  let color = "green";
+
+  if (score < 80) { verdict = "QUESTIONABLE"; color = "yellow"; }
+  if (score < 50) { verdict = "MANIPULATIVE"; color = "red"; }
+
+  document.getElementById("result").innerHTML = `
+    <h2 class="${color}">Integrity Score: ${score}</h2>
+    <h3 class="${color}">${verdict}</h3>
+    ${
+      reasons.length
+        ? `<ul>${reasons.map(r => `<li>${r}</li>`).join("")}</ul>`
+        : "<p>No major manipulation signals detected.</p>"
+    }
+  `;
+}
 </script>
 
 </body>
