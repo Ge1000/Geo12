@@ -80,6 +80,19 @@ ul {
   margin-top: 8px;
 }
 
+details {
+  background: #12162b;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #9fb3ff;
+}
+
 footer {
   margin-top: 30px;
   font-size: 12px;
@@ -97,34 +110,34 @@ Independent Offer Integrity Check – no tracking, no affiliation, no influence
 </div>
 
 <div class="panel">
-  <label>Offer description (text shown to user)</label>
-  <textarea id="offerText" placeholder="Example: 70% OFF – Only 2 hours left! Best deal ever. No refunds."></textarea>
+  <label>Offer description (visible to user)</label>
+  <textarea id="offerText" placeholder="Example: 70% OFF – Only today! No refunds."></textarea>
 
-  <label>Discount type</label>
+  <label>Discount claim</label>
   <select id="discount">
-    <option value="none">No discount claim</option>
-    <option value="weak">Discount without proof</option>
+    <option value="none">No discount</option>
+    <option value="weak">Unverifiable discount</option>
     <option value="strong">Verifiable discount</option>
   </select>
 
-  <label>Urgency signals</label>
+  <label>Urgency / scarcity</label>
   <select id="urgency">
     <option value="none">None</option>
-    <option value="soft">Limited time wording</option>
-    <option value="hard">Countdown / scarcity pressure</option>
+    <option value="soft">Soft urgency language</option>
+    <option value="hard">Artificial urgency / countdown</option>
   </select>
 
-  <label>Transparency</label>
+  <label>Transparency of terms</label>
   <select id="transparency">
-    <option value="clear">Clear terms & refunds</option>
-    <option value="partial">Some conditions unclear</option>
-    <option value="opaque">Hidden / missing conditions</option>
+    <option value="clear">Clear terms</option>
+    <option value="partial">Partially unclear</option>
+    <option value="opaque">Hidden / missing terms</option>
   </select>
 
   <label>Affiliate opacity</label>
   <select id="affiliate">
     <option value="clean">No redirect masking</option>
-    <option value="masked">Affiliate / redirect masking</option>
+    <option value="masked">Masked / chained redirect</option>
   </select>
 
   <button onclick="runCheck()">Run Integrity Check</button>
@@ -139,11 +152,49 @@ Independent Offer Integrity Check – no tracking, no affiliation, no influence
 
   <h3>Explanation</h3>
   <ul id="explanations"></ul>
+
+  <!-- AUDIT LOG -->
+  <details>
+    <summary>Audit Log (verifiable)</summary>
+    <ul id="auditLog"></ul>
+  </details>
+
+  <!-- EXPORT -->
+  <details>
+    <summary>Export – Legal / Compliance</summary>
+    <pre id="exportBox" style="white-space:pre-wrap;"></pre>
+  </details>
+
+  <!-- OPEN SPEC -->
+  <details>
+    <summary>Open Rule Specification</summary>
+    <pre>
+Base score: 100
+
+Rules (deterministic):
+- Unverifiable discount: -15
+- Soft urgency language: -8
+- Artificial urgency / countdown: -15
+- Partial transparency: -10
+- Opaque terms: -20
+- Affiliate redirect masking: -5
+- Emotional exaggeration keywords: -5
+
+No weighting.
+No learning.
+No personalization.
+Same input = same output.
+    </pre>
+  </details>
 </div>
 
 <footer>
-BOMBO provides informational integrity signals only.  
-No legal, financial, or purchasing advice.
+<strong>Disclaimer:</strong> BOMBO provides informational integrity signals only.
+It does not verify legality, pricing accuracy, product quality, or merchant behavior.
+No financial, legal, or purchasing advice is given.<br><br>
+
+<strong>Privacy:</strong> This application performs all analysis locally in the browser.
+No data is stored, transmitted, tracked, or shared. No cookies. No identifiers.
 </footer>
 
 <script>
@@ -151,85 +202,121 @@ function runCheck() {
   let score = 100;
   const signals = [];
   const explanations = [];
+  const audit = [];
 
-  const discount = document.getElementById("discount").value;
-  const urgency = document.getElementById("urgency").value;
-  const transparency = document.getElementById("transparency").value;
-  const affiliate = document.getElementById("affiliate").value;
-  const text = document.getElementById("offerText").value.toLowerCase();
+  const discount = discountEl().value;
+  const urgency = urgencyEl().value;
+  const transparency = transparencyEl().value;
+  const affiliate = affiliateEl().value;
+  const text = textEl().value.toLowerCase();
 
-  // Pricing integrity
+  function log(rule, penalty) {
+    audit.push(`${rule} → ${penalty}`);
+  }
+
   if (discount === "weak") {
     score -= 15;
     signals.push("Unverifiable discount");
-    explanations.push("Discount is claimed without clear reference or proof.");
+    explanations.push("Discount claimed without objective reference.");
+    log("Unverifiable discount", "-15");
   }
 
-  // Urgency
   if (urgency === "soft") {
     score -= 8;
     signals.push("Soft urgency language");
     explanations.push("Time pressure wording detected.");
+    log("Soft urgency language", "-8");
   }
+
   if (urgency === "hard") {
     score -= 15;
     signals.push("Artificial urgency / scarcity");
-    explanations.push("Strong urgency mechanisms increase pressure on decision-making.");
+    explanations.push("Countdown or scarcity pressure detected.");
+    log("Artificial urgency", "-15");
   }
 
-  // Transparency
   if (transparency === "partial") {
     score -= 10;
     signals.push("Partial transparency");
-    explanations.push("Some conditions are not clearly disclosed.");
+    explanations.push("Some terms are unclear.");
+    log("Partial transparency", "-10");
   }
+
   if (transparency === "opaque") {
     score -= 20;
     signals.push("Opaque conditions");
-    explanations.push("Key terms or refunds are hidden or unclear.");
+    explanations.push("Key terms or refunds missing.");
+    log("Opaque conditions", "-20");
   }
 
-  // Affiliate opacity
   if (affiliate === "masked") {
     score -= 5;
     signals.push("Affiliate redirect masking");
-    explanations.push("Offer flow uses masked or chained redirects.");
+    explanations.push("Redirect structure obscures destination.");
+    log("Affiliate masking", "-5");
   }
 
-  // Text-based manipulation hints
   if (text.includes("only today") || text.includes("best ever")) {
     score -= 5;
     signals.push("Emotional exaggeration");
-    explanations.push("Subjective or exaggerated claims detected.");
+    explanations.push("Subjective exaggeration detected.");
+    log("Emotional exaggeration", "-5");
   }
 
   score = Math.max(0, score);
 
-  // Classification
-  let level = "High Integrity";
-  let color = "green";
+  let level = "High Integrity", color = "green";
   if (score < 80) { level = "Moderate Integrity"; color = "yellow"; }
   if (score < 50) { level = "Low Integrity"; color = "red"; }
 
-  // Render
-  document.getElementById("result").style.display = "block";
-  document.getElementById("score").textContent = score;
-  document.getElementById("score").className = "score " + color;
-  document.getElementById("level").innerHTML =
+  show("result");
+
+  setScore(score, color, level);
+  renderBadges("signals", signals, color);
+  renderList("explanations", explanations);
+  renderList("auditLog", audit);
+
+  document.getElementById("exportBox").textContent =
+`Integrity Score: ${score}
+Level: ${level}
+
+Detected signals:
+${audit.join("\n")}
+
+Methodology:
+Deterministic, rule-based, non-learning.
+No tracking. No personalization.`;
+}
+
+function discountEl(){return document.getElementById("discount")}
+function urgencyEl(){return document.getElementById("urgency")}
+function transparencyEl(){return document.getElementById("transparency")}
+function affiliateEl(){return document.getElementById("affiliate")}
+function textEl(){return document.getElementById("offerText")}
+
+function show(id){document.getElementById(id).style.display="block"}
+
+function setScore(score,color,level){
+  const s=document.getElementById("score");
+  s.textContent=score;
+  s.className="score "+color;
+  document.getElementById("level").innerHTML=
     `<span class="badge ${color}">${level}</span>`;
+}
 
-  const s = document.getElementById("signals");
-  s.innerHTML = "";
-  signals.forEach(sig => {
-    s.innerHTML += `<span class="badge ${color}">${sig}</span>`;
-  });
+function renderBadges(id,list,color){
+  const el=document.getElementById(id);
+  el.innerHTML="";
+  list.forEach(i=>el.innerHTML+=`<span class="badge ${color}">${i}</span>`);
+}
 
-  const e = document.getElementById("explanations");
-  e.innerHTML = "";
-  explanations.forEach(exp => {
-    const li = document.createElement("li");
-    li.textContent = exp;
-    e.appendChild(li);
+function renderList(id,list){
+  const el=document.getElementById(id);
+  el.innerHTML="";
+  list.forEach(i=>{
+    const li=document.createElement("li");
+    li.textContent=i;
+    el.appendChild(li);
   });
 }
 </script>
