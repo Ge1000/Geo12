@@ -153,19 +153,16 @@ Independent Offer Integrity Check – no tracking, no affiliation, no influence
   <h3>Explanation</h3>
   <ul id="explanations"></ul>
 
-  <!-- AUDIT LOG -->
   <details>
     <summary>Audit Log (verifiable)</summary>
     <ul id="auditLog"></ul>
   </details>
 
-  <!-- EXPORT -->
   <details>
     <summary>Export – Legal / Compliance</summary>
     <pre id="exportBox" style="white-space:pre-wrap;"></pre>
   </details>
 
-  <!-- OPEN SPEC -->
   <details>
     <summary>Open Rule Specification</summary>
     <pre>
@@ -263,6 +260,10 @@ function runCheck() {
     log("Emotional exaggeration", "-5");
   }
 
+  if (audit.length === 0) {
+    audit.push("All integrity rules evaluated – no penalties applied");
+  }
+
   score = Math.max(0, score);
 
   let level = "High Integrity", color = "green";
@@ -280,12 +281,13 @@ function runCheck() {
 `Integrity Score: ${score}
 Level: ${level}
 
-Detected signals:
+Audit log:
 ${audit.join("\n")}
 
 Methodology:
 Deterministic, rule-based, non-learning.
-No tracking. No personalization.`;
+No tracking. No personalization.
+Same input = same output.`;
 }
 
 function discountEl(){return document.getElementById("discount")}
