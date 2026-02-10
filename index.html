@@ -15,8 +15,13 @@ body {
 }
 
 h1 { margin-bottom: 4px; }
-h2 { margin-top: 40px; }
-.subtitle { color: #aaa; margin-bottom: 20px; max-width: 720px; }
+h2 { margin-top: 36px; }
+
+.subtitle {
+  color: #aaa;
+  margin-bottom: 20px;
+  max-width: 760px;
+}
 
 .panel {
   background: #161a33;
@@ -25,22 +30,18 @@ h2 { margin-top: 40px; }
   margin-bottom: 20px;
 }
 
-label {
-  display: block;
-  margin: 10px 0 6px;
-  font-size: 14px;
-  color: #ccc;
-}
-
-textarea, select, button {
+textarea, button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
   border: none;
   font-size: 14px;
 }
 
-textarea { resize: vertical; min-height: 80px; }
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
 
 button {
   background: #4f7cff;
@@ -52,11 +53,11 @@ button {
 
 .badge {
   display: inline-block;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .green { background:#1e6f4a; color:#5dff9b; }
@@ -69,7 +70,7 @@ details {
   background:#12162b;
   border-radius:8px;
   padding:10px;
-  margin-top:10px;
+  margin-top:12px;
 }
 
 summary {
@@ -90,7 +91,7 @@ footer {
 
 <body>
 
-<!-- PUBLIC LANDING (C) -->
+<!-- PUBLIC LANDING -->
 <h1>BOMBO</h1>
 <div class="subtitle">
 Independent offer integrity signals.  
@@ -100,21 +101,21 @@ No tracking. No affiliation. No influence.
 <div class="panel">
 <h3>What BOMBO does</h3>
 <p>
-BOMBO analyzes how an offer is <strong>presented</strong> to the user.  
-It detects observable integrity signals such as artificial urgency,
-unclear terms, unverifiable discounts or affiliate masking.
+BOMBO analyzes how an offer is <strong>presented</strong> to users and detects
+observable integrity signals such as artificial urgency, unclear terms or
+inconsistent discount claims.
 </p>
 
 <h3>What BOMBO does NOT do</h3>
 <ul>
-<li>No price verification</li>
-<li>No legal judgement</li>
-<li>No product quality assessment</li>
-<li>No financial advice</li>
+<li>No price database checks</li>
+<li>No merchant verification</li>
+<li>No legal or financial judgement</li>
+<li>No tracking or profiling</li>
 </ul>
 
 <p>
-BOMBO is deterministic, explainable and platform-neutral.
+Deterministic. Explainable. Platform-neutral.
 </p>
 </div>
 
@@ -122,36 +123,7 @@ BOMBO is deterministic, explainable and platform-neutral.
 <h2>Run Integrity Check</h2>
 
 <div class="panel">
-<label>Offer text (as shown to users)</label>
-<textarea id="offerText" placeholder="Example: 70% OFF – Only today! No refunds."></textarea>
-
-<label>Discount claim</label>
-<select id="discount">
-<option value="none">No discount</option>
-<option value="weak">Unverifiable discount</option>
-<option value="strong">Verifiable discount</option>
-</select>
-
-<label>Urgency / scarcity</label>
-<select id="urgency">
-<option value="none">None</option>
-<option value="soft">Soft urgency language</option>
-<option value="hard">Artificial urgency / countdown</option>
-</select>
-
-<label>Transparency of terms</label>
-<select id="transparency">
-<option value="clear">Clear terms</option>
-<option value="partial">Partially unclear</option>
-<option value="opaque">Hidden / missing terms</option>
-</select>
-
-<label>Affiliate opacity</label>
-<select id="affiliate">
-<option value="clean">No redirect masking</option>
-<option value="masked">Masked / chained redirect</option>
-</select>
-
+<textarea id="offerText" placeholder="Paste the offer text exactly as shown to users. Example: 50% OFF – Only today! Was 100€, now 100€"></textarea>
 <button onclick="runCheck()">Run BOMBO</button>
 </div>
 
@@ -159,31 +131,35 @@ BOMBO is deterministic, explainable and platform-neutral.
 <div class="panel" id="result" style="display:none;">
 <div id="verdict"></div>
 
-<h3>Detected signals</h3>
+<h3>Detected integrity signals</h3>
 <ul id="signals"></ul>
 
-<h3>Audit log</h3>
+<h3>Audit log (explainable)</h3>
 <ul id="audit"></ul>
 
 <details>
-<summary>Export (Legal / Compliance)</summary>
+<summary>Export – Legal / Compliance</summary>
 <pre id="export" style="white-space:pre-wrap;"></pre>
 </details>
 
 <details>
 <summary>Open Rule Specification</summary>
 <pre>
-Ruleset: BOMBO-v1.0
-Deterministic. Non-learning. No personalization.
+Ruleset: BOMBO-v1.1
 
-Signals reduce integrity confidence.
-Same input = same output.
+• Deterministic
+• Non-learning
+• No personalization
+• Same input → same output
+
+Signals are based only on observable offer presentation.
 </pre>
 </details>
 </div>
 
 <footer>
 <strong>Disclaimer:</strong> BOMBO provides informational integrity signals only.
+It does not verify actual pricing history, legality, product quality or merchant behavior.
 No financial, legal or purchasing advice is given.<br><br>
 
 <strong>Privacy:</strong> All analysis runs locally in the browser.
@@ -191,59 +167,124 @@ No data is stored, transmitted, tracked or shared.
 </footer>
 
 <script>
-function runCheck(){
-  let score=100;
-  const signals=[];
-  const audit=[];
-  const text=document.getElementById("offerText").value.toLowerCase();
+function runCheck() {
+  const textRaw = document.getElementById("offerText").value;
+  const text = textRaw.toLowerCase();
 
-  function hit(label,penalty,reason){
-    score-=penalty;
-    signals.push(label);
-    audit.push(label+" → "+reason+" (-"+penalty+")");
+  let confidence = 100;
+  const signals = [];
+  const audit = [];
+
+  function flag(signal, observation, rule, impact) {
+    confidence -= impact;
+    signals.push(signal);
+    audit.push(
+      `Signal: ${signal}\n` +
+      `Observation: ${observation}\n` +
+      `Rule: ${rule}\n` +
+      `Effect: Integrity confidence reduced (-${impact})`
+    );
   }
 
-  if(discount.value==="weak") hit("Unverifiable discount",15,"No objective reference");
-  if(urgency.value==="soft") hit("Soft urgency",8,"Time pressure language");
-  if(urgency.value==="hard") hit("Artificial urgency",15,"Countdown / scarcity");
-  if(transparency.value==="partial") hit("Partial transparency",10,"Terms unclear");
-  if(transparency.value==="opaque") hit("Opaque conditions",20,"Missing key terms");
-  if(affiliate.value==="masked") hit("Affiliate masking",5,"Redirect chain");
+  /* 1️⃣ URGENCY DETECTION */
+  if (/(only today|ends today|last chance|limited|countdown)/.test(text)) {
+    flag(
+      "Artificial urgency",
+      "Time-pressure language detected in offer text",
+      "Artificial urgency reduces presentation integrity",
+      15
+    );
+  }
 
-  if(text.includes("only today")||text.includes("best ever"))
-    hit("Emotional exaggeration",5,"Subjective marketing wording");
+  /* 2️⃣ DISCOUNT CLAIM DETECTION */
+  const percentMatch = text.match(/(\d{1,3})\s?%/);
+  const hasDiscount = !!percentMatch;
 
-  score=Math.max(0,score);
+  /* 2A – Unverifiable discount */
+  if (hasDiscount && !/(was|before|previously|instead of)/.test(text)) {
+    flag(
+      "Unverifiable discount claim",
+      "Percentage discount present without reference price",
+      "Discount claims require reference context",
+      15
+    );
+  }
 
-  let verdict="🟢 Integrity signals OK", cls="green";
-  if(score<80){ verdict="🟠 Integrity signals mixed"; cls="yellow"; }
-  if(score<50){ verdict="🔴 Integrity signals weak"; cls="red"; }
+  /* 2B – Discount consistency logic */
+  const priceMatches = text.match(/(\d+[.,]?\d*)\s?(€|\$|usd|eur)/g);
+  if (hasDiscount && priceMatches && priceMatches.length >= 2) {
+    const prices = priceMatches.map(p => parseFloat(p));
+    if (prices[0] <= prices[1]) {
+      flag(
+        "Inconsistent discount structure",
+        "Reference price is equal to or lower than current price",
+        "Inconsistent pricing structure reduces integrity",
+        20
+      );
+    }
+  }
 
-  document.getElementById("result").style.display="block";
-  document.getElementById("verdict").innerHTML=
-    `<span class="badge ${cls}">${verdict}</span>`;
+  /* 3️⃣ TRANSPARENCY */
+  if (/(no refunds|terms apply|conditions apply)/.test(text)) {
+    flag(
+      "Opaque conditions",
+      "Restrictions mentioned without clear explanation",
+      "Unclear terms reduce integrity",
+      10
+    );
+  }
 
-  render("signals",signals);
-  render("audit",audit);
+  /* 4️⃣ EMOTIONAL EXAGGERATION */
+  if (/(best ever|guaranteed|no risk|perfect deal)/.test(text)) {
+    flag(
+      "Emotional exaggeration",
+      "Subjective or absolute marketing language detected",
+      "Exaggeration reduces informational integrity",
+      5
+    );
+  }
 
-  document.getElementById("export").textContent=
-`Verdict: ${verdict}
-Ruleset: BOMBO-v1.0
+  /* SAFETY FLOOR */
+  confidence = Math.max(0, confidence);
 
-Audit:
-${audit.join("\n")}
+  /* VERDICT */
+  let verdictText = "🟢 Integrity signals appear consistent";
+  let cls = "green";
+
+  if (confidence < 80) {
+    verdictText = "🟠 Integrity signals mixed";
+    cls = "yellow";
+  }
+  if (confidence < 50) {
+    verdictText = "🔴 Integrity signals weak";
+    cls = "red";
+  }
+
+  document.getElementById("result").style.display = "block";
+  document.getElementById("verdict").innerHTML =
+    `<span class="badge ${cls}">${verdictText}</span>`;
+
+  renderList("signals", signals.length ? signals : ["No significant integrity signals detected"]);
+  renderList("audit", audit.length ? audit : ["No integrity rules triggered"]);
+
+  document.getElementById("export").textContent =
+`Verdict: ${verdictText}
+Ruleset: BOMBO-v1.1
+
+Audit log:
+${audit.join("\n\n")}
 
 Methodology:
 Deterministic, rule-based, local execution.
-No tracking.`;
+No tracking. No personalization.`;
 }
 
-function render(id,list){
-  const el=document.getElementById(id);
-  el.innerHTML="";
-  list.forEach(i=>{
-    const li=document.createElement("li");
-    li.textContent=i;
+function renderList(id, list) {
+  const el = document.getElementById(id);
+  el.innerHTML = "";
+  list.forEach(item => {
+    const li = document.createElement("li");
+    li.textContent = item;
     el.appendChild(li);
   });
 }
