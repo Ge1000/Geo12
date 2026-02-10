@@ -21,60 +21,30 @@ h1 { margin-bottom: 4px; }
   padding: 16px;
   margin-bottom: 20px;
 }
-label {
-  display: block;
-  margin: 10px 0 6px;
-  font-size: 14px;
-  color: #ccc;
-}
+label { display:block;margin:10px 0 6px;font-size:14px;color:#ccc; }
 textarea, button {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
+  width:100%;padding:10px;border-radius:8px;border:none;font-size:14px;
 }
-textarea { resize: vertical; min-height: 80px; }
+textarea { resize:vertical;min-height:80px; }
 button {
-  background: #4f7cff;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 14px;
+  background:#4f7cff;color:#fff;font-weight:600;cursor:pointer;margin-top:14px;
 }
-.score { font-size: 48px; font-weight: 700; }
-.green { color: #5dff9b; }
-.yellow { color: #ffd45d; }
-.red { color: #ff6b6b; }
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 6px;
-  margin-bottom: 6px;
+.score { font-size:48px;font-weight:700; }
+.green{color:#5dff9b;} .yellow{color:#ffd45d;} .red{color:#ff6b6b;}
+.badge{
+  display:inline-block;padding:4px 10px;border-radius:6px;
+  font-size:12px;font-weight:600;margin-right:6px;margin-bottom:6px;
 }
-.badge.green { background: #1e6f4a; }
-.badge.yellow { background: #6f5a1e; }
-.badge.red { background: #6f1e1e; }
-ul { padding-left: 18px; margin-top: 8px; }
-details {
-  background: #12162b;
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 10px;
+.badge.green{background:#1e6f4a;}
+.badge.yellow{background:#6f5a1e;}
+.badge.red{background:#6f1e1e;}
+ul{padding-left:18px;margin-top:8px;}
+details{
+  background:#12162b;border-radius:8px;padding:10px;margin-top:10px;
 }
-summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: #9fb3ff;
-}
-footer {
-  margin-top: 30px;
-  font-size: 12px;
-  color: #777;
-  text-align: center;
+summary{cursor:pointer;font-weight:600;color:#9fb3ff;}
+footer{
+  margin-top:30px;font-size:12px;color:#777;text-align:center;
 }
 </style>
 </head>
@@ -87,7 +57,7 @@ Independent Offer Integrity Check – observed reality, not declared input
 </div>
 
 <div class="panel">
-  <label>Context (optional – visible text only)</label>
+  <label>Context (optional)</label>
   <textarea id="offerText" placeholder="Optional notes. BOMBO analyzes the page automatically."></textarea>
   <button onclick="runCheck()">Run Integrity Check</button>
 </div>
@@ -114,20 +84,12 @@ Independent Offer Integrity Check – observed reality, not declared input
 
   <details>
     <summary>Open Rule Specification</summary>
-    <pre>
-Base score: 100
+    <pre id="ruleSpec"></pre>
+  </details>
 
-Observed rules (deterministic):
-- Discount language without reference price: -15
-- Artificial urgency patterns: -15
-- Soft urgency language: -8
-- Missing or hidden terms/refund policy: -20
-- Emotional exaggeration keywords: -5
-- Redirect / affiliate masking indicators: -5
-
-No AI. No learning. No personalization.
-Same page = same score.
-    </pre>
+  <details>
+    <summary>Whitepaper – BOMBO Integrity Engine</summary>
+    <pre id="whitepaper" style="white-space:pre-wrap;"></pre>
   </details>
 </div>
 
@@ -140,64 +102,79 @@ No data is stored, transmitted, tracked, or shared. No cookies.
 </footer>
 
 <script>
-function runCheck() {
+/* =======================
+   RULE SET (CANONICAL)
+======================= */
+const RULES = [
+  "Unverifiable discount → -15",
+  "Soft urgency language → -8",
+  "Artificial urgency / countdown → -15",
+  "Missing or opaque terms → -20",
+  "Emotional exaggeration → -5",
+  "Affiliate / redirect masking → -5"
+];
+
+/* Stable rule-set hash (deterministic) */
+function ruleSetHash(){
+  return btoa(RULES.join("|"));
+}
+
+/* =======================
+   CORE ENGINE
+======================= */
+function runCheck(){
   let score = 100;
   const signals = [];
   const explanations = [];
   const audit = [];
 
-  const pageText = document.body.innerText.toLowerCase();
+  const text = document.body.innerText.toLowerCase();
   const html = document.documentElement.innerHTML.toLowerCase();
 
-  function log(rule, penalty) {
+  function log(rule, penalty){
     audit.push(`${rule} → ${penalty}`);
   }
 
-  // Discount detection
-  if (/%\s*off|sale|discount/.test(pageText) && !/was\s*\$|<del>/.test(html)) {
+  if (/%\s*off|sale|discount/.test(text) && !/was\s*\$|<del>/.test(html)) {
     score -= 15;
     signals.push("Unverifiable discount");
-    explanations.push("Discount language detected without clear reference price.");
-    log("Unverifiable discount", "-15");
+    explanations.push("Discount language without reference price.");
+    log("Unverifiable discount","-15");
   }
 
-  // Urgency detection
-  if (/only today|last chance|ends in/.test(pageText)) {
+  if (/only today|last chance|ends in/.test(text)) {
     score -= 8;
     signals.push("Soft urgency language");
     explanations.push("Time pressure wording detected.");
-    log("Soft urgency", "-8");
+    log("Soft urgency","-8");
   }
 
   if (/countdown|setinterval|timer/.test(html)) {
     score -= 15;
-    signals.push("Artificial urgency / countdown");
-    explanations.push("Dynamic countdown or scarcity mechanism detected.");
-    log("Artificial urgency", "-15");
+    signals.push("Artificial urgency");
+    explanations.push("Countdown or scarcity mechanism detected.");
+    log("Artificial urgency","-15");
   }
 
-  // Terms detection
-  if (!/terms|refund|policy/.test(pageText)) {
+  if (!/terms|refund|policy/.test(text)) {
     score -= 20;
-    signals.push("Opaque or missing terms");
-    explanations.push("No visible terms, refund or policy references found.");
-    log("Missing terms", "-20");
+    signals.push("Missing or opaque terms");
+    explanations.push("No visible terms or refund policy.");
+    log("Missing terms","-20");
   }
 
-  // Emotional exaggeration
-  if (/best ever|guaranteed|no risk/.test(pageText)) {
+  if (/best ever|guaranteed|no risk/.test(text)) {
     score -= 5;
     signals.push("Emotional exaggeration");
-    explanations.push("Subjective or manipulative phrasing detected.");
-    log("Emotional exaggeration", "-5");
+    explanations.push("Subjective exaggeration detected.");
+    log("Emotional exaggeration","-5");
   }
 
-  // Affiliate / redirect hints
   if (/redirect|affid|utm_/.test(html)) {
     score -= 5;
-    signals.push("Possible affiliate masking");
-    explanations.push("Redirect or tracking indicators detected in page code.");
-    log("Affiliate masking indicators", "-5");
+    signals.push("Affiliate masking indicators");
+    explanations.push("Redirect or tracking indicators detected.");
+    log("Affiliate masking","-5");
   }
 
   if (audit.length === 0) {
@@ -206,35 +183,73 @@ function runCheck() {
 
   score = Math.max(0, score);
 
-  let level = "High Integrity", color = "green";
-  if (score < 80) { level = "Moderate Integrity"; color = "yellow"; }
-  if (score < 50) { level = "Low Integrity"; color = "red"; }
+  let level="High Integrity",color="green";
+  if(score<80){level="Moderate Integrity";color="yellow";}
+  if(score<50){level="Low Integrity";color="red";}
 
-  document.getElementById("result").style.display = "block";
-  setScore(score, color, level);
-  renderBadges("signals", signals, color);
-  renderList("explanations", explanations);
-  renderList("auditLog", audit);
+  document.getElementById("result").style.display="block";
+  setScore(score,color,level);
+  renderBadges("signals",signals,color);
+  renderList("explanations",explanations);
+  renderList("auditLog",audit);
 
-  const fingerprint = btoa(
-    audit.join("|") + "|" + score + "|" + document.location.hostname
+  const execFingerprint = btoa(
+    ruleSetHash()+"|"+audit.join("|")+"|"+location.hostname
   );
 
   document.getElementById("exportBox").textContent =
 `Integrity Score: ${score}
 Level: ${level}
 
+RuleSetHash:
+${ruleSetHash()}
+
 Audit:
 ${audit.join("\n")}
 
 Execution fingerprint:
-${fingerprint}
+${execFingerprint}
 
 Methodology:
-Observed page analysis. Deterministic rules.
-No tracking. No cookies. No personalization.`;
+Observed reality. Deterministic rules.
+No tracking. No cookies.`;
+
+  document.getElementById("ruleSpec").textContent =
+`Base score: 100
+Rules:
+${RULES.join("\n")}
+
+RuleSetHash:
+${ruleSetHash()}`;
+
+  document.getElementById("whitepaper").textContent =
+`BOMBO – Independent Offer Integrity Engine
+
+BOMBO evaluates online offers using deterministic,
+rule-based analysis of observable page content.
+
+It does NOT:
+- track users
+- use cookies
+- learn or personalize
+- affiliate or monetize results
+
+It DOES:
+- analyze visible content and page structure
+- apply transparent, published rules
+- produce reproducible, auditable scores
+
+Same rules. Same page. Same result.
+
+Designed for:
+- consumers
+- platforms
+- compliance and legal review`;
 }
 
+/* =======================
+   UI HELPERS
+======================= */
 function setScore(score,color,level){
   const s=document.getElementById("score");
   s.textContent=score;
@@ -243,11 +258,11 @@ function setScore(score,color,level){
     `<span class="badge ${color}">${level}</span>`;
 }
 function renderBadges(id,list,color){
-  const el=document.getElementById(id); el.innerHTML="";
+  const el=document.getElementById(id);el.innerHTML="";
   list.forEach(i=>el.innerHTML+=`<span class="badge ${color}">${i}</span>`);
 }
 function renderList(id,list){
-  const el=document.getElementById(id); el.innerHTML="";
+  const el=document.getElementById(id);el.innerHTML="";
   list.forEach(i=>{const li=document.createElement("li");li.textContent=i;el.appendChild(li);});
 }
 </script>
