@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>BOMBO – Independent Offer Integrity Check</title>
+<title>BOMBO – Independent Offer Integrity Signals</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -21,31 +21,68 @@ h1 { margin-bottom: 4px; }
   padding: 16px;
   margin-bottom: 20px;
 }
-label { display:block;margin:10px 0 6px;font-size:14px;color:#ccc; }
-textarea, button {
-  width:100%;padding:10px;border-radius:8px;border:none;font-size:14px;
+label {
+  display: block;
+  margin: 10px 0 6px;
+  font-size: 14px;
+  color: #ccc;
 }
-textarea { resize:vertical;min-height:80px; }
+textarea, select, button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+}
+textarea { min-height: 90px; }
 button {
-  background:#4f7cff;color:#fff;font-weight:600;cursor:pointer;margin-top:14px;
+  background: #4f7cff;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 14px;
 }
-.score { font-size:48px;font-weight:700; }
-.green{color:#5dff9b;} .yellow{color:#ffd45d;} .red{color:#ff6b6b;}
-.badge{
-  display:inline-block;padding:4px 10px;border-radius:6px;
-  font-size:12px;font-weight:600;margin-right:6px;margin-bottom:6px;
+.signalRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
 }
-.badge.green{background:#1e6f4a;}
-.badge.yellow{background:#6f5a1e;}
-.badge.red{background:#6f1e1e;}
-ul{padding-left:18px;margin-top:8px;}
+.dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  opacity: 0.2;
+}
+.dot.green { background:#5dff9b; }
+.dot.orange { background:#ffd45d; }
+.dot.red { background:#ff6b6b; }
+.dot.active { opacity:1; }
+.badge {
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:600;
+  margin:4px 6px 0 0;
+}
+.badge.green{background:#1e6f4a}
+.badge.orange{background:#6f5a1e}
+.badge.red{background:#6f1e1e}
+ul{padding-left:18px}
 details{
-  background:#12162b;border-radius:8px;padding:10px;margin-top:10px;
+  background:#12162b;
+  border-radius:8px;
+  padding:10px;
+  margin-top:10px;
 }
-summary{cursor:pointer;font-weight:600;color:#9fb3ff;}
+summary{cursor:pointer;font-weight:600;color:#9fb3ff}
 footer{
-  margin-top:30px;font-size:12px;color:#777;text-align:center;
+  margin-top:30px;
+  font-size:12px;
+  color:#777;
+  text-align:center;
 }
+code{color:#9fb3ff}
 </style>
 </head>
 
@@ -53,18 +90,30 @@ footer{
 
 <h1>BOMBO</h1>
 <div class="subtitle">
-Independent Offer Integrity Check – observed reality, not declared input
+Independent Integrity Signal Engine – deterministic, auditable, fingerprinted
 </div>
 
 <div class="panel">
-  <label>Context (optional)</label>
-  <textarea id="offerText" placeholder="Optional notes. BOMBO analyzes the page automatically."></textarea>
+  <label>Offer text</label>
+  <textarea id="offerText"
+    placeholder="70% OFF – Only today! Best deal ever. No refunds."></textarea>
+
+  <label>Affiliate metadata (optional)</label>
+  <select id="affiliate">
+    <option value="clean">No redirect masking</option>
+    <option value="masked">Masked / chained redirect</option>
+  </select>
+
   <button onclick="runCheck()">Run Integrity Check</button>
 </div>
 
 <div class="panel" id="result" style="display:none;">
-  <div class="score" id="score"></div>
-  <div id="level"></div>
+  <div class="signalRow">
+    <div class="dot green" id="dotGreen"></div>
+    <div class="dot orange" id="dotOrange"></div>
+    <div class="dot red" id="dotRed"></div>
+    <span id="signalText"></span>
+  </div>
 
   <h3>Detected Signals</h3>
   <div id="signals"></div>
@@ -73,197 +122,155 @@ Independent Offer Integrity Check – observed reality, not declared input
   <ul id="explanations"></ul>
 
   <details>
+    <summary>Offer Fingerprint</summary>
+    <div><strong>BOMBO-OFFER-ID:</strong></div>
+    <code id="fingerprint"></code>
+  </details>
+
+  <details>
     <summary>Audit Log (verifiable)</summary>
     <ul id="auditLog"></ul>
   </details>
 
   <details>
     <summary>Export – Legal / Compliance</summary>
-    <pre id="exportBox" style="white-space:pre-wrap;"></pre>
+    <pre id="exportBox"></pre>
   </details>
 
   <details>
     <summary>Open Rule Specification</summary>
-    <pre id="ruleSpec"></pre>
-  </details>
+<pre>
+Deterministic signal engine
+Fingerprinted offer identity
 
-  <details>
-    <summary>Whitepaper – BOMBO Integrity Engine</summary>
-    <pre id="whitepaper" style="white-space:pre-wrap;"></pre>
+Fingerprint inputs:
+- discount flag
+- urgency flag
+- refund limitation
+- affiliate masking
+- signal count
+- text length bucket
+
+Same structure = same fingerprint
+</pre>
   </details>
 </div>
 
 <footer>
-<strong>Disclaimer:</strong> BOMBO provides informational integrity signals only.
-No financial, legal, or purchasing advice.<br><br>
-
-<strong>Privacy:</strong> All analysis is performed locally in your browser.
-No data is stored, transmitted, tracked, or shared. No cookies.
+<strong>Disclaimer:</strong> Informational integrity signals only.<br>
+<strong>Privacy:</strong> All processing local. No tracking. No storage.
 </footer>
 
 <script>
-/* =======================
-   RULE SET (CANONICAL)
-======================= */
-const RULES = [
-  "Unverifiable discount → -15",
-  "Soft urgency language → -8",
-  "Artificial urgency / countdown → -15",
-  "Missing or opaque terms → -20",
-  "Emotional exaggeration → -5",
-  "Affiliate / redirect masking → -5"
-];
+async function runCheck(){
+  const textRaw = document.getElementById("offerText").value;
+  const text = textRaw.toLowerCase();
+  const affiliate = document.getElementById("affiliate").value;
 
-/* Stable rule-set hash (deterministic) */
-function ruleSetHash(){
-  return btoa(RULES.join("|"));
-}
+  const signals=[], explanations=[], audit=[];
+  let critical=false;
 
-/* =======================
-   CORE ENGINE
-======================= */
-function runCheck(){
-  let score = 100;
-  const signals = [];
-  const explanations = [];
-  const audit = [];
-
-  const text = document.body.innerText.toLowerCase();
-  const html = document.documentElement.innerHTML.toLowerCase();
-
-  function log(rule, penalty){
-    audit.push(`${rule} → ${penalty}`);
+  function add(sig, exp, src, isCritical=false){
+    signals.push(sig);
+    explanations.push(exp);
+    audit.push(`${sig} ← ${src}${isCritical?" [CRITICAL]":""}`);
+    if(isCritical) critical=true;
   }
 
-  if (/%\s*off|sale|discount/.test(text) && !/was\s*\$|<del>/.test(html)) {
-    score -= 15;
-    signals.push("Unverifiable discount");
-    explanations.push("Discount language without reference price.");
-    log("Unverifiable discount","-15");
+  // ---- SIGNAL EXTRACTION ----
+  const hasDiscount = /\d+\s?%/.test(text);
+  const hasUrgency = /only today|ends in|last chance|countdown|hurry/.test(text);
+  const hasRefundLimit = /no refunds|no return/.test(text);
+  const hasExaggeration = /best ever|guaranteed|insane deal/.test(text);
+
+  if (hasDiscount)
+    add("Discount claim","Percentage discount detected.","text");
+
+  if (hasUrgency)
+    add("Artificial urgency","Time pressure language.","text",true);
+
+  if (hasRefundLimit)
+    add("Refund limitation","Refunds restricted.","text",true);
+
+  if (hasExaggeration)
+    add("Emotional exaggeration","Subjective persuasion.","text");
+
+  if (affiliate==="masked")
+    add("Affiliate redirect masking","Destination obscured.","metadata");
+
+  // ---- CLASSIFICATION ----
+  let level,color;
+  if (critical || signals.length>=3){
+    level="HIGH RISK SIGNAL"; color="red";
+  } else if (signals.length>0){
+    level="ATTENTION SIGNAL"; color="orange";
+  } else {
+    level="NO RISK SIGNALS"; color="green";
   }
 
-  if (/only today|last chance|ends in/.test(text)) {
-    score -= 8;
-    signals.push("Soft urgency language");
-    explanations.push("Time pressure wording detected.");
-    log("Soft urgency","-8");
-  }
+  // ---- FINGERPRINT ----
+  const lengthBucket =
+    textRaw.length < 80 ? "S" :
+    textRaw.length < 200 ? "M" : "L";
 
-  if (/countdown|setinterval|timer/.test(html)) {
-    score -= 15;
-    signals.push("Artificial urgency");
-    explanations.push("Countdown or scarcity mechanism detected.");
-    log("Artificial urgency","-15");
-  }
+  const fingerprintSource = [
+    hasDiscount ? 1:0,
+    hasUrgency ? 1:0,
+    hasRefundLimit ? 1:0,
+    affiliate==="masked" ? 1:0,
+    signals.length,
+    lengthBucket
+  ].join("|");
 
-  if (!/terms|refund|policy/.test(text)) {
-    score -= 20;
-    signals.push("Missing or opaque terms");
-    explanations.push("No visible terms or refund policy.");
-    log("Missing terms","-20");
-  }
-
-  if (/best ever|guaranteed|no risk/.test(text)) {
-    score -= 5;
-    signals.push("Emotional exaggeration");
-    explanations.push("Subjective exaggeration detected.");
-    log("Emotional exaggeration","-5");
-  }
-
-  if (/redirect|affid|utm_/.test(html)) {
-    score -= 5;
-    signals.push("Affiliate masking indicators");
-    explanations.push("Redirect or tracking indicators detected.");
-    log("Affiliate masking","-5");
-  }
-
-  if (audit.length === 0) {
-    audit.push("All integrity rules executed → no penalties applied");
-  }
-
-  score = Math.max(0, score);
-
-  let level="High Integrity",color="green";
-  if(score<80){level="Moderate Integrity";color="yellow";}
-  if(score<50){level="Low Integrity";color="red";}
-
-  document.getElementById("result").style.display="block";
-  setScore(score,color,level);
-  renderBadges("signals",signals,color);
-  renderList("explanations",explanations);
-  renderList("auditLog",audit);
-
-  const execFingerprint = btoa(
-    ruleSetHash()+"|"+audit.join("|")+"|"+location.hostname
+  const hash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(fingerprintSource)
   );
+  const fingerprint = [...new Uint8Array(hash)]
+    .map(b=>b.toString(16).padStart(2,"0"))
+    .join("");
 
-  document.getElementById("exportBox").textContent =
-`Integrity Score: ${score}
-Level: ${level}
+  // ---- RENDER ----
+  document.getElementById("result").style.display="block";
+  setDots(color);
+  document.getElementById("signalText").textContent=level;
+  document.getElementById("fingerprint").textContent=fingerprint;
 
-RuleSetHash:
-${ruleSetHash()}
+  render("signals",signals,color,true);
+  render("explanations",explanations,false);
+  render("auditLog",audit,false);
 
-Audit:
+  document.getElementById("exportBox").textContent=
+`Integrity Signal: ${level}
+BOMBO-OFFER-ID: ${fingerprint}
+
+Detected signals:
 ${audit.join("\n")}
 
-Execution fingerprint:
-${execFingerprint}
-
-Methodology:
-Observed reality. Deterministic rules.
-No tracking. No cookies.`;
-
-  document.getElementById("ruleSpec").textContent =
-`Base score: 100
-Rules:
-${RULES.join("\n")}
-
-RuleSetHash:
-${ruleSetHash()}`;
-
-  document.getElementById("whitepaper").textContent =
-`BOMBO – Independent Offer Integrity Engine
-
-BOMBO evaluates online offers using deterministic,
-rule-based analysis of observable page content.
-
-It does NOT:
-- track users
-- use cookies
-- learn or personalize
-- affiliate or monetize results
-
-It DOES:
-- analyze visible content and page structure
-- apply transparent, published rules
-- produce reproducible, auditable scores
-
-Same rules. Same page. Same result.
-
-Designed for:
-- consumers
-- platforms
-- compliance and legal review`;
+Method:
+Deterministic extraction + structural fingerprint.
+Same structure = same ID.`;
 }
 
-/* =======================
-   UI HELPERS
-======================= */
-function setScore(score,color,level){
-  const s=document.getElementById("score");
-  s.textContent=score;
-  s.className="score "+color;
-  document.getElementById("level").innerHTML=
-    `<span class="badge ${color}">${level}</span>`;
+function setDots(c){
+  ["Green","Orange","Red"].forEach(x=>{
+    document.getElementById("dot"+x).classList.remove("active");
+  });
+  document.getElementById("dot"+c.charAt(0).toUpperCase()+c.slice(1)).classList.add("active");
 }
-function renderBadges(id,list,color){
-  const el=document.getElementById(id);el.innerHTML="";
-  list.forEach(i=>el.innerHTML+=`<span class="badge ${color}">${i}</span>`);
-}
-function renderList(id,list){
-  const el=document.getElementById(id);el.innerHTML="";
-  list.forEach(i=>{const li=document.createElement("li");li.textContent=i;el.appendChild(li);});
+
+function render(id,list,color,badge){
+  const el=document.getElementById(id);
+  el.innerHTML="";
+  list.forEach(i=>{
+    if(badge){
+      el.innerHTML+=`<span class="badge ${color}">${i}</span>`;
+    } else {
+      const li=document.createElement("li");
+      li.textContent=i;
+      el.appendChild(li);
+    }
+  });
 }
 </script>
 
