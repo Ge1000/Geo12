@@ -54,11 +54,11 @@ border-radius:8px;
 function cleanOCR(text){
 
 const junk = [
-"meci","egal","live","casino","bonus","meniu",
+"live","casino","bonus","meniu",
 "bilete","sport","calendar","competitii",
 "superbet","azi","astazi","builder",
 "league","premier","liga","anglia",
-"acasa","bet","1","x","2"
+"acasa","bet"
 ]
 
 return text
@@ -69,7 +69,7 @@ let l=line.trim()
 if(l.length<3) return ""
 let lower=l.toLowerCase()
 for(let j of junk){
-if(lower===j) return ""
+if(lower.includes(j)) return ""
 }
 return l
 })
@@ -78,7 +78,7 @@ return l
 
 }
 
-// ------------------ PARSER HYBRID ------------------
+// ------------------ SMART PARSER FIX ------------------
 
 function parseMatches(text){
 
@@ -87,43 +87,50 @@ let lines=text.split("\n")
 .filter(l=>l.length>2)
 
 let matches=[]
-let used=new Set()
 
 for(let i=0;i<lines.length;i++){
 
-if(used.has(i)) continue
-
-let current=lines[i]
-
-// ignorăm linii care conțin cote
-if(current.match(/\d+\.\d+/)) continue
-
-// CASE echipe pe 2 linii + cote pe a 3-a
-if(i+2<lines.length){
-
-let home=lines[i]
-let away=lines[i+1]
-let oddsLine=lines[i+2]
-
-if(!home.match(/\d/) && !away.match(/\d/)){
-
-let odds=oddsLine.match(/(\d+\.\d+)/g)
+// caut linie cu 3 cote valide
+let odds = lines[i].match(/(\d+\.\d+)/g)
 
 if(odds && odds.length>=3){
+
+let odd1=parseFloat(odds[0])
+let oddX=parseFloat(odds[1])
+let odd2=parseFloat(odds[2])
+
+// validare cote realiste
+if(odd1>1 && oddX>1 && odd2>1){
+
+// caut cele 2 linii anterioare care NU conțin cifre
+let home=""
+let away=""
+
+for(let j=i-1;j>=0;j--){
+if(!lines[j].match(/\d/)){
+if(!away) away=lines[j]
+else{
+home=lines[j]
+break
+}
+}
+}
+
+// validare finală
+if(home && away && home!==away){
 
 matches.push({
 home:home,
 away:away,
-odd1:parseFloat(odds[0]),
-oddX:parseFloat(odds[1]),
-odd2:parseFloat(odds[2])
+odd1:odd1,
+oddX:oddX,
+odd2:odd2
 })
 
-used.add(i)
-used.add(i+1)
-used.add(i+2)
 }
+
 }
+
 }
 
 }
