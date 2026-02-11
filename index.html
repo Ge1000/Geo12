@@ -2,95 +2,90 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo OCR + xG Analyzer Final</title>
+<title>Geo Quick Bet Analyzer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
-body{font-family:system-ui;background:#0f1220;color:white;padding:20px}
-input,button{padding:8px;margin:5px}
-.box{background:#1a1f38;padding:15px;margin-top:20px;border-radius:10px}
-.good{color:#00ff9d}
-.bad{color:#ff4d4d}
-h3{margin-top:15px}
+body{font-family:system-ui;background:#0f1220;color:white;padding:20px;text-align:center;}
+input,button{padding:10px;margin:5px;font-size:16px;}
+.box{background:#1a1f38;padding:15px;margin-top:20px;border-radius:10px;}
+.pick{font-size:20px;margin:10px;}
+.win{color:#00ff9d;font-weight:bold;}
+.lose{color:#ff4d4d;font-weight:bold;}
 </style>
 </head>
 <body>
 
-<h2>📸 Geo OCR + xG Analyzer Final</h2>
-
-<p>Încarcă poza cu meciuri și cote (xG optional, rezultat optional 1/X/2):</p>
+<h2>📸 Geo Quick Bet Analyzer</h2>
+<p>Încarcă poza cu meciuri și cote (xG optional):</p>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează Analiză</button>
 
 <div class="box" id="result">Rezultatele vor apărea aici...</div>
 
 <script>
-// --- Funcții matematice ---
+// Monte Carlo simplificat
 function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
-function monteCarlo(xgH,xgA,sims=100000){let c1=0,cX=0,c2=0;for(let i=0;i<sims;i++){let h=poissonRandom(xgH),a=poissonRandom(xgA);if(h>a)c1++;else if(h==a)cX++;else c2++;}return [c1/sims,cX/sims,c2/sims];}
+function monteCarlo(xgH,xgA,sims=100000){
+  let cH=0,cX=0,cA=0,golsTot=0;
+  for(let i=0;i<sims;i++){
+    let h=poissonRandom(xgH),a=poissonRandom(xgA);
+    golsTot+=h+a;
+    if(h>a)cH++; else if(h==a)cX++; else cA++;
+  }
+  let pH=cH/sims, pX=cX/sims, pA=cA/sims, pOver=(golsTot/sims)>2.5?1:0;
+  return {pH,pX,pA,pOver};
+}
 
-// --- OCR + procesare text ---
 function runOCR(){
   let file=document.getElementById("imgInput").files[0];
   if(!file){alert("Alege poza"); return;}
   result.innerHTML="Se procesează OCR...⏳";
 
   Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
-    .then(({data:{text}})=>{
-      processText(text);
-    });
+    .then(({data:{text}})=>{processText(text);});
 }
 
 function processText(text){
-  // Curățare text OCR
   text=text.replace(/\r/g,'\n').replace(/\t/g,' ').replace(/\s+/g,' ').trim();
   let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
+  if(lines.length==0){result.innerHTML="Nu s-au găsit meciuri valide."; return;}
+
   let output="";
-
   for(let l of lines){
-    // Flexibil: echipe cu spații, cote cu punct sau virgulă, xG optional, rezultat optional
-    // Caut cote: orice număr cu 1-2 zecimale
+    // Detectam echipe si cote
     let numbers=l.match(/[\d]+\.[\d]+/g);
-    if(!numbers || numbers.length<2) continue; // trebuie minim 2 cote
-
-    // Extragem echipe: partea text între început și prima cotă, și între cote
+    if(!numbers || numbers.length<2) continue;
     let parts=l.split(numbers[0]);
-    if(parts.length<2) continue;
     let teamA=parts[0].trim();
-    let rest=parts[1];
     let odd1=parseFloat(numbers[0]);
     let oddX=parseFloat(numbers[1]);
-    let odd2=numbers.length>=3?parseFloat(numbers[2]):null;
+    let odd2=numbers.length>=3?parseFloat(numbers[2]):odd1;
 
-    let teamB="";
-    let xgH=1.5, xgA=1.5;
-    let resultReal="";
+    // Echipa B: text după ultima cotă
+    let lastIndex=l.lastIndexOf(numbers[numbers.length>=3?2:1]);
+    let teamB=l.substring(lastIndex+numbers[numbers.length>=3?2:1].length).replace(/xG/gi,'').trim();
 
-    // Căutare xG și echipă B
+    // xG fallback 1.5 dacă nu există
     let xgMatch=l.match(/(\d*\.?\d+)xG/gi);
+    let xgH=1.5, xgA=1.5;
     if(xgMatch && xgMatch.length>=1) xgH=parseFloat(xgMatch[0]);
     if(xgMatch && xgMatch.length>=2) xgA=parseFloat(xgMatch[1]);
 
-    // Extragem echipa B: text după ultima cotă până la xG sau rezultat
-    let lastNumberIndex=l.lastIndexOf(numbers[ numbers.length>=3?2:1 ]);
-    teamB=l.substring(lastNumberIndex+numbers[ numbers.length>=3?2:1 ].length).replace(/xG/gi,'').replace(/[1X2]/i,'').trim();
-
-    // Detect rezultat 1/X/2
-    let resultMatch=l.match(/[1X2]/i);
-    if(resultMatch) resultReal=resultMatch[0].toUpperCase();
-
-    if(!odd2) odd2=odd1; // fallback dacă nu există a treia cotă
-
     // Monte Carlo
-    let probs=monteCarlo(xgH,xgA);
-    let edge=[probs[0]-1/odd1,probs[1]-1/oddX,probs[2]-1/odd2];
-    let bestIndex=edge.indexOf(Math.max(...edge));
-    let pick=["1","X","2"][bestIndex];
+    let sim=monteCarlo(xgH,xgA);
 
-    let cls=edge[bestIndex]>0.04?"good":"bad"; // edge>4% = value bet
-    output+=`<p class="${cls}">
-      ${teamA} vs ${teamB} | Pick: ${pick} | Prob: ${(probs[bestIndex]*100).toFixed(2)}% | Edge: ${(edge[bestIndex]*100).toFixed(2)}%` + (resultReal?` | Rezultat real: ${resultReal}`:'') + `
-    </p>`;
+    // Pick câștigător
+    let pick="";
+    let maxP=Math.max(sim.pH,sim.pX,sim.pA);
+    if(maxP==sim.pH) pick=`Câștigă ${teamA}`;
+    else if(maxP==sim.pX) pick="Egal";
+    else pick=`Câștigă ${teamB}`;
+
+    // Peste/Sub goluri
+    let goluriPick=sim.pOver? "Peste 2.5 goluri":"Sub 2.5 goluri";
+
+    output+=`<p class="pick win">${teamA} vs ${teamB} → ${pick}, ${goluriPick}</p>`;
   }
 
   result.innerHTML=output||"Nu s-au găsit meciuri valide în poză.";
