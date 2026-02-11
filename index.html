@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.21 Mega Blind OCR Fix 💥</title>
+<title>Pick 5.6.21 Mega Visual OCR 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -41,63 +41,70 @@ button{
 .high{border-left:5px solid #22c55e;}
 .medium{border-left:5px solid #facc15;}
 .low{border-left:5px solid #ef4444;}
+canvas{
+  max-width:100%;
+  margin-top:20px;
+  border:1px solid #444;
+  border-radius:8px;
+}
 </style>
 </head>
 <body>
 
-<h1>Pick 5.6.21 Mega Blind OCR Fix 💥</h1>
+<h1>Pick 5.6.21 Mega Visual OCR 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
 <button onclick="runOCR()">Rulează analiză</button>
 
 <h3>Preview OCR</h3>
-<div id="preview"></div>
+<canvas id="canvas"></canvas>
 
 <h3>Meciuri Detectate</h3>
 <div id="output"></div>
 
 <script>
 
-// ------------------ CLEAN OCR SUPER FLEX ------------------
+// ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
-        .replace(/[\*|@#\$%®<>\-\_\\]/g,'.') // elimină simboluri
-        .replace(/\s{2,}/g,' ')              // reduce spații multiple
+        .replace(/[\*|@#\$%®<>\-]/g,'.')
+        .replace(/\s{2,}/g,' ')
+        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
-        .filter(l=>l.length>1 && !['acasa','live','bilete','bonus','meniu'].some(w=>l.toLowerCase().includes(w)))
+        .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER MEGA BLIND ------------------
+// ------------------ PARSER ULTRA HYBRID ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
-
     for(let line of lines){
-        buffer.push(line)
-        // căutăm linii care conțin cote
+        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
         let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
-            // preluăm ultimele două linii din buffer care nu sunt cote ca echipe
-            let candidates = buffer.slice(-5, -1).filter(l => !l.match(/\d/))
-            if(candidates.length>=2){
-                let away=candidates.pop()
-                let home=candidates.pop()
-                if(home!==away && !matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({
-                        home: home,
-                        away: away,
-                        odd1: parseFloat(odds[0]),
-                        oddX: parseFloat(odds[1]),
-                        odd2: parseFloat(odds[2])
-                    })
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
+
+            let home="", away=""
+            for(let i=buffer.length-1;i>=0;i--){
+                if(!buffer[i].match(/\d/)){
+                    if(!away) away=buffer[i]
+                    else { home=buffer[i]; break }
                 }
             }
-            buffer=[]
+
+            if(home && away && home!==away){
+                if(!matches.some(m=>m.home===home && m.away===away)){
+                    matches.push({home,away,odd1,oddX,odd2})
+                }
+            }
+        } else {
+            buffer.push(line)
         }
     }
-
     return matches
 }
 
@@ -139,21 +146,41 @@ function display(matches){
     })
 }
 
-// ------------------ RUN OCR ------------------
+// ------------------ RUN OCR & DRAW ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
     if(!file){ alert("Selectează o poză"); return }
 
-    let previewDiv=document.getElementById("preview")
-    let { data: { text } } = await Tesseract.recognize(file,'eng',{
-        logger:m=>console.log(m)
-    })
+    let canvas=document.getElementById("canvas")
+    let ctx=canvas.getContext("2d")
+    let img=new Image()
+    img.onload = async function(){
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img,0,0)
 
-    previewDiv.innerHTML="<pre>"+text+"</pre>"
+        let { data: { text, words } } = await Tesseract.recognize(file,'eng',{
+            logger:m=>console.log(m)
+        })
 
-    let cleaned=cleanOCR(text)
-    let matches=parseMatches(cleaned)
-    display(matches)
+        let cleaned=cleanOCR(text)
+        let matches=parseMatches(cleaned)
+        display(matches)
+
+        // Desenează casete pe cuvinte ce conțin cote
+        ctx.strokeStyle="red"
+        ctx.lineWidth=2
+        ctx.font="18px Arial"
+        ctx.fillStyle="yellow"
+
+        words.forEach(w=>{
+            if(w.text.match(/\d+\.\d+/)){
+                ctx.strokeRect(w.bbox.x0,w.bbox.y0,w.bbox.x1-w.bbox.x0,w.bbox.y1-w.bbox.y0)
+                ctx.fillText(w.text,w.bbox.x0,w.bbox.y0-5)
+            }
+        })
+    }
+    img.src=URL.createObjectURL(file)
 }
 
 </script>
