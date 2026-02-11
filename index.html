@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.7</title>
+<title>Geo Nuclear Quick Pick 4.8</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -14,7 +14,7 @@ body {
   color: #ffffff;
 }
 h2 {text-align:center; margin-bottom:10px; color:#00ffea;}
-#matches {
+#preview, #matches {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 12px;
@@ -40,10 +40,14 @@ input, button { padding:10px; margin:5px; font-size:16px; }
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.7 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.8 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
+<h3>Preview OCR</h3>
+<div id="preview"></div>
+
+<h3>Meciuri Profitabile</h3>
 <div id="matches"></div>
 
 <script>
@@ -78,12 +82,13 @@ function monteCarlo(xgH,xgA,sims=100000){
 function runOCR(){
   let file=document.getElementById("imgInput").files[0];
   if(!file){alert("Alege poza"); return;}
-  document.getElementById("matches").innerHTML = "Se procesează OCR...";
+  document.getElementById("preview").innerHTML = "Se procesează OCR...";
+  document.getElementById("matches").innerHTML = "";
   Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Curatare OCR
+// Curatare OCR + eliminare artefacte
 function cleanText(text){
   return text.replace(/\r|\n|\t/g,' ')
              .replace(/Meci|Egal/gi,'')
@@ -94,36 +99,47 @@ function cleanText(text){
 
 // Determinare culoare dupa edge
 function getColor(edge){
-  if(edge>=1.0) return '#00ffea'; // verde neon
-  if(edge>=0.5) return '#ffff33'; // galben neon
-  return '#ff4500'; // portocaliu neon
+  if(edge>=1.0) return '#00ffea';
+  if(edge>=0.5) return '#ffff33';
+  return '#ff4500';
 }
 
 // Parse și afișare
 function processText(rawText){
   let text = cleanText(rawText);
   const matchRegex = /([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+)\s*([\d\.]+)\/([\d\.]+)\/([\d\.]+)(.*?(\d*\.?\d+)xG.*?(\d*\.?\d+)xG)?/gi;
+  let previewDiv = document.getElementById("preview");
   let matchesDiv = document.getElementById("matches");
+  previewDiv.innerHTML = "";
   matchesDiv.innerHTML = "";
   let matchesFound = [];
   let results = [];
   let m;
 
+  // Preview OCR: toate meciurile detectate, inclusiv artefacte
   while((m = matchRegex.exec(text)) !== null){
-    let t1 = findTeam(m[1]);
-    let t2 = findTeam(m[2]);
-    if(!t1 || !t2) continue; // ignoră artefacte
-
+    let t1 = findTeam(m[1]) || m[1].trim();
+    let t2 = findTeam(m[2]) || m[2].trim();
     let odd1 = parseFloat(m[3]);
     let oddX = parseFloat(m[4]);
     let odd2 = parseFloat(m[5]);
     let xgH = m[7]?parseFloat(m[7]):1.5;
     let xgA = m[8]?parseFloat(m[8]):1.5;
 
+    // Preview div
+    let divPrev = document.createElement("div");
+    divPrev.className="match";
+    divPrev.style.background="#333";
+    divPrev.innerHTML=`<h3>${t1} vs ${t2}</h3>
+                       <p>Cote: ${odd1}/${oddX}/${odd2}</p>
+                       <p>xG: ${xgH}-${xgA}</p>`;
+    previewDiv.appendChild(divPrev);
+
     let key = t1+"|"+t2;
-    if(matchesFound.includes(key)) continue; // eliminare duplicate
+    if(matchesFound.includes(key)) continue;
     matchesFound.push(key);
 
+    // Calcul Edge
     let sim = monteCarlo(xgH,xgA);
     let maxP = Math.max(sim.pH, sim.pX, sim.pA);
     let edge = 0;
@@ -148,13 +164,13 @@ function processText(rawText){
   results.forEach((r,index)=>{
     let div = document.createElement("div");
     div.className = "match";
-    if(index<3) div.classList.add("top3"); // Top 3 evidențiat
+    if(index<3) div.classList.add("top3");
     div.style.background = getColor(r.edge);
-    div.innerHTML = `<h3>${r.pick}</h3>
-                     <p>${r.t1} vs ${r.t2}</p>
-                     <p>Cote: ${r.odd1}/${r.oddX}/${r.odd2}</p>
-                     <p>xG: ${r.xgH}-${r.xgA}</p>
-                     <p>Edge: ${r.edge.toFixed(2)}</p>`;
+    div.innerHTML=`<h3>${r.pick}</h3>
+                   <p>${r.t1} vs ${r.t2}</p>
+                   <p>Cote: ${r.odd1}/${r.oddX}/${r.odd2}</p>
+                   <p>xG: ${r.xgH}-${r.xgA}</p>
+                   <p>Edge: ${r.edge.toFixed(2)}</p>`;
     matchesDiv.appendChild(div);
   });
 }
