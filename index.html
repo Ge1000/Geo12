@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.8 💥</title>
+<title>Pick 5.6.9 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -31,7 +31,9 @@ margin:10px 0;
 padding:12px;
 background:#111827;
 border-radius:8px;
+transition: transform 0.2s;
 }
+.match:hover { transform: scale(1.02); }
 .high{border-left:5px solid #22c55e;}
 .medium{border-left:5px solid #facc15;}
 .low{border-left:5px solid #ef4444;}
@@ -39,7 +41,7 @@ border-radius:8px;
 </head>
 <body>
 
-<h1>Pick 5.6.8 💥</h1>
+<h1>Pick 5.6.9 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -51,43 +53,32 @@ border-radius:8px;
 
 // ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
-    // Înlocuim virgulă cu punct și eliminăm spații ciudate
+    // Înlocuim virgulă cu punct și eliminăm spații multiple
     text = text.replace(/,/g,'.').replace(/\s{2,}/g,' ')
-    // Eliminăm junk comun, dar păstrăm echipele și cote
-    const junk = ["live","casino","bonus","meniu","bilete","sport","calendar","competitii","superbet","azi","astazi","builder"]
     return text.split("\n").map(line=>{
         let l=line.trim()
         if(l.length<2) return ""
-        let lower=l.toLowerCase()
-        for(let j of junk){
-            if(lower.includes(j.toLowerCase())) return ""
-        }
         return l
     }).filter(l=>l!=="")
 }
 
 // ------------------ PARSER FLEXIBIL ------------------
 function parseMatches(text){
-    let lines=text
-        .split("\n")
-        .map(l=>l.trim())
-        .filter(l=>l.length>1)
-    
+    let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>1)
     let matches=[]
     let usedIndexes=new Set()
     
     for(let i=0;i<lines.length;i++){
         if(usedIndexes.has(i)) continue
-        // Căutăm linia cu cote
+        // Cautăm linia cu cote (3 numere)
         let odds=lines[i].match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
-            
-            // Căutăm ultimele două linii valide înainte de cote
+            // Căutăm ultimele 3 linii valide înainte de cote
             let home="", away=""
-            for(let j=i-1;j>=0;j--){
+            for(let j=i-1;j>=0 && j>=i-3;j--){
                 if(!lines[j].match(/\d/)){
                     if(!away) away=lines[j]
                     else{
@@ -97,11 +88,8 @@ function parseMatches(text){
                 }
             }
             if(home && away && home!==away){
-                // Eliminăm prefixe OCR comune
                 home=home.replace(/^[A-Z]{1,3}\s+/,'').trim()
                 away=away.replace(/^[A-Z]{1,3}\s+/,'').trim()
-                
-                // Evităm duplicate
                 if(!matches.some(m=>m.home===home && m.away===away)){
                     matches.push({home,away,odd1,oddX,odd2})
                 }
