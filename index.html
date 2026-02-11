@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.14 💥</title>
+<title>Pick 5.6.15 Super Hybrid 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.14 💥</h1>
+<h1>Pick 5.6.15 Super Hybrid 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -59,38 +59,47 @@ button{
 
 <script>
 
-// ------------------ CLEAN OCR AVANSAT ------------------
+// ------------------ CLEAN OCR SUPER HYBRID ------------------
 function cleanOCR(text){
-    // Înlocuiește simboluri și spații multiple
-    text = text.replace(/[,*@®\-\|<>]/g,'.')
-               .replace(/\s{2,}/g,' ')
-               .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
+    text = text
+        .replace(/[\*|@#\$%®<>\-]/g,'.')  // elimină simboluri
+        .replace(/\s{2,}/g,' ')           // reduce spații multiple
+        .replace(/[^a-zA-Z0-9\.\/\s]/g,'') // elimină caractere nevalide
     return text.split("\n").map(l=>l.trim()).filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ROBUST ------------------
+// ------------------ PARSER SUPER ROBUST ------------------
 function parseMatches(lines){
     let matches=[]
-    for(let i=0;i<lines.length;i++){
-        let line = lines[i]
-        // Detectăm pattern de tip "Echipa1 ... vs ... Echipa2"
-        let vsIndex = line.toLowerCase().indexOf(' vs ')
-        if(vsIndex>0){
-            let home = line.slice(0,vsIndex).trim()
-            let away = line.slice(vsIndex+4).trim()
-            // Caută cote pe aceeași linie sau următoarea linie
-            let oddsLine = line.slice(vsIndex+4).replace(away,'').trim()
-            if(!oddsLine && i+1<lines.length) oddsLine = lines[i+1]
-            let odds = oddsLine.match(/(\d+\.\d+)/g)
-            if(odds && odds.length>=3){
-                matches.push({
-                    home: home,
-                    away: away,
-                    odd1: parseFloat(odds[0]),
-                    oddX: parseFloat(odds[1]),
-                    odd2: parseFloat(odds[2])
-                })
+    let tempLines=[]
+
+    for(let line of lines){
+        // păstrează doar linii cu caractere utile
+        if(line.match(/\d+\.\d+/)){
+            // linie cu cote
+            let odds = line.match(/(\d+\.\d+)/g)
+            if(odds.length>=3){
+                let odd1=parseFloat(odds[0])
+                let oddX=parseFloat(odds[1])
+                let odd2=parseFloat(odds[2])
+
+                // ultimele 2 linii cu text considerăm că sunt echipe
+                let home="", away=""
+                for(let i=tempLines.length-1;i>=0;i--){
+                    if(tempLines[i].length>1 && !tempLines[i].match(/\d/)){
+                        if(!away) away=tempLines[i]
+                        else { home=tempLines[i]; break }
+                    }
+                }
+
+                if(home && away && home!==away){
+                    if(!matches.some(m=>m.home===home && m.away===away)){
+                        matches.push({home,away,odd1,oddX,odd2})
+                    }
+                }
             }
+        } else {
+            tempLines.push(line)
         }
     }
     return matches
@@ -143,8 +152,8 @@ async function runOCR(){
     let { data: { text } } = await Tesseract.recognize(file,'eng',{
         logger:m=>console.log(m)
     })
-    
-    previewDiv.innerHTML="<pre>"+text+"</pre>" // vezi tot textul recunoscut
+
+    previewDiv.innerHTML="<pre>"+text+"</pre>" // vezi textul recunoscut
 
     let cleaned=cleanOCR(text)
     let matches=parseMatches(cleaned)
