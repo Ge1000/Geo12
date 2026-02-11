@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.0</title>
+<title>Geo Nuclear Quick Pick 4.2</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -46,17 +46,13 @@ input, button {
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.0 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.2 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
 <div id="matches"></div>
 
 <script>
-const leagues = {
-  "Premier League": ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea","Crystal Palace","Everton","Fulham","Liverpool","Man City","Man United","Newcastle","Nottingham","Tottenham","West Ham","Wolves","Leicester","Sheffield","Burnley"]
-};
-
 // Monte Carlo
 function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
 function monteCarlo(xgH,xgA,sims=100000){
@@ -68,16 +64,6 @@ function monteCarlo(xgH,xgA,sims=100000){
   return {pH:cH/sims, pX:cX/sims, pA:cA/sims};
 }
 
-// Detectare liga
-function detectLeague(text){
-  for(let league in leagues){
-    for(let team of leagues[league]){
-      if(text.toLowerCase().includes(team.toLowerCase())) return league;
-    }
-  }
-  return null;
-}
-
 // OCR
 function runOCR(){
   let file=document.getElementById("imgInput").files[0];
@@ -87,66 +73,55 @@ function runOCR(){
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Procesare text și afișare meciuri câștigătoare
+// Parse avansat: detectează exact meciurile din text
 function processText(text){
   text = text.replace(/\r/g,' ').replace(/\n/g,' ')
-             .replace(/\t/g,' ').replace(/[^\w\s\.\-]/gi,' ')
+             .replace(/\t/g,' ').replace(/[^\w\s\.\-xG]/gi,' ')
              .replace(/\s+/g,' ').trim();
 
-  let league = detectLeague(text);
-  if(!league){document.getElementById("matches").innerHTML="Nu s-a detectat liga."; return;}
-  let teams = leagues[league];
-  let added = new Set();
+  const matchRegex = /([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+).*?([\d.]+)\s*([\d.]+)\s*([\d.]+)(.*?(\d*\.?\d+)xG.*?(\d*\.?\d+)xG)?/gi;
   let matchesDiv = document.getElementById("matches");
   matchesDiv.innerHTML = "";
+  let matchesFound = [];
+  let m;
 
-  // Cautam toate meciurile
-  for(let i=0;i<teams.length;i++){
-    for(let j=i+1;j<teams.length;j++){
-      let t1 = teams[i];
-      let t2 = teams[j];
-      if(text.toLowerCase().includes(t1.toLowerCase()) && text.toLowerCase().includes(t2.toLowerCase())){
-        let key = t1 + "|" + t2;
-        if(added.has(key)) continue;
-        added.add(key);
+  while((m = matchRegex.exec(text)) !== null){
+    let team1 = m[1].trim();
+    let team2 = m[2].trim();
+    let odd1 = parseFloat(m[3]);
+    let oddX = parseFloat(m[4]);
+    let odd2 = parseFloat(m[5]);
+    let xgH = m[7]?parseFloat(m[7]):1.5;
+    let xgA = m[8]?parseFloat(m[8]):1.5;
 
-        // Cote
-        let regexOdds=/(\d+\.\d+)/g;
-        let numbers = text.match(regexOdds);
-        let odds=[1.5,3.0,2.5];
-        if(numbers && numbers.length>=3){
-          odds=[parseFloat(numbers[0]),parseFloat(numbers[1]),parseFloat(numbers[2])];
-        }
+    // Monte Carlo
+    let sim = monteCarlo(xgH,xgA);
+    let maxP = Math.max(sim.pH, sim.pX, sim.pA);
+    let edge = 0;
+    if(maxP==sim.pH) edge = sim.pH*odd1-1;
+    else if(maxP==sim.pX) edge = sim.pX*oddX-1;
+    else edge = sim.pA*odd2-1;
 
-        // xG
-        let regexXG=/(\d*\.?\d+)xG/gi;
-        let xgMatch=text.match(regexXG);
-        let xgH=1.5, xgA=1.5;
-        if(xgMatch && xgMatch.length>=1)xgH=parseFloat(xgMatch[0]);
-        if(xgMatch && xgMatch.length>=2)xgA=parseFloat(xgMatch[1]);
+    if(edge>0){
+      let pick = maxP==sim.pH?team1:maxP==sim.pX?"Egal":team2;
+      let key = team1+"|"+team2;
+      if(matchesFound.includes(key)) continue;
+      matchesFound.push(key);
 
-        // Monte Carlo
-        let sim=monteCarlo(xgH,xgA);
-        let maxP=Math.max(sim.pH,sim.pX,sim.pA);
-        let edge=0;
-        if(maxP==sim.pH) edge=(sim.pH*odds[0]-1);
-        else if(maxP==sim.pX) edge=(sim.pX*odds[1]-1);
-        else edge=(sim.pA*odds[2]-1);
-
-        if(edge>0){
-          let pick=maxP==sim.pH?t1:maxP==sim.pX?"Egal":t2;
-          // afisare
-          let div = document.createElement("div");
-          div.className = "match";
-          div.innerHTML = `<h3>${pick}</h3><p>Liga: ${league}</p><p>${t1} vs ${t2}</p><p>Cote: ${odds[0]}/${odds[1]}/${odds[2]}</p><p>xG: ${xgH.toFixed(1)}-${xgA.toFixed(1)}</p><p>Edge: ${edge.toFixed(2)}</p>`;
-          matchesDiv.appendChild(div);
-        }
-      }
+      // afișare
+      let div = document.createElement("div");
+      div.className = "match";
+      div.innerHTML = `<h3>${pick}</h3>
+                       <p>${team1} vs ${team2}</p>
+                       <p>Cote: ${odd1}/${oddX}/${odd2}</p>
+                       <p>xG: ${xgH}-${xgA}</p>
+                       <p>Edge: ${edge.toFixed(2)}</p>`;
+      matchesDiv.appendChild(div);
     }
   }
 
   if(matchesDiv.children.length==0){
-    matchesDiv.innerHTML="Nu sunt meciuri profitabile";
+    matchesDiv.innerHTML = "Nu sunt meciuri profitabile";
   }
 }
 </script>
