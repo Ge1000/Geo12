@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.2</title>
+<title>Geo Nuclear Quick Pick 4.5</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -13,29 +13,34 @@ body {
   margin: 0;
   padding: 20px;
 }
-h2 {text-align:center;}
+h2 {text-align:center; margin-bottom:10px;}
 #matches {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
   margin-top: 20px;
 }
 .match {
-  background: #111a33cc;
-  padding: 15px;
+  padding: 12px;
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 14px;
   color: #ffffff;
+  transition: transform 0.2s;
 }
 .match h3 {
-  font-size: 24px;
+  font-size: 20px;
   margin: 0 0 5px 0;
-  color: #00ff9d;
 }
 .match p {
   margin: 2px 0;
-  font-size: 14px;
+  font-size: 12px;
   color: #ffffffaa;
+}
+.top3 {
+  font-size: 22px;
+  border: 2px solid #00ff9d;
+  box-shadow: 0 0 15px #00ff9d;
+  transform: scale(1.05);
 }
 input, button {
   padding: 10px;
@@ -46,7 +51,7 @@ input, button {
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.2 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.5 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
@@ -73,16 +78,30 @@ function runOCR(){
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Parse avansat: detectează exact meciurile din text
-function processText(text){
-  text = text.replace(/\r/g,' ').replace(/\n/g,' ')
-             .replace(/\t/g,' ').replace(/[^\w\s\.\-xG]/gi,' ')
-             .replace(/\s+/g,' ').trim();
+// Curatare text OCR
+function cleanText(text){
+  return text.replace(/\r|\n|\t/g,' ')
+             .replace(/Meci|Egal/gi,'')
+             .replace(/[^\w\s\.\-xG]/gi,' ')
+             .replace(/\s+/g,' ')
+             .trim();
+}
 
-  const matchRegex = /([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+).*?([\d.]+)\s*([\d.]+)\s*([\d.]+)(.*?(\d*\.?\d+)xG.*?(\d*\.?\d+)xG)?/gi;
+// Determinare culoare dupa edge
+function getColor(edge){
+  if(edge>=1.0) return '#00ff9d'; // verde
+  if(edge>=0.5) return '#ffff66'; // galben
+  return '#ff6666'; // rosu
+}
+
+// Parse și afișare
+function processText(rawText){
+  let text = cleanText(rawText);
+  const matchRegex = /([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+)\s*([\d\.]+)\s*([\d\.]+)\s*([\d\.]+)(.*?(\d*\.?\d+)xG.*?(\d*\.?\d+)xG)?/gi;
   let matchesDiv = document.getElementById("matches");
   matchesDiv.innerHTML = "";
   let matchesFound = [];
+  let results = [];
   let m;
 
   while((m = matchRegex.exec(text)) !== null){
@@ -94,7 +113,10 @@ function processText(text){
     let xgH = m[7]?parseFloat(m[7]):1.5;
     let xgA = m[8]?parseFloat(m[8]):1.5;
 
-    // Monte Carlo
+    let key = team1+"|"+team2;
+    if(matchesFound.includes(key)) continue;
+    matchesFound.push(key);
+
     let sim = monteCarlo(xgH,xgA);
     let maxP = Math.max(sim.pH, sim.pX, sim.pA);
     let edge = 0;
@@ -104,25 +126,30 @@ function processText(text){
 
     if(edge>0){
       let pick = maxP==sim.pH?team1:maxP==sim.pX?"Egal":team2;
-      let key = team1+"|"+team2;
-      if(matchesFound.includes(key)) continue;
-      matchesFound.push(key);
-
-      // afișare
-      let div = document.createElement("div");
-      div.className = "match";
-      div.innerHTML = `<h3>${pick}</h3>
-                       <p>${team1} vs ${team2}</p>
-                       <p>Cote: ${odd1}/${oddX}/${odd2}</p>
-                       <p>xG: ${xgH}-${xgA}</p>
-                       <p>Edge: ${edge.toFixed(2)}</p>`;
-      matchesDiv.appendChild(div);
+      results.push({pick, team1, team2, odd1, oddX, odd2, xgH, xgA, edge});
     }
   }
 
-  if(matchesDiv.children.length==0){
+  if(results.length==0){
     matchesDiv.innerHTML = "Nu sunt meciuri profitabile";
+    return;
   }
+
+  // Sortare descrescator dupa edge
+  results.sort((a,b)=>b.edge - a.edge);
+
+  results.forEach((r,index)=>{
+    let div = document.createElement("div");
+    div.className = "match";
+    if(index<3) div.classList.add("top3"); // top 3 evidențiat
+    div.style.background = getColor(r.edge);
+    div.innerHTML = `<h3>${r.pick}</h3>
+                     <p>${r.team1} vs ${r.team2}</p>
+                     <p>Cote: ${r.odd1}/${r.oddX}/${r.odd2}</p>
+                     <p>xG: ${r.xgH}-${r.xgA}</p>
+                     <p>Edge: ${r.edge.toFixed(2)}</p>`;
+    matchesDiv.appendChild(div);
+  });
 }
 </script>
 
