@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.9.0</title>
+<title>Geo Nuclear Quick Pick 4.10</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -18,7 +18,7 @@ input,button { padding:10px;margin:5px;font-size:16px; }
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.9.0 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.10 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
@@ -34,11 +34,18 @@ const validTeams=["Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crysta
 "Everton","Fulham","Liverpool","Luton","Man City","Man Utd","Newcastle",
 "Nottingham","Sheffield","Southampton","Tottenham","West Ham","Wolves"];
 
-// Fuzzy match
-function findTeam(name){
-  name=name.toLowerCase().replace(/[^a-z ]/g,'').trim();
-  for(let t of validTeams){if(t.toLowerCase().includes(name)||name.includes(t.toLowerCase())) return t;}
-  return name;
+// Fuzzy match și corecție adversar
+function fixTeam(t1, t2){
+  t1 = t1.toLowerCase().replace(/[^a-z ]/g,'').trim();
+  t2 = t2.toLowerCase().replace(/[^a-z ]/g,'').trim();
+  let match1 = validTeams.find(v=>v.toLowerCase().includes(t1)||t1.includes(v.toLowerCase()))||t1;
+  let match2 = validTeams.find(v=>v.toLowerCase().includes(t2)||t2.includes(v.toLowerCase()))||t2;
+  // Dacă aceleași echipe, aleg cea mai apropiată validă pentru adversar
+  if(match1===match2){
+    let other = validTeams.find(v=>v!==match1);
+    if(other) match2 = other;
+  }
+  return [match1,match2];
 }
 
 // Generator random cu seed determinist
@@ -74,22 +81,22 @@ function cleanText(text){return text.replace(/\r|\n|\t/g,' ').replace(/[^\w\s\.\
 // Culoare după Edge
 function getColor(edge){if(edge>=1.0)return '#00ffea'; if(edge>=0.5)return '#ffff33'; return '#ff4500';}
 
-// Procesare text
+// Procesare text OCR
 function processText(rawText){
   let text=cleanText(rawText);
   let previewDiv=document.getElementById("preview"),matchesDiv=document.getElementById("matches");
   previewDiv.innerHTML=""; matchesDiv.innerHTML="";
   let matchesFound=[],results=[];
 
-  // Detectare echipe și cote flexibile
+  // Detectare echipe și cote
   const teamRegex=/([A-Za-z\s]{3,})\s*(?:vs|-)\s*([A-Za-z\s]{3,})/gi;
   const oddsRegex=/(\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})/gi;
 
   let teams=[],odds=[],m;
-  while((m=teamRegex.exec(text))!==null) teams.push([findTeam(m[1]),findTeam(m[2])]);
+  while((m=teamRegex.exec(text))!==null) teams.push(fixTeam(m[1],m[2]));
   while((m=oddsRegex.exec(text))!==null) odds.push([parseFloat(m[1]),parseFloat(m[2]),parseFloat(m[3])]);
 
-  // Preview
+  // Preview OCR
   for(let i=0;i<teams.length;i++){
     let t1=teams[i][0],t2=teams[i][1];
     let divPrev=document.createElement("div"); divPrev.className="match"; divPrev.style.background="#333";
@@ -97,7 +104,7 @@ function processText(rawText){
     previewDiv.appendChild(divPrev);
   }
 
-  // Asocieri meciuri cu cote
+  // Asociere meciuri cu cote
   for(let i=0;i<Math.min(teams.length,odds.length);i++){
     let t1=teams[i][0],t2=teams[i][1];
     let odd1=odds[i][0],oddX=odds[i][1],odd2=odds[i][2];
