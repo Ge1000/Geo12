@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Geo Nuclear Quick Pick 5.6</title>
+<title>Geo Nuclear Quick Pick 5.6.2</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -26,69 +26,83 @@ color:#000;
 font-weight:bold;
 cursor:pointer;
 }
-.result{
-margin-top:20px;
-padding:15px;
-background:#1e293b;
-border-radius:10px;
-}
 .match{
 margin:10px 0;
-padding:10px;
+padding:12px;
 background:#111827;
 border-radius:8px;
 }
 .high{border-left:5px solid #22c55e;}
 .medium{border-left:5px solid #facc15;}
 .low{border-left:5px solid #ef4444;}
-textarea{
-width:100%;
-height:150px;
-margin-top:10px;
-background:#111827;
-color:#fff;
-border-radius:8px;
-padding:10px;
-font-size:13px;
-}
 </style>
 </head>
 <body>
 
-<h1>💥 Geo Nuclear Quick Pick 5.6 💥</h1>
+<h1>💥 Geo Nuclear Quick Pick 5.6.2 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
 <button onclick="runOCR()">Rulează analiză</button>
 
-<div class="result" id="output"></div>
+<div id="output"></div>
 
 <script>
 
 function cleanOCR(text){
 return text
-.replace(/[^a-zA-Z0-9\.\-\n\/ ]/g,'')
-.replace(/(live|casino|bonus|meniu|bilete|sport|calendar|competitii)/gi,'')
-.replace(/\s+/g,' ')
+.replace(/[^a-zA-Z0-9\.\-\n ]/g,'')
+.replace(/(live|casino|bonus|meniu|bilete|sport|calendar|competitii|superbet|azi|astazi)/gi,'')
 }
 
 function parseMatches(text){
-let lines=text.split(/(?=\d\.\d{2})/g)
+
+let lines=text.split("\n")
+.map(l=>l.trim())
+.filter(l=>l.length>2)
+
 let matches=[]
+let usedIndexes=new Set()
 
-for(let line of lines){
+for(let i=0;i<lines.length;i++){
 
-let odds=line.match(/(\d\.\d{2})/g)
-if(!odds || odds.length<3) continue
+if(usedIndexes.has(i)) continue
 
-let teams=line.split(odds[0])[0].trim()
+let line=lines[i]
 
-let teamMatch=teams.match(/([A-Za-z ]+)\s+([A-Za-z ]+)/)
+/* CASE 1: echipe pe aceeași linie */
+let sameLine=line.match(/^([A-Za-z ]+)\s+vs?\s+([A-Za-z ]+)$/i)
 
-if(!teamMatch) continue
+if(sameLine && lines[i+1]){
 
-let home=teamMatch[1].trim()
-let away=teamMatch[2].trim()
+let odds=lines[i+1].match(/(\d+\.\d+)/g)
+
+if(odds && odds.length>=3){
+
+matches.push({
+home:sameLine[1].trim(),
+away:sameLine[2].trim(),
+odd1:parseFloat(odds[0]),
+oddX:parseFloat(odds[1]),
+odd2:parseFloat(odds[2])
+})
+
+usedIndexes.add(i)
+usedIndexes.add(i+1)
+continue
+}
+}
+
+/* CASE 2: echipe pe 2 linii separate */
+if(i+2<lines.length){
+
+let home=lines[i]
+let away=lines[i+1]
+let oddsLine=lines[i+2]
+
+let odds=oddsLine.match(/(\d+\.\d+)/g)
+
+if(odds && odds.length>=3){
 
 matches.push({
 home:home,
@@ -97,12 +111,19 @@ odd1:parseFloat(odds[0]),
 oddX:parseFloat(odds[1]),
 odd2:parseFloat(odds[2])
 })
+
+usedIndexes.add(i)
+usedIndexes.add(i+1)
+usedIndexes.add(i+2)
+}
+}
+
 }
 
 return matches
 }
 
-function calculateEdge(match){
+function calculate(match){
 
 let p1=1/match.odd1
 let pX=1/match.oddX
@@ -121,9 +142,9 @@ maxProb===p1?match.home:
 maxProb===p2?match.away:
 "Egal"
 
-let edge=(maxProb*100).toFixed(2)
+let percent=(maxProb*100).toFixed(2)
 
-return {pick,edge,maxProb}
+return {pick,percent,maxProb}
 }
 
 function display(matches){
@@ -138,7 +159,7 @@ return
 
 matches.forEach(m=>{
 
-let calc=calculateEdge(m)
+let calc=calculate(m)
 
 let level="low"
 if(calc.maxProb>0.55) level="high"
@@ -149,13 +170,14 @@ container.innerHTML+=`
 <b>${m.home} vs ${m.away}</b><br>
 Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
 🔥 Recomandare: <b>${calc.pick}</b><br>
-Probabilitate estimată: ${calc.edge}%
+Probabilitate: ${calc.percent}%
 </div>
 `
 })
 }
 
 async function runOCR(){
+
 let file=document.getElementById("imageInput").files[0]
 if(!file) return alert("Selectează o poză")
 
