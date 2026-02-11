@@ -3,35 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.9 💥</title>
+<title>Pick 5.6.10 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
 <style>
 body{
-background:#0f172a;
-color:#e2e8f0;
-font-family:system-ui;
-text-align:center;
-padding:20px;
+  background:#0f172a;
+  color:#e2e8f0;
+  font-family:system-ui;
+  text-align:center;
+  padding:20px;
 }
 h1{color:#22c55e;font-size:22px}
 button{
-padding:12px 20px;
-margin:10px;
-border:none;
-border-radius:8px;
-background:#22c55e;
-color:#000;
-font-weight:bold;
-cursor:pointer;
+  padding:12px 20px;
+  margin:10px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+#preview, #output{
+  margin-top:20px;
+  text-align:left;
 }
 .match{
-margin:10px 0;
-padding:12px;
-background:#111827;
-border-radius:8px;
-transition: transform 0.2s;
+  margin:10px 0;
+  padding:12px;
+  background:#111827;
+  border-radius:8px;
+  transition: transform 0.2s;
 }
 .match:hover { transform: scale(1.02); }
 .high{border-left:5px solid #22c55e;}
@@ -41,55 +45,48 @@ transition: transform 0.2s;
 </head>
 <body>
 
-<h1>Pick 5.6.9 💥</h1>
+<h1>Pick 5.6.10 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
 <button onclick="runOCR()">Rulează analiză</button>
 
+<h3>Preview OCR</h3>
+<div id="preview"></div>
+
+<h3>Meciuri Detectate</h3>
 <div id="output"></div>
 
 <script>
 
 // ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
-    // Înlocuim virgulă cu punct și eliminăm spații multiple
+    // Înlocuim virgulă cu punct și spații multiple
     text = text.replace(/,/g,'.').replace(/\s{2,}/g,' ')
-    return text.split("\n").map(line=>{
-        let l=line.trim()
-        if(l.length<2) return ""
-        return l
-    }).filter(l=>l!=="")
+    return text.split("\n").map(line=>line.trim()).filter(line=>line.length>1)
 }
 
 // ------------------ PARSER FLEXIBIL ------------------
-function parseMatches(text){
-    let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>1)
+function parseMatches(lines){
     let matches=[]
     let usedIndexes=new Set()
-    
+
     for(let i=0;i<lines.length;i++){
         if(usedIndexes.has(i)) continue
-        // Cautăm linia cu cote (3 numere)
-        let odds=lines[i].match(/(\d+\.\d+)/g)
+        let odds = lines[i].match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
-            // Căutăm ultimele 3 linii valide înainte de cote
+            // Căutăm ultimele 3 linii înainte de cote pentru echipe
             let home="", away=""
             for(let j=i-1;j>=0 && j>=i-3;j--){
                 if(!lines[j].match(/\d/)){
                     if(!away) away=lines[j]
-                    else{
-                        home=lines[j]
-                        break
-                    }
+                    else { home=lines[j]; break }
                 }
             }
             if(home && away && home!==away){
-                home=home.replace(/^[A-Z]{1,3}\s+/,'').trim()
-                away=away.replace(/^[A-Z]{1,3}\s+/,'').trim()
                 if(!matches.some(m=>m.home===home && m.away===away)){
                     matches.push({home,away,odd1,oddX,odd2})
                 }
@@ -126,6 +123,7 @@ function display(matches){
         let level="low"
         if(calc.maxProb>0.55) level="high"
         else if(calc.maxProb>0.40) level="medium"
+
         container.innerHTML+=`
         <div class="match ${level}">
         <b>${m.home} vs ${m.away}</b><br>
@@ -137,16 +135,24 @@ function display(matches){
     })
 }
 
-// ------------------ OCR ------------------
+// ------------------ RUN OCR ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
-    if(!file) return alert("Selectează o poză")
-    let { data: { text } } = await Tesseract.recognize(file,'eng')
+    if(!file){ alert("Selectează o poză"); return }
+
+    let previewDiv=document.getElementById("preview")
+    let { data: { text } } = await Tesseract.recognize(file,'eng',{
+        logger:m=>console.log(m)
+    })
+    
+    previewDiv.innerHTML="<pre>"+text+"</pre>" // vezi tot textul recunoscut
+
     let cleaned=cleanOCR(text)
     let matches=parseMatches(cleaned)
     display(matches)
 }
 
 </script>
+
 </body>
 </html>
