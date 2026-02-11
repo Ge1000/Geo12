@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo OCR + Backtest Analyzer</title>
+<title>Geo OCR + xG Analyzer Simplu</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -16,13 +16,11 @@ h3{margin-top:15px}
 </head>
 <body>
 
-<h2>📸 Geo OCR + Backtest Engine</h2>
+<h2>📸 Geo OCR + xG Analyzer Simplu</h2>
 
-<p>Încarcă poza cu meciuri + cote + rezultat (1/X/2):</p>
+<p>Încarcă poza cu meciuri + cote + xG + rezultat (1/X/2):</p>
 <input type="file" id="imgInput" accept="image/*">
-<h3>Banca inițială:</h3>
-<input type="number" id="bank" placeholder="Ex: 1000">
-<button onclick="runOCR()">Rulează OCR + Backtest</button>
+<button onclick="runOCR()">Rulează Analiză</button>
 
 <div class="box" id="result">Rezultatele vor apărea aici...</div>
 
@@ -30,81 +28,42 @@ h3{margin-top:15px}
 // --- Funcții matematice ---
 function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
 function monteCarlo(xgH,xgA,sims=100000){let c1=0,cX=0,c2=0;for(let i=0;i<sims;i++){let h=poissonRandom(xgH),a=poissonRandom(xgA);if(h>a)c1++;else if(h==a)cX++;else c2++;}return [c1/sims,cX/sims,c2/sims];}
-function kelly(prob,odd){let b=odd-1;let edge=(prob*(b+1)-1)/b;return edge>0?edge*0.5:0;}
+function kelly(prob,odd){let b=odd-1;let edge=(prob*(b+1)-1)/b;return edge;}
 
 // --- OCR + parse + analiză ---
 function runOCR(){
   let file=document.getElementById("imgInput").files[0];
-  let bank=parseFloat(document.getElementById("bank").value);
-  if(!file||!bank){alert("Alege poza și banca inițială"); return;}
+  if(!file){alert("Alege o poza"); return;}
   result.innerHTML="Se procesează OCR...⏳";
 
   Tesseract.recognize(file,'eng',{logger:m=>console.log(m)}).then(({data:{text}})=>{
-    processText(text,bank);
+    processText(text);
   });
 }
 
-function processText(text,bank){
+function processText(text){
   let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
   let output="";
-  let leagueStats={};
-  let initialBank=bank;
 
   for(let l of lines){
-    // Detect liga optional: [EPL], [LaLiga] etc.
-    let leagueMatch=l.match(/\[([a-zA-Z0-9\s]+)\]/);
-    let league=leagueMatch?leagueMatch[1]:"Unknown";
-
-    // Caut pattern: TeamA odd1 X oddX TeamB odd2 rezultat
-    let m=l.match(/(\w+)\s+([\d.]+)\s+X\s+([\d.]+)\s+(\w+)\s+([\d.]+)\s+([1X2])/i);
+    // Caut pattern: TeamA xG odd1 X oddX TeamB xG odd2 rezultat
+    // Ex: TeamA 1.6xG 2.10 X 3.40 TeamB 1.4xG 3.50 1
+    let m=l.match(/(\w+)\s+([\d.]+)xG\s+([\d.]+)\s+X\s+([\d.]+)\s+(\w+)\s+([\d.]+)xG\s+([\d.]+)\s+([1X2])/i);
     if(!m) continue;
-    let teamA=m[1], odd1=parseFloat(m[2]), oddX=parseFloat(m[3]), teamB=m[4], odd2=parseFloat(m[5]), resultReal=m[6].toUpperCase();
-
-    // Simplificare xG: invers cota
-    let xgH=1/odd1*2.5;
-    let xgA=1/odd2*2.5;
+    let teamA=m[1], xgH=parseFloat(m[2]), odd1=parseFloat(m[3]),
+        oddX=parseFloat(m[4]), teamB=m[5], xgA=parseFloat(m[6]),
+        odd2=parseFloat(m[7]), resultReal=m[8].toUpperCase();
 
     let probs=monteCarlo(xgH,xgA);
     let edge=[probs[0]-1/odd1,probs[1]-1/oddX,probs[2]-1/odd2];
     let bestIndex=edge.indexOf(Math.max(...edge));
     let pick=["1","X","2"][bestIndex];
-    let stake=kelly(probs[bestIndex],[odd1,oddX,odd2][bestIndex]);
 
-    // filtrare edge < 4%
-    if(edge[bestIndex]<0.04 || stake<=0){stake=0;}
-
-    // max 2% bancă
-    stake=Math.min(stake,bank*0.02);
-
-    // aplicare bet
-    if(stake>0){
-      if(pick==resultReal) bank+=stake*[odd1,oddX,odd2][bestIndex]-stake;
-      else bank-=stake;
-    }
-
-    if(!leagueStats[league]) leagueStats[league]={bets:0,valueBets:0,profit:0};
-    leagueStats[league].bets++;
-    if(stake>0){
-      leagueStats[league].valueBets++;
-      leagueStats[league].profit+=(pick==resultReal? [odd1,oddX,odd2][bestIndex]-1:-1)*stake;
-    }
-
-    let cls=stake>0?"good":"bad";
+    let cls=edge[bestIndex]>0.04?"good":"bad"; // edge >4% = value bet
     output+=`<p class="${cls}">
-      [${league}] ${teamA} vs ${teamB} | Pick: ${pick} | Prob: ${(probs[bestIndex]*100).toFixed(2)}% | Edge: ${(edge[bestIndex]*100).toFixed(2)}% | Stake: ${stake.toFixed(2)}
+      ${teamA} vs ${teamB} | Pick: ${pick} | Prob: ${(probs[bestIndex]*100).toFixed(2)}% | Edge: ${(edge[bestIndex]*100).toFixed(2)}% | Rezultat real: ${resultReal}
     </p>`;
   }
-
-  // Statistici pe ligă
-  output+="<h3>📊 Statistici pe Ligă</h3>";
-  for(let l in leagueStats){
-    let roi=(leagueStats[l].profit/initialBank*100).toFixed(2);
-    output+=`<p>${l} | Total Meciuri: ${leagueStats[l].bets} | Value Bets: ${leagueStats[l].valueBets} | Profit: ${leagueStats[l].profit.toFixed(2)} | ROI: ${roi}%</p>`;
-  }
-
-  let totalProfit=(bank-initialBank).toFixed(2);
-  let totalROI=((bank-initialBank)/initialBank*100).toFixed(2);
-  output+=`<h3>Total Profit: ${totalProfit} | ROI: ${totalROI}%</h3>`;
 
   result.innerHTML=output||"Nu s-au găsit meciuri valide în poză.";
 }
