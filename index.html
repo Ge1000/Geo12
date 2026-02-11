@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Geo Nuclear Quick Pick 5.6.3</title>
+<title>Geo Nuclear Quick Pick 5.6.4</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -39,7 +39,7 @@ border-radius:8px;
 </head>
 <body>
 
-<h1>💥 Geo Nuclear Quick Pick 5.6.3 💥</h1>
+<h1>💥 Geo Nuclear Quick Pick 5.6.4 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -78,64 +78,62 @@ return l
 
 }
 
-// ------------------ SMART PARSER FIX ------------------
+// ------------------ PARSER NUCLEAR CORE ------------------
 
 function parseMatches(text){
 
-let lines=text.split("\n")
-.map(l=>l.trim())
-.filter(l=>l.length>2)
+    let lines = text.split("\n")
+        .map(l=>l.trim())
+        .filter(l=>l.length>2)
 
-let matches=[]
+    let matches=[]
 
-for(let i=0;i<lines.length;i++){
+    for(let i=0;i<lines.length;i++){
 
-// caut linie cu 3 cote valide
-let odds = lines[i].match(/(\d+\.\d+)/g)
+        // Căutăm linie cu 3 cote
+        let odds = lines[i].match(/(\d+\.\d+)/g)
 
-if(odds && odds.length>=3){
+        if(odds && odds.length>=3){
 
-let odd1=parseFloat(odds[0])
-let oddX=parseFloat(odds[1])
-let odd2=parseFloat(odds[2])
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
 
-// validare cote realiste
-if(odd1>1 && oddX>1 && odd2>1){
+            if(odd1>1 && oddX>1 && odd2>1){
 
-// caut cele 2 linii anterioare care NU conțin cifre
-let home=""
-let away=""
+                // Ultimele 2 linii fără cifre -> home & away
+                let home=""
+                let away=""
 
-for(let j=i-1;j>=0;j--){
-if(!lines[j].match(/\d/)){
-if(!away) away=lines[j]
-else{
-home=lines[j]
-break
-}
-}
-}
+                for(let j=i-1;j>=0;j--){
+                    if(!lines[j].match(/\d/)){
+                        if(!away) away=lines[j]
+                        else{
+                            home=lines[j]
+                            break
+                        }
+                    }
+                }
 
-// validare finală
-if(home && away && home!==away){
+                if(home && away && home!==away){
 
-matches.push({
-home:home,
-away:away,
-odd1:odd1,
-oddX:oddX,
-odd2:odd2
-})
+                    // Curățare prefixe OCR și ignorare duplicat după 'vs'
+                    home = home.replace(/^[A-Z]{1,3}\s+/,'').split('vs')[0].trim()
+                    away = away.replace(/^[A-Z]{1,3}\s+/,'').split('vs')[0].trim()
 
-}
+                    matches.push({
+                        home:home,
+                        away:away,
+                        odd1:odd1,
+                        oddX:oddX,
+                        odd2:odd2
+                    })
+                }
+            }
+        }
+    }
 
-}
-
-}
-
-}
-
-return matches
+    return matches
 }
 
 // ------------------ CALCUL PROBABILITATE ------------------
