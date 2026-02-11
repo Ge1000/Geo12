@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 3.0</title>
+<title>Geo Nuclear Quick Pick 3.3</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -38,12 +38,13 @@ input, button {
   font-size: 14px;
   color: #ffffff;
   text-align: right;
+  max-width: 300px;
 }
 </style>
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 3.0 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 3.3 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
@@ -51,16 +52,12 @@ input, button {
 <div id="badge"></div>
 
 <script>
-// Liste echipe pe ligi (extensibil)
+// Liste echipe pe liga (extensibil)
 const leagues = {
-  "Premier League": ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea","Crystal Palace","Everton","Fulham","Liverpool","Man City","Man United","Newcastle","Nottingham","Tottenham","West Ham","Wolves","Leicester","Sheffield","Burnley"],
-  "La Liga": ["Real Madrid","Barcelona","Atletico Madrid","Sevilla","Valencia","Villarreal","Real Sociedad","Real Betis","Athletic Bilbao"],
-  "Serie A": ["Juventus","Inter","Milan","Napoli","Roma","Lazio","Atalanta","Fiorentina","Torino","Sassuolo"],
-  "Bundesliga": ["Bayern","Dortmund","Leverkusen","RB Leipzig","Wolfsburg","Eintracht","Freiburg"],
-  "Ligue 1": ["PSG","Marseille","Monaco","Lyon","Lille","Nice","Lens"]
+  "Premier League": ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea","Crystal Palace","Everton","Fulham","Liverpool","Man City","Man United","Newcastle","Nottingham","Tottenham","West Ham","Wolves","Leicester","Sheffield","Burnley"]
 };
 
-// Functii Monte Carlo
+// Monte Carlo
 function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
 function monteCarlo(xgH,xgA,sims=100000){
   let cH=0, cX=0, cA=0;
@@ -91,52 +88,65 @@ function runOCR(){
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Procesare text, filtrare meciuri profitabile
+// Parse avansat + detect xG + cote
 function processText(text){
-  text=text.replace(/\r/g,'\n').replace(/\t/g,' ')
-           .replace(/[^\w\s\.\-]/gi,' ').replace(/\s+/g,' ').trim();
+  // curatare text
+  text = text.replace(/\r/g,' ').replace(/\n/g,' ')
+             .replace(/\t/g,' ').replace(/[^\w\s\.\-]/gi,' ')
+             .replace(/\s+/g,' ').trim();
 
   let league = detectLeague(text);
   if(!league){document.getElementById("pick").innerHTML="Nu s-a detectat liga."; return;}
-
-  let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
+  let teams = leagues[league];
   let matches = [];
+  let added = new Set();
 
-  for(let l of lines){
-    let matchedTeams = leagues[league].filter(t=>l.toLowerCase().includes(t.toLowerCase()));
-    if(matchedTeams.length>=2){
-      let teamA=matchedTeams[0], teamB=matchedTeams[1];
+  // cautam meciuri
+  for(let i=0;i<text.length;i++){
+    for(let t1 of teams){
+      if(text.toLowerCase().includes(t1.toLowerCase())){
+        for(let t2 of teams){
+          if(t1!==t2 && text.toLowerCase().includes(t2.toLowerCase())){
+            let key = t1 + "|" + t2;
+            if(added.has(key)) continue;
+            added.add(key);
 
-      // Detectam cote
-      let numbers=l.match(/[\d]+\.[\d]+/g);
-      if(!numbers || numbers.length<2) numbers=[1.5,3.0,2.5];
-      let odd1=parseFloat(numbers[0]), oddX=parseFloat(numbers[1]), odd2=numbers.length>=3?parseFloat(numbers[2]):numbers[0];
+            // Extract cote: toate numerele cu punct din text după echipe
+            let regexOdds=/(\d+\.\d+)/g;
+            let numbers = text.match(regexOdds);
+            let odds=[1.5,3.0,2.5]; // fallback
+            if(numbers && numbers.length>=3){
+              odds=[parseFloat(numbers[0]),parseFloat(numbers[1]),parseFloat(numbers[2])];
+            }
 
-      // xG fallback
-      let xgMatch=l.match(/(\d*\.?\d+)xG/gi);
-      let xgH=1.5, xgA=1.5;
-      if(xgMatch && xgMatch.length>=1)xgH=parseFloat(xgMatch[0]);
-      if(xgMatch && xgMatch.length>=2)xgA=parseFloat(xgMatch[1]);
+            // Extract xG: cauta pattern <num>xG
+            let regexXG=/(\d*\.?\d+)xG/gi;
+            let xgMatch=text.match(regexXG);
+            let xgH=1.5, xgA=1.5;
+            if(xgMatch && xgMatch.length>=1)xgH=parseFloat(xgMatch[0]);
+            if(xgMatch && xgMatch.length>=2)xgA=parseFloat(xgMatch[1]);
 
-      // Monte Carlo și pick
-      let sim=monteCarlo(xgH,xgA);
-      let maxP=Math.max(sim.pH,sim.pX,sim.pA);
+            // Monte Carlo
+            let sim=monteCarlo(xgH,xgA);
+            let maxP=Math.max(sim.pH,sim.pX,sim.pA);
+            let edge=0;
+            if(maxP==sim.pH) edge=(sim.pH*odds[0]-1);
+            else if(maxP==sim.pX) edge=(sim.pX*odds[1]-1);
+            else edge=(sim.pA*odds[2]-1);
 
-      // Calcul edge (simplu): dacă probabilitate pick / cotă > 1, considerăm profitabil
-      let edge=0;
-      if(maxP==sim.pH) edge=(sim.pH*odd1-1);
-      else if(maxP==sim.pX) edge=(sim.pX*oddX-1);
-      else edge=(sim.pA*odd2-1);
-
-      if(edge>0){ // filtrare profitabile
-        let pick=maxP==sim.pH?teamA:maxP==sim.pX?"Egal":teamB;
-        matches.push({pick:pick, info:`Liga: ${league} | Cote: ${odd1}/${oddX}/${odd2} | xG: ${xgH.toFixed(1)}-${xgA.toFixed(1)} | Edge: ${edge.toFixed(2)}`});
+            if(edge>0){
+              let pick=maxP==sim.pH?t1:maxP==sim.pX?"Egal":t2;
+              matches.push({pick:pick, info:`Liga: ${league} | ${t1} vs ${t2} | Cote: ${odds[0]}/${odds[1]}/${odds[2]} | xG: ${xgH.toFixed(1)}-${xgA.toFixed(1)} | Edge: ${edge.toFixed(2)}`});
+            }
+          }
+        }
       }
     }
   }
 
   if(matches.length==0){document.getElementById("pick").innerHTML="Nu sunt meciuri profitabile"; return;}
 
+  // afisare pe rand
   let index=0;
   document.getElementById("pick").innerHTML=matches[index].pick;
   document.getElementById("badge").innerHTML=matches[index].info;
