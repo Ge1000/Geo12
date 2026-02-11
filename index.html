@@ -1,292 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>BOMBO – Independent Offer Integrity Check</title>
+<title>Geo OCR + Backtest Analyzer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0f1220;
-  color: #fff;
-  margin: 0;
-  padding: 24px;
-}
-
-h1 { margin-bottom: 4px; }
-h2 { margin-top: 36px; }
-
-.subtitle {
-  color: #aaa;
-  margin-bottom: 20px;
-  max-width: 760px;
-}
-
-.panel {
-  background: #161a33;
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 20px;
-}
-
-textarea, button {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-button {
-  background: #4f7cff;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 14px;
-}
-
-.badge {
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.green { background:#1e6f4a; color:#5dff9b; }
-.yellow { background:#6f5a1e; color:#ffd45d; }
-.red { background:#6f1e1e; color:#ff6b6b; }
-
-ul { padding-left:18px; }
-
-details {
-  background:#12162b;
-  border-radius:8px;
-  padding:10px;
-  margin-top:12px;
-}
-
-summary {
-  cursor:pointer;
-  font-weight:600;
-  color:#9fb3ff;
-}
-
-footer {
-  margin-top: 40px;
-  font-size: 12px;
-  color: #777;
-  text-align: center;
-  max-width: 900px;
-}
+body{font-family:system-ui;background:#0f1220;color:white;padding:20px}
+input,button{padding:8px;margin:5px}
+.box{background:#1a1f38;padding:15px;margin-top:20px;border-radius:10px}
+.good{color:#00ff9d}
+.bad{color:#ff4d4d}
+h3{margin-top:15px}
 </style>
 </head>
-
 <body>
 
-<!-- PUBLIC LANDING -->
-<h1>BOMBO</h1>
-<div class="subtitle">
-Independent offer integrity signals.  
-No tracking. No affiliation. No influence.
-</div>
+<h2>📸 Geo OCR + Backtest Engine</h2>
 
-<div class="panel">
-<h3>What BOMBO does</h3>
-<p>
-BOMBO analyzes how an offer is <strong>presented</strong> to users and detects
-observable integrity signals such as artificial urgency, unclear terms or
-inconsistent discount claims.
-</p>
+<p>Încarcă poza cu meciuri + cote + rezultat (1/X/2):</p>
+<input type="file" id="imgInput" accept="image/*">
+<h3>Banca inițială:</h3>
+<input type="number" id="bank" placeholder="Ex: 1000">
+<button onclick="runOCR()">Rulează OCR + Backtest</button>
 
-<h3>What BOMBO does NOT do</h3>
-<ul>
-<li>No price database checks</li>
-<li>No merchant verification</li>
-<li>No legal or financial judgement</li>
-<li>No tracking or profiling</li>
-</ul>
-
-<p>
-Deterministic. Explainable. Platform-neutral.
-</p>
-</div>
-
-<!-- APPLICATION -->
-<h2>Run Integrity Check</h2>
-
-<div class="panel">
-<textarea id="offerText" placeholder="Paste the offer text exactly as shown to users. Example: 50% OFF – Only today! Was 100€, now 100€"></textarea>
-<button onclick="runCheck()">Run BOMBO</button>
-</div>
-
-<!-- RESULT -->
-<div class="panel" id="result" style="display:none;">
-<div id="verdict"></div>
-
-<h3>Detected integrity signals</h3>
-<ul id="signals"></ul>
-
-<h3>Audit log (explainable)</h3>
-<ul id="audit"></ul>
-
-<details>
-<summary>Export – Legal / Compliance</summary>
-<pre id="export" style="white-space:pre-wrap;"></pre>
-</details>
-
-<details>
-<summary>Open Rule Specification</summary>
-<pre>
-Ruleset: BOMBO-v1.1
-
-• Deterministic
-• Non-learning
-• No personalization
-• Same input → same output
-
-Signals are based only on observable offer presentation.
-</pre>
-</details>
-</div>
-
-<footer>
-<strong>Disclaimer:</strong> BOMBO provides informational integrity signals only.
-It does not verify actual pricing history, legality, product quality or merchant behavior.
-No financial, legal or purchasing advice is given.<br><br>
-
-<strong>Privacy:</strong> All analysis runs locally in the browser.
-No data is stored, transmitted, tracked or shared.
-</footer>
+<div class="box" id="result">Rezultatele vor apărea aici...</div>
 
 <script>
-function runCheck() {
-  const textRaw = document.getElementById("offerText").value;
-  const text = textRaw.toLowerCase();
+// --- Funcții matematice ---
+function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
+function monteCarlo(xgH,xgA,sims=100000){let c1=0,cX=0,c2=0;for(let i=0;i<sims;i++){let h=poissonRandom(xgH),a=poissonRandom(xgA);if(h>a)c1++;else if(h==a)cX++;else c2++;}return [c1/sims,cX/sims,c2/sims];}
+function kelly(prob,odd){let b=odd-1;let edge=(prob*(b+1)-1)/b;return edge>0?edge*0.5:0;}
 
-  let confidence = 100;
-  const signals = [];
-  const audit = [];
+// --- OCR + parse + analiză ---
+function runOCR(){
+  let file=document.getElementById("imgInput").files[0];
+  let bank=parseFloat(document.getElementById("bank").value);
+  if(!file||!bank){alert("Alege poza și banca inițială"); return;}
+  result.innerHTML="Se procesează OCR...⏳";
 
-  function flag(signal, observation, rule, impact) {
-    confidence -= impact;
-    signals.push(signal);
-    audit.push(
-      `Signal: ${signal}\n` +
-      `Observation: ${observation}\n` +
-      `Rule: ${rule}\n` +
-      `Effect: Integrity confidence reduced (-${impact})`
-    );
-  }
-
-  /* 1️⃣ URGENCY DETECTION */
-  if (/(only today|ends today|last chance|limited|countdown)/.test(text)) {
-    flag(
-      "Artificial urgency",
-      "Time-pressure language detected in offer text",
-      "Artificial urgency reduces presentation integrity",
-      15
-    );
-  }
-
-  /* 2️⃣ DISCOUNT CLAIM DETECTION */
-  const percentMatch = text.match(/(\d{1,3})\s?%/);
-  const hasDiscount = !!percentMatch;
-
-  /* 2A – Unverifiable discount */
-  if (hasDiscount && !/(was|before|previously|instead of)/.test(text)) {
-    flag(
-      "Unverifiable discount claim",
-      "Percentage discount present without reference price",
-      "Discount claims require reference context",
-      15
-    );
-  }
-
-  /* 2B – Discount consistency logic */
-  const priceMatches = text.match(/(\d+[.,]?\d*)\s?(€|\$|usd|eur)/g);
-  if (hasDiscount && priceMatches && priceMatches.length >= 2) {
-    const prices = priceMatches.map(p => parseFloat(p));
-    if (prices[0] <= prices[1]) {
-      flag(
-        "Inconsistent discount structure",
-        "Reference price is equal to or lower than current price",
-        "Inconsistent pricing structure reduces integrity",
-        20
-      );
-    }
-  }
-
-  /* 3️⃣ TRANSPARENCY */
-  if (/(no refunds|terms apply|conditions apply)/.test(text)) {
-    flag(
-      "Opaque conditions",
-      "Restrictions mentioned without clear explanation",
-      "Unclear terms reduce integrity",
-      10
-    );
-  }
-
-  /* 4️⃣ EMOTIONAL EXAGGERATION */
-  if (/(best ever|guaranteed|no risk|perfect deal)/.test(text)) {
-    flag(
-      "Emotional exaggeration",
-      "Subjective or absolute marketing language detected",
-      "Exaggeration reduces informational integrity",
-      5
-    );
-  }
-
-  /* SAFETY FLOOR */
-  confidence = Math.max(0, confidence);
-
-  /* VERDICT */
-  let verdictText = "🟢 Integrity signals appear consistent";
-  let cls = "green";
-
-  if (confidence < 80) {
-    verdictText = "🟠 Integrity signals mixed";
-    cls = "yellow";
-  }
-  if (confidence < 50) {
-    verdictText = "🔴 Integrity signals weak";
-    cls = "red";
-  }
-
-  document.getElementById("result").style.display = "block";
-  document.getElementById("verdict").innerHTML =
-    `<span class="badge ${cls}">${verdictText}</span>`;
-
-  renderList("signals", signals.length ? signals : ["No significant integrity signals detected"]);
-  renderList("audit", audit.length ? audit : ["No integrity rules triggered"]);
-
-  document.getElementById("export").textContent =
-`Verdict: ${verdictText}
-Ruleset: BOMBO-v1.1
-
-Audit log:
-${audit.join("\n\n")}
-
-Methodology:
-Deterministic, rule-based, local execution.
-No tracking. No personalization.`;
+  Tesseract.recognize(file,'eng',{logger:m=>console.log(m)}).then(({data:{text}})=>{
+    processText(text,bank);
+  });
 }
 
-function renderList(id, list) {
-  const el = document.getElementById(id);
-  el.innerHTML = "";
-  list.forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    el.appendChild(li);
-  });
+function processText(text,bank){
+  let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
+  let output="";
+  let leagueStats={};
+  let initialBank=bank;
+
+  for(let l of lines){
+    // Detect liga optional: [EPL], [LaLiga] etc.
+    let leagueMatch=l.match(/\[([a-zA-Z0-9\s]+)\]/);
+    let league=leagueMatch?leagueMatch[1]:"Unknown";
+
+    // Caut pattern: TeamA odd1 X oddX TeamB odd2 rezultat
+    let m=l.match(/(\w+)\s+([\d.]+)\s+X\s+([\d.]+)\s+(\w+)\s+([\d.]+)\s+([1X2])/i);
+    if(!m) continue;
+    let teamA=m[1], odd1=parseFloat(m[2]), oddX=parseFloat(m[3]), teamB=m[4], odd2=parseFloat(m[5]), resultReal=m[6].toUpperCase();
+
+    // Simplificare xG: invers cota
+    let xgH=1/odd1*2.5;
+    let xgA=1/odd2*2.5;
+
+    let probs=monteCarlo(xgH,xgA);
+    let edge=[probs[0]-1/odd1,probs[1]-1/oddX,probs[2]-1/odd2];
+    let bestIndex=edge.indexOf(Math.max(...edge));
+    let pick=["1","X","2"][bestIndex];
+    let stake=kelly(probs[bestIndex],[odd1,oddX,odd2][bestIndex]);
+
+    // filtrare edge < 4%
+    if(edge[bestIndex]<0.04 || stake<=0){stake=0;}
+
+    // max 2% bancă
+    stake=Math.min(stake,bank*0.02);
+
+    // aplicare bet
+    if(stake>0){
+      if(pick==resultReal) bank+=stake*[odd1,oddX,odd2][bestIndex]-stake;
+      else bank-=stake;
+    }
+
+    if(!leagueStats[league]) leagueStats[league]={bets:0,valueBets:0,profit:0};
+    leagueStats[league].bets++;
+    if(stake>0){
+      leagueStats[league].valueBets++;
+      leagueStats[league].profit+=(pick==resultReal? [odd1,oddX,odd2][bestIndex]-1:-1)*stake;
+    }
+
+    let cls=stake>0?"good":"bad";
+    output+=`<p class="${cls}">
+      [${league}] ${teamA} vs ${teamB} | Pick: ${pick} | Prob: ${(probs[bestIndex]*100).toFixed(2)}% | Edge: ${(edge[bestIndex]*100).toFixed(2)}% | Stake: ${stake.toFixed(2)}
+    </p>`;
+  }
+
+  // Statistici pe ligă
+  output+="<h3>📊 Statistici pe Ligă</h3>";
+  for(let l in leagueStats){
+    let roi=(leagueStats[l].profit/initialBank*100).toFixed(2);
+    output+=`<p>${l} | Total Meciuri: ${leagueStats[l].bets} | Value Bets: ${leagueStats[l].valueBets} | Profit: ${leagueStats[l].profit.toFixed(2)} | ROI: ${roi}%</p>`;
+  }
+
+  let totalProfit=(bank-initialBank).toFixed(2);
+  let totalROI=((bank-initialBank)/initialBank*100).toFixed(2);
+  output+=`<h3>Total Profit: ${totalProfit} | ROI: ${totalROI}%</h3>`;
+
+  result.innerHTML=output||"Nu s-au găsit meciuri valide în poză.";
 }
 </script>
 
