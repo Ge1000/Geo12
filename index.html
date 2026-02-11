@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.11 💥</title>
+<title>Pick 5.6.12 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.11 💥</h1>
+<h1>Pick 5.6.12 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -59,29 +59,33 @@ button{
 
 <script>
 
-// ------------------ CLEAN OCR INTELIGENT ------------------
+// ------------------ CLEAN OCR AVANSAT ------------------
 function cleanOCR(text){
-    return text.replace(/[^\w\s\.\-\/]/g,' ')  // elimină simboluri ciudate
-               .replace(/\s{2,}/g,' ')         // reduce spații multiple
-               .split("\n")
-               .map(l=>l.trim())
-               .filter(l=>l.length>1)
+    // eliminăm simboluri și junk
+    text = text.replace(/[^\w\s\.\-\/]/g,' ')
+               .replace(/\s{2,}/g,' ')
+               .replace(/[,]/g,'.')
+               .replace(/\r/g,'')
+    let lines = text.split('\n')
+                    .map(l=>l.trim())
+                    .filter(l=>l.length>1 && !l.match(/live|casino|bonus|meniu|bilete|sport|calendar|competitii|superbet|acasa|builder|league|premier|liga|anglia/i))
+    return lines
 }
 
-// ------------------ PARSER AVANSAT ------------------
+// ------------------ PARSER ROBUST ------------------
 function parseMatches(lines){
     let matches=[]
     let usedIndexes=new Set()
 
     for(let i=0;i<lines.length;i++){
         if(usedIndexes.has(i)) continue
+
         let odds = lines[i].match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
-
-            // căutăm ultimele 2 linii non-numerice valide înainte de cote
+            // caută ultimele două linii valide non-numerice
             let home="", away=""
             for(let j=i-1;j>=0;j--){
                 if(!lines[j].match(/\d/)){
@@ -89,11 +93,7 @@ function parseMatches(lines){
                     else { home=lines[j]; break }
                 }
             }
-
             if(home && away && home!==away){
-                home=home.replace(/^\s*\W+/,'').trim()
-                away=away.replace(/^\s*\W+/,'').trim()
-                // evită duplicate
                 if(!matches.some(m=>m.home===home && m.away===away)){
                     matches.push({home,away,odd1,oddX,odd2})
                 }
@@ -152,7 +152,7 @@ async function runOCR(){
         logger:m=>console.log(m)
     })
     
-    previewDiv.innerHTML="<pre>"+text+"</pre>" // vezi tot textul recunoscut
+    previewDiv.innerHTML="<pre>"+text+"</pre>"
 
     let cleaned=cleanOCR(text)
     let matches=parseMatches(cleaned)
