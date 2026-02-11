@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.13 💥</title>
+<title>Pick 5.6.14 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.13 💥</h1>
+<h1>Pick 5.6.14 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -58,82 +58,67 @@ button{
 <div id="output"></div>
 
 <script>
-// ------------------ CLEAN OCR AVANSAT ------------------
-function cleanOCR(text){
-    text = text.replace(/,/g,'.').replace(/\s{2,}/g,' ');
-    let lines = text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
 
-    // eliminăm linii inutile
-    const junk = ["@", "D", "QI", "P", "I", "Jj", "acasa", "live", "casino", "bonus", "meniu", "bilete", "sport", "calendar", "competitii", "superbet", "azi", "astazi"];
-    return lines.filter(l => !junk.some(j => l.includes(j)));
+// ------------------ CLEAN OCR ------------------
+function cleanOCR(text){
+    text = text.replace(/,/g,'.').replace(/\s{2,}/g,' ').replace(/[^\w\d\.\/\- ]/g,'')
+    return text.split("\n").map(line=>line.trim()).filter(line=>line.length>1)
 }
 
-// ------------------ PARSER FLEXIBIL ------------------
+// ------------------ PARSER FIX ------------------
 function parseMatches(lines){
-    let matches=[];
-    let usedIndexes = new Set();
+    let matches=[]
+    const matchRegex = /([A-Za-z0-9\s\.\-]+)\s+vs\s+([A-Za-z0-9\s\.\-]+)/i
 
     for(let i=0;i<lines.length;i++){
-        if(usedIndexes.has(i)) continue;
-
-        let odds = lines[i].match(/(\d+\.\d+)/g);
-
-        if(odds && odds.length>=3){
-            let odd1=parseFloat(odds[0]);
-            let oddX=parseFloat(odds[1]);
-            let odd2=parseFloat(odds[2]);
-
-            // căutăm ultimele 3 linii valide înainte de cote pentru echipe
-            let home="", away="";
-            for(let j=i-1;j>=i-3 && j>=0;j--){
-                if(!lines[j].match(/\d/)){
-                    if(!away) away=lines[j];
-                    else { home=lines[j]; break; }
-                }
-            }
-
-            if(home && away && home!==away){
-                home=home.replace(/^[^\w]*\s*/,'').trim();
-                away=away.replace(/^[^\w]*\s*/,'').trim();
-
-                if(!matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({home,away,odd1,oddX,odd2});
-                }
-                usedIndexes.add(i);
+        let m = lines[i].match(matchRegex)
+        if(m){
+            let home = m[1].trim()
+            let away = m[2].trim()
+            // Caută cote pe aceeași linie sau linia următoare
+            let oddsLine = lines[i].replace(matchRegex,'').trim()
+            if(!oddsLine && i+1<lines.length) oddsLine = lines[i+1].trim()
+            let odds = oddsLine.match(/(\d+\.\d+)/g)
+            if(odds && odds.length>=3){
+                matches.push({
+                    home: home,
+                    away: away,
+                    odd1: parseFloat(odds[0]),
+                    oddX: parseFloat(odds[1]),
+                    odd2: parseFloat(odds[2])
+                })
             }
         }
     }
-
-    return matches;
+    return matches
 }
 
 // ------------------ CALCUL PROBABILITATE ------------------
 function calculate(match){
-    let p1=1/match.odd1;
-    let pX=1/match.oddX;
-    let p2=1/match.odd2;
-    let total=p1+pX+p2;
-    p1/=total; pX/=total; p2/=total;
-    let maxProb=Math.max(p1,pX,p2);
-    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal";
-    let percent=(maxProb*100).toFixed(2);
-    return {pick,percent,maxProb};
+    let p1=1/match.odd1
+    let pX=1/match.oddX
+    let p2=1/match.odd2
+    let total=p1+pX+p2
+    p1/=total; pX/=total; p2/=total
+    let maxProb=Math.max(p1,pX,p2)
+    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
+    let percent=(maxProb*100).toFixed(2)
+    return {pick,percent,maxProb}
 }
 
 // ------------------ DISPLAY ------------------
 function display(matches){
-    let container=document.getElementById("output");
-    container.innerHTML="";
+    let container=document.getElementById("output")
+    container.innerHTML=""
     if(matches.length===0){
-        container.innerHTML="Nu s-au detectat meciuri valide.";
-        return;
+        container.innerHTML="Nu s-au detectat meciuri valide."
+        return
     }
-
     matches.forEach(m=>{
-        let calc=calculate(m);
-        let level="low";
-        if(calc.maxProb>0.55) level="high";
-        else if(calc.maxProb>0.40) level="medium";
+        let calc=calculate(m)
+        let level="low"
+        if(calc.maxProb>0.55) level="high"
+        else if(calc.maxProb>0.40) level="medium"
 
         container.innerHTML+=`
         <div class="match ${level}">
@@ -141,26 +126,28 @@ function display(matches){
         Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
         🔥 Recomandare: <b>${calc.pick}</b><br>
         Probabilitate: ${calc.percent}%
-        </div>`;
-    });
+        </div>
+        `
+    })
 }
 
-// ------------------ OCR ------------------
+// ------------------ RUN OCR ------------------
 async function runOCR(){
-    let file=document.getElementById("imageInput").files[0];
-    if(!file){ alert("Selectează o poză"); return; }
+    let file=document.getElementById("imageInput").files[0]
+    if(!file){ alert("Selectează o poză"); return }
 
-    let previewDiv=document.getElementById("preview");
-    previewDiv.innerHTML="Se procesează OCR...";
-
-    let { data: { text } } = await Tesseract.recognize(file,'eng',{logger:m=>console.log(m)});
+    let previewDiv=document.getElementById("preview")
+    let { data: { text } } = await Tesseract.recognize(file,'eng',{
+        logger:m=>console.log(m)
+    })
     
-    previewDiv.innerHTML="<pre>"+text+"</pre>";
+    previewDiv.innerHTML="<pre>"+text+"</pre>" // vezi tot textul recunoscut
 
-    let cleaned=cleanOCR(text);
-    let matches=parseMatches(cleaned);
-    display(matches);
+    let cleaned=cleanOCR(text)
+    let matches=parseMatches(cleaned)
+    display(matches)
 }
+
 </script>
 
 </body>
