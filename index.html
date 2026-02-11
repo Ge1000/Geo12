@@ -3,163 +3,183 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.22 Smart + Live Form 🧠⚽</title>
+<title>Pick 5.6.24 Smart Core Engine 🧠⚽</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
 <style>
-body{background:#0f172a;color:#e2e8f0;font-family:system-ui;text-align:center;padding:20px;}
+body{
+  background:#0f172a;
+  color:#e2e8f0;
+  font-family:system-ui;
+  text-align:center;
+  padding:20px;
+}
 h1{color:#22c55e;font-size:22px}
-button{padding:12px 20px;margin:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer;}
-#preview,#output{text-align:left;margin-top:20px;}
-.match{background:#111827;border-radius:8px;padding:12px;margin:10px 0;}
-.high{border-left:5px solid #22c55e;}
-.medium{border-left:5px solid #facc15;}
-.low{border-left:5px solid #ef4444;}
-canvas{max-width:100%;margin-top:20px;border:1px solid #444;border-radius:8px;}
+button{
+  padding:12px 20px;
+  margin:10px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+.match{
+  margin:12px 0;
+  padding:14px;
+  background:#111827;
+  border-radius:8px;
+}
+.high{border-left:6px solid #22c55e;}
+.medium{border-left:6px solid #facc15;}
+.low{border-left:6px solid #ef4444;}
+canvas{
+  max-width:100%;
+  margin-top:20px;
+  border:1px solid #444;
+  border-radius:8px;
+}
 </style>
 </head>
 <body>
 
-<h1>Pick 5.6.22 Smart + Live Form 🧠⚽</h1>
+<h1>Pick 5.6.24 Smart Core Engine 🧠⚽</h1>
 
-<input type="file" id="imageInput"><br>
+<input type="file" id="imageInput">
+<br>
 <button onclick="runOCR()">Rulează analiză</button>
 
-<h3>Preview OCR</h3><canvas id="canvas"></canvas>
-<h3>Meciuri Detectate</h3><div id="output"></div>
+<canvas id="canvas"></canvas>
+
+<h3>Meciuri Detectate</h3>
+<div id="output"></div>
 
 <script>
 
-const API_KEY = "YOUR_API_KEY_HERE"; // ← pune cheia ta aici
-const API_HOST = "v3.football.api-sports.io";
-
-// ───────── OCR CLEAN ─────────
+// CLEAN OCR
 function cleanOCR(text){
-    return text.replace(/[\*|@#\$%®<>\-]/g,'.').replace(/\s{2,}/g,' ')
-               .replace(/[^a-zA-Z0-9\.\/\s]/g,'').split("\n")
-               .map(l=>l.trim()).filter(l=>l.length>1);
+    return text
+        .replace(/[\*|@#\$%®<>\-]/g,' ')
+        .replace(/\s{2,}/g,' ')
+        .replace(/[^a-zA-Z0-9\.\s]/g,'')
+        .split("\n")
+        .map(l=>l.trim())
+        .filter(l=>l.length>2)
 }
 
-// ───────── PARSER ─────────
+// PARSER
 function parseMatches(lines){
-    let matches=[], buffer=[];
-    for(let line of lines){
-        if(line.toLowerCase().match(/acasa|live|bonus|meni/)) continue;
-        let odds=line.match(/(\d+\.\d+)/g);
+    let matches=[]
+    for(let i=0;i<lines.length;i++){
+        let odds = lines[i].match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
-            let odd1=parseFloat(odds[0]), oddX=parseFloat(odds[1]), odd2=parseFloat(odds[2]);
-            let home="", away="";
-            for(let i=buffer.length-1;i>=0;i--){
-                if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]; else{ home=buffer[i]; break;}
-                }
+            let home = lines[i-2] || ""
+            let away = lines[i-1] || ""
+            if(home && away && !home.match(/\d/) && !away.match(/\d/)){
+                matches.push({
+                    home,
+                    away,
+                    odd1:parseFloat(odds[0]),
+                    oddX:parseFloat(odds[1]),
+                    odd2:parseFloat(odds[2])
+                })
             }
-            if(home && away && home!==away){
-                if(!matches.some(m=>m.home===home && m.away===away))
-                    matches.push({home,away,odd1,oddX,odd2});
-            }
-            buffer=[];
-        }else buffer.push(line);
+        }
     }
-    return matches;
+    return matches
 }
 
-// ───────── API FOOTBALL HELPERS ─────────
-async function fetchJson(url){
-    let res = await fetch(url, {
-        headers: {"Authorization": "Bearer " + API_KEY}
-    });
-    return res.json();
-}
+// SMART ENGINE
+function smartAnalyze(m){
 
-async function getTeamId(name){
-    let q = encodeURIComponent(name);
-    let url = `https://${API_HOST}/v3/teams?search=${q}`;
-    let json = await fetchJson(url);
-    if(json.response && json.response.length) return json.response[0].team.id;
-    return null;
-}
+    // Probabilități brute
+    let p1=1/m.odd1
+    let pX=1/m.oddX
+    let p2=1/m.odd2
 
-async function getLastResults(teamId){
-    let url = `https://${API_HOST}/v3/fixtures?team=${teamId}&last=5&season=2025`;
-    let json = await fetchJson(url);
-    return json.response;
-}
+    // Eliminare marjă bookmaker
+    let total=p1+pX+p2
+    p1/=total; pX/=total; p2/=total
 
-function calcForm(matches, teamId){
-    let points=0;
-    matches.forEach(m=>{
-        let home = m.teams.home.id, away = m.teams.away.id;
-        let hGoals = m.goals.home, aGoals = m.goals.away;
-        if(hGoals===aGoals) points += 1;
-        else if((hGoals>aGoals && home===teamId)||(aGoals>hGoals && away===teamId)) points +=3;
-    });
-    return (points/15) + 1;
-}
+    // Detectare dezechilibru
+    let diff = Math.abs(p1-p2)
 
-// ───────── SMART CALC ─────────
-async function enrichForm(matches){
-    for(let m of matches){
-        m.homeId = await getTeamId(m.home);
-        m.awayId = await getTeamId(m.away);
-        let homeResults = m.homeId ? await getLastResults(m.homeId) : [];
-        let awayResults = m.awayId ? await getLastResults(m.awayId) : [];
-        m.homeForm = calcForm(homeResults, m.homeId);
-        m.awayForm = calcForm(awayResults, m.awayId);
+    // Penalizare cote extrem de mici (<1.30)
+    if(m.odd1<1.30) p1*=0.92
+    if(m.odd2<1.30) p2*=0.92
+
+    // Boost pentru value între 1.80 – 2.40
+    if(m.odd1>=1.8 && m.odd1<=2.4) p1*=1.05
+    if(m.odd2>=1.8 && m.odd2<=2.4) p2*=1.05
+
+    // Re-normalizare
+    total=p1+pX+p2
+    p1/=total; pX/=total; p2/=total
+
+    let maxProb=Math.max(p1,pX,p2)
+    let pick=maxProb===p1?m.home:maxProb===p2?m.away:"Egal"
+
+    let confidence="low"
+    if(maxProb>0.60) confidence="high"
+    else if(maxProb>0.48) confidence="medium"
+
+    return {
+        pick,
+        percent:(maxProb*100).toFixed(2),
+        confidence
     }
-    return matches;
 }
 
-function smartCalc(match){
-    let p1=1/match.odd1, pX=1/match.oddX, p2=1/match.odd2;
-    p1 *= match.homeForm; p2 *= match.awayForm;
-    let total = p1+pX+p2;
-    p1/=total; pX/=total; p2/=total;
-    let maxProb=Math.max(p1,pX,p2),
-        pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal",
-        percent=(maxProb*100).toFixed(2);
-    return {pick,percent};
-}
-
-// ───────── DISPLAY ─────────
+// DISPLAY
 function display(matches){
-    let container=document.getElementById("output"); container.innerHTML="";
-    if(!matches.length){ container.innerHTML="Nu s-au detectat meciuri valide."; return;}
+    let out=document.getElementById("output")
+    out.innerHTML=""
+
+    if(matches.length===0){
+        out.innerHTML="Nu s-au detectat meciuri valide."
+        return
+    }
+
     matches.forEach(m=>{
-        let calc = smartCalc(m);
-        container.innerHTML += `
-        <div class="match">
-          <b>${m.home} vs ${m.away}</b><br>
-          Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
-          Forme: ${m.homeForm.toFixed(2)} vs ${m.awayForm.toFixed(2)}<br>
-          🔥 Recomandare: <b>${calc.pick}</b><br>
-          Probabilitate: ${calc.percent}%
-        </div>`;
-    });
+        let result=smartAnalyze(m)
+
+        out.innerHTML+=`
+        <div class="match ${result.confidence}">
+        <b>${m.home} vs ${m.away}</b><br>
+        Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
+        🔥 Recomandare Smart: <b>${result.pick}</b><br>
+        Scor încredere: ${result.percent}%
+        </div>
+        `
+    })
 }
 
-// ───────── RUN OCR ─────────
+// RUN
 async function runOCR(){
-    let file = document.getElementById("imageInput").files[0];
-    if(!file){ alert("Selectează o poză"); return;}
+    let file=document.getElementById("imageInput").files[0]
+    if(!file){ alert("Selectează o poză"); return }
 
-    let canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d"), img=new Image();
+    let canvas=document.getElementById("canvas")
+    let ctx=canvas.getContext("2d")
+    let img=new Image()
+
     img.onload = async function(){
-        canvas.width=img.width; canvas.height=img.height;
-        ctx.drawImage(img,0,0);
+        canvas.width=img.width
+        canvas.height=img.height
+        ctx.drawImage(img,0,0)
 
-        let { data:{text} } = await Tesseract.recognize(file,'eng');
-        let cleaned = cleanOCR(text);
-        let parsed = parseMatches(cleaned);
+        let { data:{ text } } = await Tesseract.recognize(file,'eng')
 
-        let withForm = await enrichForm(parsed);
-        display(withForm);
+        let cleaned=cleanOCR(text)
+        let matches=parseMatches(cleaned)
+        display(matches)
     }
-    img.src = URL.createObjectURL(file);
+
+    img.src=URL.createObjectURL(file)
 }
 
 </script>
-
 </body>
 </html>
