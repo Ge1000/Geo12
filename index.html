@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Geo Nuclear Quick Pick 5.6.2</title>
+<title>Geo Nuclear Quick Pick 5.6.3</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -39,7 +39,7 @@ border-radius:8px;
 </head>
 <body>
 
-<h1>💥 Geo Nuclear Quick Pick 5.6.2 💥</h1>
+<h1>💥 Geo Nuclear Quick Pick 5.6.3 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -49,11 +49,36 @@ border-radius:8px;
 
 <script>
 
+// ------------------ CLEAN OCR ------------------
+
 function cleanOCR(text){
+
+const junk = [
+"meci","egal","live","casino","bonus","meniu",
+"bilete","sport","calendar","competitii",
+"superbet","azi","astazi","builder",
+"league","premier","liga","anglia",
+"acasa","bet","1","x","2"
+]
+
 return text
 .replace(/[^a-zA-Z0-9\.\-\n ]/g,'')
-.replace(/(live|casino|bonus|meniu|bilete|sport|calendar|competitii|superbet|azi|astazi)/gi,'')
+.split("\n")
+.map(line=>{
+let l=line.trim()
+if(l.length<3) return ""
+let lower=l.toLowerCase()
+for(let j of junk){
+if(lower===j) return ""
 }
+return l
+})
+.filter(l=>l!=="")
+.join("\n")
+
+}
+
+// ------------------ PARSER HYBRID ------------------
 
 function parseMatches(text){
 
@@ -62,43 +87,25 @@ let lines=text.split("\n")
 .filter(l=>l.length>2)
 
 let matches=[]
-let usedIndexes=new Set()
+let used=new Set()
 
 for(let i=0;i<lines.length;i++){
 
-if(usedIndexes.has(i)) continue
+if(used.has(i)) continue
 
-let line=lines[i]
+let current=lines[i]
 
-/* CASE 1: echipe pe aceeași linie */
-let sameLine=line.match(/^([A-Za-z ]+)\s+vs?\s+([A-Za-z ]+)$/i)
+// ignorăm linii care conțin cote
+if(current.match(/\d+\.\d+/)) continue
 
-if(sameLine && lines[i+1]){
-
-let odds=lines[i+1].match(/(\d+\.\d+)/g)
-
-if(odds && odds.length>=3){
-
-matches.push({
-home:sameLine[1].trim(),
-away:sameLine[2].trim(),
-odd1:parseFloat(odds[0]),
-oddX:parseFloat(odds[1]),
-odd2:parseFloat(odds[2])
-})
-
-usedIndexes.add(i)
-usedIndexes.add(i+1)
-continue
-}
-}
-
-/* CASE 2: echipe pe 2 linii separate */
+// CASE echipe pe 2 linii + cote pe a 3-a
 if(i+2<lines.length){
 
 let home=lines[i]
 let away=lines[i+1]
 let oddsLine=lines[i+2]
+
+if(!home.match(/\d/) && !away.match(/\d/)){
 
 let odds=oddsLine.match(/(\d+\.\d+)/g)
 
@@ -112,9 +119,10 @@ oddX:parseFloat(odds[1]),
 odd2:parseFloat(odds[2])
 })
 
-usedIndexes.add(i)
-usedIndexes.add(i+1)
-usedIndexes.add(i+2)
+used.add(i)
+used.add(i+1)
+used.add(i+2)
+}
 }
 }
 
@@ -122,6 +130,8 @@ usedIndexes.add(i+2)
 
 return matches
 }
+
+// ------------------ CALCUL PROBABILITATE ------------------
 
 function calculate(match){
 
@@ -146,6 +156,8 @@ let percent=(maxProb*100).toFixed(2)
 
 return {pick,percent,maxProb}
 }
+
+// ------------------ DISPLAY ------------------
 
 function display(matches){
 
@@ -175,6 +187,8 @@ Probabilitate: ${calc.percent}%
 `
 })
 }
+
+// ------------------ OCR ------------------
 
 async function runOCR(){
 
