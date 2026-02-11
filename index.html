@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.16 Super Hybrid 2.0 💥</title>
+<title>Pick 5.6.18 Mega Fallback Ultra Final 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.16 Super Hybrid 2.0 💥</h1>
+<h1>Pick 5.6.18 Mega Fallback Ultra Final 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -59,10 +59,10 @@ button{
 
 <script>
 
-// ------------------ CLEAN OCR FLEX ------------------
+// ------------------ CLEAN OCR MAX ------------------
 function cleanOCR(text){
     return text
-        .replace(/[\*|@#\$%®<>\-]/g,'.')
+        .replace(/[\*|@#\$%®<>\-\_\\\/]/g,'.')
         .replace(/\s{2,}/g,' ')
         .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
@@ -70,24 +70,23 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID FIXED ------------------
+// ------------------ PARSER MEGA FALLBACK ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
 
     for(let line of lines){
-        // ignorăm linii neimportante
-        let lower=line.toLowerCase()
-        if(lower.includes('acasa') || lower.includes('live') || lower.includes('bonus') || lower.includes('meni')) continue
+        let low=line.toLowerCase()
+        // ignoră linii inutile
+        if(low.includes('acasa') || low.includes('live') || low.includes('bonus') || low.includes('meni') || low.includes('efortuna') || low.includes('meci')) continue
 
-        // verificăm dacă linia are cote
         let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            // ultimele două linii utile din buffer sunt echipele
+            // detectare ultimele 2 linii utile
             let home="", away=""
             for(let i=buffer.length-1;i>=0;i--){
                 if(!buffer[i].match(/\d/)){
@@ -96,16 +95,45 @@ function parseMatches(lines){
                 }
             }
 
+            // fallback pattern vs
+            if(!home || !away){
+                for(let b of buffer){
+                    if(b.toLowerCase().includes(' vs ')){
+                        let parts=b.split(/ vs /i)
+                        if(parts.length>=2){
+                            home=parts[0].trim()
+                            away=parts[1].trim()
+                            break
+                        }
+                    }
+                }
+            }
+
+            // fallback pattern Egal
+            if(!home || !away){
+                for(let b of buffer){
+                    if(b.toLowerCase().includes(' egal ')){
+                        let parts=b.split(/ egal /i)
+                        if(parts.length>=2){
+                            home=parts[0].trim()
+                            away=parts[1].trim()
+                            break
+                        }
+                    }
+                }
+            }
+
             if(home && away && home!==away){
                 if(!matches.some(m=>m.home===home && m.away===away)){
                     matches.push({home,away,odd1,oddX,odd2})
                 }
             }
-            buffer=[] // reset buffer după ce folosim echipele
+
         } else {
             buffer.push(line)
         }
     }
+
     return matches
 }
 
