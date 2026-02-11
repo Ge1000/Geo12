@@ -2,88 +2,104 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Quick Pick</title>
+<title>Geo Quick Single Pick</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
-body{font-family:system-ui;background:#0f1220;color:white;padding:20px;text-align:center;}
-input,button{padding:10px;margin:5px;font-size:18px;}
-.box{background:#1a1f38;padding:20px;margin-top:20px;border-radius:10px;}
-.pick{font-size:28px;margin:15px 0;font-weight:bold;color:#00ff9d;}
+body {
+  font-family: system-ui;
+  background: #0f1220;
+  color: #00ff9d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+  text-align: center;
+}
+input, button {
+  padding: 12px;
+  margin: 10px;
+  font-size: 18px;
+}
+#pick {
+  font-size: 48px;
+  font-weight: bold;
+  margin-top: 50px;
+}
 </style>
 </head>
 <body>
 
-<h2>📸 Geo Quick Pick</h2>
-<p>Încarcă poza cu meciuri și cote:</p>
+<h2>📸 Geo Quick Single Pick</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Arată câștigătorul</button>
 
-<div class="box" id="result">Rezultatul va apărea aici...</div>
+<div id="pick"></div>
 
 <script>
-// Funcții Monte Carlo
-function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
+function poissonRandom(lambda){
+  let L=Math.exp(-lambda),p=1,k=0;
+  while(p>L){k++; p*=Math.random();}
+  return k-1;
+}
+
 function monteCarlo(xgH,xgA,sims=100000){
-  let cH=0,cX=0,cA=0;
+  let cH=0, cX=0, cA=0;
   for(let i=0;i<sims;i++){
-    let h=poissonRandom(xgH),a=poissonRandom(xgA);
+    let h=poissonRandom(xgH), a=poissonRandom(xgA);
     if(h>a)cH++; else if(h==a)cX++; else cA++;
   }
   return {pH:cH/sims, pX:cX/sims, pA:cA/sims};
 }
 
-// OCR
 function runOCR(){
   let file=document.getElementById("imgInput").files[0];
   if(!file){alert("Alege poza"); return;}
-  result.innerHTML="Se procesează OCR...⏳";
-
+  document.getElementById("pick").innerHTML = "Se procesează OCR...";
   Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Procesare text
 function processText(text){
   text=text.replace(/\r/g,'\n').replace(/\t/g,' ').replace(/\s+/g,' ').trim();
   let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
-  if(lines.length==0){result.innerHTML="Nu s-au găsit meciuri valide."; return;}
+  if(lines.length==0){document.getElementById("pick").innerHTML="Nu s-au găsit meciuri valide"; return;}
 
-  let output="";
-  for(let l of lines){
-    // Detectam echipe si cote
-    let numbers=l.match(/[\d]+\.[\d]+/g);
-    if(!numbers || numbers.length<2) continue;
-    let parts=l.split(numbers[0]);
-    let teamA=parts[0].trim();
-    let odd1=parseFloat(numbers[0]);
-    let oddX=parseFloat(numbers[1]);
-    let odd2=numbers.length>=3?parseFloat(numbers[2]):odd1;
+  // Luăm doar primul meci pentru single pick
+  let l = lines[0];
 
-    // Echipa B: text după ultima cotă
-    let lastIndex=l.lastIndexOf(numbers[numbers.length>=3?2:1]);
-    let teamB=l.substring(lastIndex+numbers[numbers.length>=3?2:1].length).replace(/xG/gi,'').trim();
+  // Extragem cote
+  let numbers=l.match(/[\d]+\.[\d]+/g);
+  if(!numbers || numbers.length<2){document.getElementById("pick").innerHTML="Nu s-au găsit meciuri valide"; return;}
 
-    // xG fallback 1.5
-    let xgMatch=l.match(/(\d*\.?\d+)xG/gi);
-    let xgH=1.5, xgA=1.5;
-    if(xgMatch && xgMatch.length>=1) xgH=parseFloat(xgMatch[0]);
-    if(xgMatch && xgMatch.length>=2) xgA=parseFloat(xgMatch[1]);
+  let parts=l.split(numbers[0]);
+  let teamA=parts[0].trim();
+  let odd1=parseFloat(numbers[0]);
+  let oddX=parseFloat(numbers[1]);
+  let odd2=numbers.length>=3?parseFloat(numbers[2]):odd1;
 
-    // Monte Carlo
-    let sim=monteCarlo(xgH,xgA);
+  let lastIndex=l.lastIndexOf(numbers[numbers.length>=3?2:1]);
+  let teamB=l.substring(lastIndex+numbers[numbers.length>=3?2:1].length).replace(/xG/gi,'').trim();
 
-    // Pick câștigător
-    let maxP=Math.max(sim.pH,sim.pX,sim.pA);
-    let pick="";
-    if(maxP==sim.pH) pick=teamA;
-    else if(maxP==sim.pX) pick="Egal";
-    else pick=teamB;
+  // xG fallback
+  let xgMatch=l.match(/(\d*\.?\d+)xG/gi);
+  let xgH=1.5, xgA=1.5;
+  if(xgMatch && xgMatch.length>=1)xgH=parseFloat(xgMatch[0]);
+  if(xgMatch && xgMatch.length>=2)xgA=parseFloat(xgMatch[1]);
 
-    output+=`<div class="pick">${teamA} vs ${teamB} → ${pick}</div>`;
-  }
+  // Monte Carlo
+  let sim=monteCarlo(xgH,xgA);
 
-  result.innerHTML=output||"Nu s-au găsit meciuri valide în poză.";
+  // Pick câștigător
+  let maxP=Math.max(sim.pH,sim.pX,sim.pA);
+  let pick="";
+  if(maxP==sim.pH) pick=teamA;
+  else if(maxP==sim.pX) pick="Egal";
+  else pick=teamB;
+
+  document.getElementById("pick").innerHTML = pick;
 }
 </script>
 
