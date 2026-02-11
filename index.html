@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.19 Ultra Blind OCR 💥</title>
+<title>Pick 5.6.20 Mega Fallback Final 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.19 Ultra Blind OCR 💥</h1>
+<h1>Pick 5.6.20 Mega Fallback Final 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -59,16 +59,18 @@ button{
 
 <script>
 
-// ------------------ CLEAN OCR TOTAL ------------------
+// ------------------ CLEAN OCR FINAL ------------------
 function cleanOCR(text){
-    // elimină simboluri și caractere murdare
-    text = text.replace(/[\*\|\@\#\$\%\®\<\>\-\—\‘\’\“\”]/g,'')
-               .replace(/\s{2,}/g,' ')
-               .replace(/[^a-zA-Z0-9\s\.\/]/g,'')
-    return text.split("\n").map(l=>l.trim()).filter(l=>l.length>1)
+    return text
+        .replace(/[\*\|\@\#\$\%\®\<\>\-\—\‘\’\“\”]/g,'')
+        .replace(/\s{2,}/g,' ')
+        .replace(/[^a-zA-Z0-9\s\.\/]/g,'')
+        .split("\n")
+        .map(l=>l.trim())
+        .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA BLIND ------------------
+// ------------------ PARSER FINAL ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
@@ -77,38 +79,32 @@ function parseMatches(lines){
         // ignoră texte inutile
         if(line.toLowerCase().match(/acasa|live|bilete|casino|bonus|meniu|efortuna/)) continue
 
-        // detectează cote pe linie
+        // detectează cote
         let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            // ultimele 2 linii non-numerice din buffer sunt echipele
-            let home="", away=""
-            for(let i=buffer.length-1;i>=0;i--){
-                if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]
-                    else { home=buffer[i]; break }
+            // ultimele două linii non-numerice din buffer
+            let temp = buffer.filter(l=>!l.match(/\d/))
+            if(temp.length>=2){
+                let home = temp[temp.length-2].trim().replace(/[^a-zA-Z0-9\s\.]/g,'')
+                let away = temp[temp.length-1].trim().replace(/[^a-zA-Z0-9\s\.]/g,'')
+                if(home && away && home!==away){
+                    // verifică să nu fie duplicat
+                    if(!matches.some(m=>m.home===home && m.away===away)){
+                        matches.push({home,away,odd1,oddX,odd2})
+                    }
                 }
             }
-
-            if(home && away && home!==away){
-                // curățare suplimentară
-                home = home.replace(/[^a-zA-Z0-9\s\.]/g,'').trim()
-                away = away.replace(/[^a-zA-Z0-9\s\.]/g,'').trim()
-                if(!matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({home,away,odd1,oddX,odd2})
-                }
-            }
-        } else {
-            buffer.push(line)
-        }
+        } 
+        buffer.push(line)
     }
     return matches
 }
 
-// ------------------ CALCUL PROBABILITATE ------------------
+// ------------------ CALCUL ------------------
 function calculate(match){
     let p1=1/match.odd1
     let pX=1/match.oddX
