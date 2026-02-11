@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.21 Mega Visual OCR 💥</title>
+<title>Pick 5.6.21 Mega Visual OCR Fix 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -51,7 +51,7 @@ canvas{
 </head>
 <body>
 
-<h1>Pick 5.6.21 Mega Visual OCR 💥</h1>
+<h1>Pick 5.6.21 Mega Visual OCR Fix 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -76,10 +76,11 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID ------------------
+// ------------------ PARSER ULTRA HYBRID FIX ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
+
     for(let line of lines){
         if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
         let odds = line.match(/(\d+\.\d+)/g)
@@ -101,8 +102,9 @@ function parseMatches(lines){
                     matches.push({home,away,odd1,oddX,odd2})
                 }
             }
+            buffer=[] // reset buffer după fiecare meci
         } else {
-            buffer.push(line)
+            if(line.length>1) buffer.push(line)
         }
     }
     return matches
