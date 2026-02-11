@@ -2,139 +2,172 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 5.5 💥</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geo Nuclear Quick Pick 5.6</title>
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
 <style>
-body {font-family:Arial; background:#0f1220; color:#fff; padding:20px;}
-h2 {text-align:center; color:#00ffea; margin-bottom:20px;}
-#preview, #output {margin-top:20px;}
-.match {
-    display:inline-block;
-    padding:10px 15px;
-    margin:3px;
-    border-radius:10px;
-    min-width:120px;
-    text-align:center;
-    font-weight:bold;
-    color:#000;
-    font-size:14px;
+body{
+background:#0f172a;
+color:#e2e8f0;
+font-family:system-ui;
+text-align:center;
+padding:20px;
 }
-input, button {padding:10px; margin:5px; cursor:pointer;}
+h1{color:#22c55e;font-size:22px}
+button{
+padding:12px 20px;
+margin:10px;
+border:none;
+border-radius:8px;
+background:#22c55e;
+color:#000;
+font-weight:bold;
+cursor:pointer;
+}
+.result{
+margin-top:20px;
+padding:15px;
+background:#1e293b;
+border-radius:10px;
+}
+.match{
+margin:10px 0;
+padding:10px;
+background:#111827;
+border-radius:8px;
+}
+.high{border-left:5px solid #22c55e;}
+.medium{border-left:5px solid #facc15;}
+.low{border-left:5px solid #ef4444;}
+textarea{
+width:100%;
+height:150px;
+margin-top:10px;
+background:#111827;
+color:#fff;
+border-radius:8px;
+padding:10px;
+font-size:13px;
+}
 </style>
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 5.5 Offline 💥</h2>
-<input type="file" id="imgInput" accept="image/*">
+<h1>💥 Geo Nuclear Quick Pick 5.6 💥</h1>
+
+<input type="file" id="imageInput">
+<br>
 <button onclick="runOCR()">Rulează analiză</button>
-<button onclick="exportCSV()">Export CSV</button>
 
-<h3>Preview OCR</h3>
-<div id="preview"></div>
-
-<h3>Value Bets în linie</h3>
-<div id="output"></div>
+<div class="result" id="output"></div>
 
 <script>
-let finalResults = [];
-let seed = 987654;
 
-// Seeded random pentru consistență
-function random(){var x=Math.sin(seed++)*10000; return x - Math.floor(x);}
-
-// OCR + Parse
-function runOCR(){
-    let file=document.getElementById("imgInput").files[0];
-    if(!file){alert("Alege poza"); return;}
-    document.getElementById("preview").innerHTML="Se procesează OCR...";
-    document.getElementById("output").innerHTML="";
-    finalResults=[];
-    Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
-    .then(({data:{text}})=>{
-        document.getElementById("preview").innerText=text;
-        parseMatches(text);
-    });
+function cleanOCR(text){
+return text
+.replace(/[^a-zA-Z0-9\.\-\n\/ ]/g,'')
+.replace(/(live|casino|bonus|meniu|bilete|sport|calendar|competitii)/gi,'')
+.replace(/\s+/g,' ')
 }
 
-// Parse echipe
 function parseMatches(text){
-    const lines=text.split(/\n/);
-    let matches=[];
-    lines.forEach(line=>{
-        let match=line.match(/([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+)/);
-        if(match){
-            matches.push({home:match[1].trim(), away:match[2].trim()});
-        }
-    });
-    if(matches.length===0){
-        document.getElementById("output").innerHTML="<p>Nu s-au găsit meciuri.</p>";
-        return;
-    }
-    matches.forEach(m=>getPrediction(m.home, m.away));
+let lines=text.split(/(?=\d\.\d{2})/g)
+let matches=[]
+
+for(let line of lines){
+
+let odds=line.match(/(\d\.\d{2})/g)
+if(!odds || odds.length<3) continue
+
+let teams=line.split(odds[0])[0].trim()
+
+let teamMatch=teams.match(/([A-Za-z ]+)\s+([A-Za-z ]+)/)
+
+if(!teamMatch) continue
+
+let home=teamMatch[1].trim()
+let away=teamMatch[2].trim()
+
+matches.push({
+home:home,
+away:away,
+odd1:parseFloat(odds[0]),
+oddX:parseFloat(odds[1]),
+odd2:parseFloat(odds[2])
+})
 }
 
-// Simulare probabilități + calcul Edge
-function getPrediction(home, away){
-    const pH = (random()*0.4 + 0.3).toFixed(2);
-    const pX = (random()*0.3).toFixed(2);
-    const pA = (1 - pH - pX).toFixed(2);
-
-    // Simulare cote implicite (poți ajusta după ligă/echipe)
-    const oddH = (1/pH).toFixed(2);
-    const oddX = (1/pX).toFixed(2);
-    const oddA = (1/pA).toFixed(2);
-
-    // Calcul Edge
-    let edge = Math.max(pH*oddH -1, pX*oddX -1, pA*oddA -1);
-
-    // Determină pick-ul doar dacă edge > 0
-    let pick="", prob=0;
-    if(edge>0){
-        if(pH*oddH-1 === edge){ pick=home; prob=parseFloat(pH);}
-        else if(pX*oddX-1 === edge){ pick="Draw"; prob=parseFloat(pX);}
-        else { pick=away; prob=parseFloat(pA);}
-        finalResults.push({match:home+" vs "+away, pick, pH, pX, pA, prob, edge});
-    }
-
-    renderResults();
+return matches
 }
 
-// Culoare progresivă după probabilitate
-function getColor(prob){
-    if(prob>=0.7) return '#00ff00'; // verde
-    if(prob>=0.5) return '#ffff33'; // galben
-    return '#ff8000'; // portocaliu
+function calculateEdge(match){
+
+let p1=1/match.odd1
+let pX=1/match.oddX
+let p2=1/match.odd2
+
+let total=p1+pX+p2
+
+p1/=total
+pX/=total
+p2/=total
+
+let maxProb=Math.max(p1,pX,p2)
+
+let pick=
+maxProb===p1?match.home:
+maxProb===p2?match.away:
+"Egal"
+
+let edge=(maxProb*100).toFixed(2)
+
+return {pick,edge,maxProb}
 }
 
-// Afișare favorite în linie
-function renderResults(){
-    const output=document.getElementById("output");
-    output.innerHTML="";
-    if(finalResults.length===0){output.innerHTML="<p>Nu există meciuri profitabile.</p>"; return;}
-    finalResults.forEach(r=>{
-        const div=document.createElement("div");
-        div.className="match";
-        div.style.background=getColor(r.prob);
-        div.innerHTML=`${r.pick}`;
-        output.appendChild(div);
-    });
+function display(matches){
+
+let container=document.getElementById("output")
+container.innerHTML=""
+
+if(matches.length===0){
+container.innerHTML="Nu s-au detectat meciuri valide."
+return
 }
 
-// Export CSV
-function exportCSV(){
-    if(finalResults.length===0) return;
-    let csv="Match,Pick,P_H,P_X,P_A,Edge\n";
-    finalResults.forEach(r=>{
-        csv+=`${r.match},${r.pick},${r.pH},${r.pX},${r.pA},${r.edge.toFixed(2)}\n`;
-    });
-    const blob=new Blob([csv],{type:"text/csv"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download="geo_valuebets_5.5.csv";
-    a.click();
+matches.forEach(m=>{
+
+let calc=calculateEdge(m)
+
+let level="low"
+if(calc.maxProb>0.55) level="high"
+else if(calc.maxProb>0.40) level="medium"
+
+container.innerHTML+=`
+<div class="match ${level}">
+<b>${m.home} vs ${m.away}</b><br>
+Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
+🔥 Recomandare: <b>${calc.pick}</b><br>
+Probabilitate estimată: ${calc.edge}%
+</div>
+`
+})
 }
+
+async function runOCR(){
+let file=document.getElementById("imageInput").files[0]
+if(!file) return alert("Selectează o poză")
+
+let { data: { text } } = await Tesseract.recognize(file,'eng')
+
+let cleaned=cleanOCR(text)
+
+let matches=parseMatches(cleaned)
+
+display(matches)
+}
+
 </script>
 
 </body>
