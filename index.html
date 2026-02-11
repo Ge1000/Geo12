@@ -59,25 +59,28 @@ button{
 
 <script>
 
-// ------------------ CLEAN OCR ------------------
+// ------------------ CLEAN OCR AVANSAT ------------------
 function cleanOCR(text){
-    text = text.replace(/,/g,'.').replace(/\s{2,}/g,' ').replace(/[^\w\d\.\/\- ]/g,'')
-    return text.split("\n").map(line=>line.trim()).filter(line=>line.length>1)
+    // Înlocuiește simboluri și spații multiple
+    text = text.replace(/[,*@®\-\|<>]/g,'.')
+               .replace(/\s{2,}/g,' ')
+               .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
+    return text.split("\n").map(l=>l.trim()).filter(l=>l.length>1)
 }
 
-// ------------------ PARSER FIX ------------------
+// ------------------ PARSER ROBUST ------------------
 function parseMatches(lines){
     let matches=[]
-    const matchRegex = /([A-Za-z0-9\s\.\-]+)\s+vs\s+([A-Za-z0-9\s\.\-]+)/i
-
     for(let i=0;i<lines.length;i++){
-        let m = lines[i].match(matchRegex)
-        if(m){
-            let home = m[1].trim()
-            let away = m[2].trim()
-            // Caută cote pe aceeași linie sau linia următoare
-            let oddsLine = lines[i].replace(matchRegex,'').trim()
-            if(!oddsLine && i+1<lines.length) oddsLine = lines[i+1].trim()
+        let line = lines[i]
+        // Detectăm pattern de tip "Echipa1 ... vs ... Echipa2"
+        let vsIndex = line.toLowerCase().indexOf(' vs ')
+        if(vsIndex>0){
+            let home = line.slice(0,vsIndex).trim()
+            let away = line.slice(vsIndex+4).trim()
+            // Caută cote pe aceeași linie sau următoarea linie
+            let oddsLine = line.slice(vsIndex+4).replace(away,'').trim()
+            if(!oddsLine && i+1<lines.length) oddsLine = lines[i+1]
             let odds = oddsLine.match(/(\d+\.\d+)/g)
             if(odds && odds.length>=3){
                 matches.push({
