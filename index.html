@@ -26,21 +26,21 @@ button{
   font-weight:bold;
   cursor:pointer;
 }
+#preview, #output{
+  margin-top:20px;
+  text-align:left;
+}
 .match{
-  margin:12px 0;
-  padding:14px;
+  margin:10px 0;
+  padding:12px;
   background:#111827;
   border-radius:8px;
+  transition: transform 0.2s;
 }
-.high{border-left:6px solid #22c55e;}
-.medium{border-left:6px solid #facc15;}
-.low{border-left:6px solid #ef4444;}
-canvas{
-  max-width:100%;
-  margin-top:20px;
-  border:1px solid #444;
-  border-radius:8px;
-}
+.match:hover { transform: scale(1.02); }
+.high{border-left:5px solid #22c55e;}
+.medium{border-left:5px solid #facc15;}
+.low{border-left:5px solid #ef4444;}
 </style>
 </head>
 <body>
@@ -51,135 +51,128 @@ canvas{
 <br>
 <button onclick="runOCR()">Rulează analiză</button>
 
-<canvas id="canvas"></canvas>
+<h3>Preview OCR</h3>
+<div id="preview"></div>
 
 <h3>Meciuri Detectate</h3>
 <div id="output"></div>
 
 <script>
 
-// CLEAN OCR
+// ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
-        .replace(/[\*|@#\$%®<>\-]/g,' ')
+        .replace(/[\*|@#\$%®<>\-]/g,'.')
         .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\s]/g,'')
+        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
-        .filter(l=>l.length>2)
+        .filter(l=>l.length>1)
 }
 
-// PARSER
+// ------------------ PARSER FIX COMPLET ------------------
 function parseMatches(lines){
     let matches=[]
+
     for(let i=0;i<lines.length;i++){
+
         let odds = lines[i].match(/(\d+\.\d+)/g)
+
         if(odds && odds.length>=3){
-            let home = lines[i-2] || ""
-            let away = lines[i-1] || ""
-            if(home && away && !home.match(/\d/) && !away.match(/\d/)){
-                matches.push({
-                    home,
-                    away,
-                    odd1:parseFloat(odds[0]),
-                    oddX:parseFloat(odds[1]),
-                    odd2:parseFloat(odds[2])
-                })
+
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
+
+            // Caută în sus linia care conține "Egal"
+            for(let j=i-1;j>=0;j--){
+
+                if(lines[j].includes("Egal")){
+
+                    let parts = lines[j].split("Egal")
+
+                    if(parts.length===2){
+
+                        let home = parts[0].trim()
+                        let away = parts[1].trim()
+
+                        if(home && away){
+
+                            matches.push({
+                                home,
+                                away,
+                                odd1,
+                                oddX,
+                                odd2
+                            })
+
+                            break
+                        }
+                    }
+                }
             }
         }
     }
+
     return matches
 }
 
-// SMART ENGINE
-function smartAnalyze(m){
-
-    // Probabilități brute
-    let p1=1/m.odd1
-    let pX=1/m.oddX
-    let p2=1/m.odd2
-
-    // Eliminare marjă bookmaker
+// ------------------ CALCUL PROBABILITATE ------------------
+function calculate(match){
+    let p1=1/match.odd1
+    let pX=1/match.oddX
+    let p2=1/match.odd2
     let total=p1+pX+p2
     p1/=total; pX/=total; p2/=total
-
-    // Detectare dezechilibru
-    let diff = Math.abs(p1-p2)
-
-    // Penalizare cote extrem de mici (<1.30)
-    if(m.odd1<1.30) p1*=0.92
-    if(m.odd2<1.30) p2*=0.92
-
-    // Boost pentru value între 1.80 – 2.40
-    if(m.odd1>=1.8 && m.odd1<=2.4) p1*=1.05
-    if(m.odd2>=1.8 && m.odd2<=2.4) p2*=1.05
-
-    // Re-normalizare
-    total=p1+pX+p2
-    p1/=total; pX/=total; p2/=total
-
     let maxProb=Math.max(p1,pX,p2)
-    let pick=maxProb===p1?m.home:maxProb===p2?m.away:"Egal"
-
-    let confidence="low"
-    if(maxProb>0.60) confidence="high"
-    else if(maxProb>0.48) confidence="medium"
-
-    return {
-        pick,
-        percent:(maxProb*100).toFixed(2),
-        confidence
-    }
+    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
+    let percent=(maxProb*100).toFixed(2)
+    return {pick,percent,maxProb}
 }
 
-// DISPLAY
+// ------------------ DISPLAY ------------------
 function display(matches){
-    let out=document.getElementById("output")
-    out.innerHTML=""
-
+    let container=document.getElementById("output")
+    container.innerHTML=""
     if(matches.length===0){
-        out.innerHTML="Nu s-au detectat meciuri valide."
+        container.innerHTML="Nu s-au detectat meciuri valide."
         return
     }
-
     matches.forEach(m=>{
-        let result=smartAnalyze(m)
+        let calc=calculate(m)
+        let level="low"
+        if(calc.maxProb>0.55) level="high"
+        else if(calc.maxProb>0.40) level="medium"
 
-        out.innerHTML+=`
-        <div class="match ${result.confidence}">
+        container.innerHTML+=`
+        <div class="match ${level}">
         <b>${m.home} vs ${m.away}</b><br>
         Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
-        🔥 Recomandare Smart: <b>${result.pick}</b><br>
-        Scor încredere: ${result.percent}%
+        🔥 Recomandare Smart: <b>${calc.pick}</b><br>
+        Scor încredere: ${calc.percent}%
         </div>
         `
     })
 }
 
-// RUN
+// ------------------ RUN OCR ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
     if(!file){ alert("Selectează o poză"); return }
 
-    let canvas=document.getElementById("canvas")
-    let ctx=canvas.getContext("2d")
-    let img=new Image()
+    let previewDiv=document.getElementById("preview")
+    let { data: { text } } = await Tesseract.recognize(file,'eng',{
+        logger:m=>console.log(m)
+    })
 
-    img.onload = async function(){
-        canvas.width=img.width
-        canvas.height=img.height
-        ctx.drawImage(img,0,0)
+    previewDiv.innerHTML="<pre>"+text+"</pre>"
 
-        let { data:{ text } } = await Tesseract.recognize(file,'eng')
-
-        let cleaned=cleanOCR(text)
-        let matches=parseMatches(cleaned)
-        display(matches)
-    }
-
-    img.src=URL.createObjectURL(file)
+    let cleaned=cleanOCR(text)
+    let matches=parseMatches(cleaned)
+    display(matches)
 }
 
 </script>
+
 </body>
 </html>
