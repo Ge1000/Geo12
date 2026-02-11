@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.6.1</title>
+<title>Geo Nuclear Quick Pick 4.7</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -40,22 +40,38 @@ input, button { padding:10px; margin:5px; font-size:16px; }
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.6.1 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.7 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
 <div id="matches"></div>
 
 <script>
+// Lista echipelor pentru fuzzy matching
+const validTeams = [
+  "Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crystal Palace",
+  "Everton","Fulham","Liverpool","Luton","Man City","Man Utd","Newcastle",
+  "Nottingham","Sheffield","Southampton","Tottenham","West Ham","Wolves"
+];
+
+// Fuzzy matching simplu
+function findTeam(name){
+  name = name.toLowerCase().replace(/[^a-z ]/g,'').trim();
+  for(let t of validTeams){
+    if(t.toLowerCase().includes(name) || name.includes(t.toLowerCase())) return t;
+  }
+  return null;
+}
+
 // Monte Carlo
 function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
 function monteCarlo(xgH,xgA,sims=100000){
   let cH=0,cX=0,cA=0;
   for(let i=0;i<sims;i++){
-    let h=poissonRandom(xgH),a=poissonRandom(xgA);
+    let h=poissonRandom(xgH), a=poissonRandom(xgA);
     if(h>a)cH++; else if(h==a)cX++; else cA++;
   }
-  return {pH:cH/sims,pX:cX/sims,pA:cA/sims};
+  return {pH:cH/sims, pX:cX/sims, pA:cA/sims};
 }
 
 // OCR
@@ -67,11 +83,11 @@ function runOCR(){
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Curatare OCR agresivă, dar fără filtrare echipe
+// Curatare OCR
 function cleanText(text){
   return text.replace(/\r|\n|\t/g,' ')
              .replace(/Meci|Egal/gi,'')
-             .replace(/[^\w\s\.\-xG]/gi,' ')
+             .replace(/[^\w\s\.\-xG\/]/gi,' ')
              .replace(/\s+/g,' ')
              .trim();
 }
@@ -86,7 +102,7 @@ function getColor(edge){
 // Parse și afișare
 function processText(rawText){
   let text = cleanText(rawText);
-  const matchRegex = /([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+)\s*([\d\.]+)\s*([\d\.]+)\s*([\d\.]+)(.*?(\d*\.?\d+)xG.*?(\d*\.?\d+)xG)?/gi;
+  const matchRegex = /([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+)\s*([\d\.]+)\/([\d\.]+)\/([\d\.]+)(.*?(\d*\.?\d+)xG.*?(\d*\.?\d+)xG)?/gi;
   let matchesDiv = document.getElementById("matches");
   matchesDiv.innerHTML = "";
   let matchesFound = [];
@@ -94,15 +110,17 @@ function processText(rawText){
   let m;
 
   while((m = matchRegex.exec(text)) !== null){
-    let team1 = m[1].trim();
-    let team2 = m[2].trim();
+    let t1 = findTeam(m[1]);
+    let t2 = findTeam(m[2]);
+    if(!t1 || !t2) continue; // ignoră artefacte
+
     let odd1 = parseFloat(m[3]);
     let oddX = parseFloat(m[4]);
     let odd2 = parseFloat(m[5]);
     let xgH = m[7]?parseFloat(m[7]):1.5;
     let xgA = m[8]?parseFloat(m[8]):1.5;
 
-    let key = team1+"|"+team2;
+    let key = t1+"|"+t2;
     if(matchesFound.includes(key)) continue; // eliminare duplicate
     matchesFound.push(key);
 
@@ -114,8 +132,8 @@ function processText(rawText){
     else edge = sim.pA*odd2-1;
 
     if(edge>0){
-      let pick = maxP==sim.pH?team1:maxP==sim.pX?"Egal":team2;
-      results.push({pick, team1, team2, odd1, oddX, odd2, xgH, xgA, edge});
+      let pick = maxP==sim.pH?t1:maxP==sim.pX?"Egal":t2;
+      results.push({pick, t1, t2, odd1, oddX, odd2, xgH, xgA, edge});
     }
   }
 
@@ -133,7 +151,7 @@ function processText(rawText){
     if(index<3) div.classList.add("top3"); // Top 3 evidențiat
     div.style.background = getColor(r.edge);
     div.innerHTML = `<h3>${r.pick}</h3>
-                     <p>${r.team1} vs ${r.team2}</p>
+                     <p>${r.t1} vs ${r.t2}</p>
                      <p>Cote: ${r.odd1}/${r.oddX}/${r.odd2}</p>
                      <p>xG: ${r.xgH}-${r.xgA}</p>
                      <p>Edge: ${r.edge.toFixed(2)}</p>`;
