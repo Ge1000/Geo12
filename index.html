@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.7</title>
+<title>Pick 5.6.8 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -39,7 +39,7 @@ border-radius:8px;
 </head>
 <body>
 
-<h1>Pick 5.6.7 💥</h1>
+<h1>Pick 5.6.8 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -49,78 +49,63 @@ border-radius:8px;
 
 <script>
 
-// ------------------ CLEAN OCR ------------------
-
+// ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
-const junk = [
-"live","casino","bonus","meniu","bilete","sport","calendar","competitii",
-"superbet","azi","astazi","builder","league","premier","liga","anglia",
-"acasa","bet","meci","egal","P","I","Jj","QI","-","vs"
-]
-
-return text
-.replace(/[^a-zA-Z0-9\.\-\n ]/g,'')
-.split("\n")
-.map(line=>{
-let l=line.trim()
-if(l.length<3) return ""
-let lower=l.toLowerCase()
-for(let j of junk){
-if(lower.includes(j.toLowerCase())) return ""
-}
-return l
-})
-.filter(l=>l!=="")
-.join("\n")
+    // Înlocuim virgulă cu punct și eliminăm spații ciudate
+    text = text.replace(/,/g,'.').replace(/\s{2,}/g,' ')
+    // Eliminăm junk comun, dar păstrăm echipele și cote
+    const junk = ["live","casino","bonus","meniu","bilete","sport","calendar","competitii","superbet","azi","astazi","builder"]
+    return text.split("\n").map(line=>{
+        let l=line.trim()
+        if(l.length<2) return ""
+        let lower=l.toLowerCase()
+        for(let j of junk){
+            if(lower.includes(j.toLowerCase())) return ""
+        }
+        return l
+    }).filter(l=>l!=="")
 }
 
-// ------------------ PARSER ULTRA CLEAN ------------------
-
+// ------------------ PARSER FLEXIBIL ------------------
 function parseMatches(text){
-    let lines = text.split("\n").map(l=>l.trim()).filter(l=>l.length>2)
+    let lines=text
+        .split("\n")
+        .map(l=>l.trim())
+        .filter(l=>l.length>1)
+    
     let matches=[]
-    let usedIndexes = new Set()
-
+    let usedIndexes=new Set()
+    
     for(let i=0;i<lines.length;i++){
         if(usedIndexes.has(i)) continue
-
-        let odds = lines[i].match(/(\d+\.\d+)/g)
-
+        // Căutăm linia cu cote
+        let odds=lines[i].match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
-
-            if(odd1>1 && oddX>1 && odd2>1){
-                // ultimele 2 linii valide înainte de cote
-                let home="", away=""
-                for(let j=i-1;j>=0;j--){
-                    if(!lines[j].match(/\d/) && lines[j]!==""){
-                        if(!away) away=lines[j]
-                        else{
-                            home=lines[j]
-                            break
-                        }
+            
+            // Căutăm ultimele două linii valide înainte de cote
+            let home="", away=""
+            for(let j=i-1;j>=0;j--){
+                if(!lines[j].match(/\d/)){
+                    if(!away) away=lines[j]
+                    else{
+                        home=lines[j]
+                        break
                     }
                 }
-
-                if(home && away && home!==away){
-                    home=home.replace(/^[A-Z]{1,3}\s+/,'').trim()
-                    away=away.replace(/^[A-Z]{1,3}\s+/,'').trim()
-
-                    let key=home+"|"+away
-                    if(!matches.some(m=>m.home===home && m.away===away)){
-                        matches.push({
-                            home:home,
-                            away:away,
-                            odd1:odd1,
-                            oddX:oddX,
-                            odd2:odd2
-                        })
-                    }
-
-                    usedIndexes.add(i)
+            }
+            if(home && away && home!==away){
+                // Eliminăm prefixe OCR comune
+                home=home.replace(/^[A-Z]{1,3}\s+/,'').trim()
+                away=away.replace(/^[A-Z]{1,3}\s+/,'').trim()
+                
+                // Evităm duplicate
+                if(!matches.some(m=>m.home===home && m.away===away)){
+                    matches.push({home,away,odd1,oddX,odd2})
                 }
+                usedIndexes.add(i)
             }
         }
     }
@@ -128,61 +113,52 @@ function parseMatches(text){
 }
 
 // ------------------ CALCUL PROBABILITATE ------------------
-
 function calculate(match){
-let p1=1/match.odd1
-let pX=1/match.oddX
-let p2=1/match.odd2
-let total=p1+pX+p2
-p1/=total
-pX/=total
-p2/=total
-let maxProb=Math.max(p1,pX,p2)
-let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
-let percent=(maxProb*100).toFixed(2)
-return {pick,percent,maxProb}
+    let p1=1/match.odd1
+    let pX=1/match.oddX
+    let p2=1/match.odd2
+    let total=p1+pX+p2
+    p1/=total; pX/=total; p2/=total
+    let maxProb=Math.max(p1,pX,p2)
+    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
+    let percent=(maxProb*100).toFixed(2)
+    return {pick,percent,maxProb}
 }
 
 // ------------------ DISPLAY ------------------
-
 function display(matches){
-let container=document.getElementById("output")
-container.innerHTML=""
-
-if(matches.length===0){
-container.innerHTML="Nu s-au detectat meciuri valide."
-return
-}
-
-matches.forEach(m=>{
-let calc=calculate(m)
-let level="low"
-if(calc.maxProb>0.55) level="high"
-else if(calc.maxProb>0.40) level="medium"
-
-container.innerHTML+=`
-<div class="match ${level}">
-<b>${m.home} vs ${m.away}</b><br>
-Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
-🔥 Recomandare: <b>${calc.pick}</b><br>
-Probabilitate: ${calc.percent}%
-</div>
-`
-})
+    let container=document.getElementById("output")
+    container.innerHTML=""
+    if(matches.length===0){
+        container.innerHTML="Nu s-au detectat meciuri valide."
+        return
+    }
+    matches.forEach(m=>{
+        let calc=calculate(m)
+        let level="low"
+        if(calc.maxProb>0.55) level="high"
+        else if(calc.maxProb>0.40) level="medium"
+        container.innerHTML+=`
+        <div class="match ${level}">
+        <b>${m.home} vs ${m.away}</b><br>
+        Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
+        🔥 Recomandare: <b>${calc.pick}</b><br>
+        Probabilitate: ${calc.percent}%
+        </div>
+        `
+    })
 }
 
 // ------------------ OCR ------------------
-
 async function runOCR(){
-let file=document.getElementById("imageInput").files[0]
-if(!file) return alert("Selectează o poză")
-let { data: { text } } = await Tesseract.recognize(file,'eng')
-let cleaned=cleanOCR(text)
-let matches=parseMatches(cleaned)
-display(matches)
+    let file=document.getElementById("imageInput").files[0]
+    if(!file) return alert("Selectează o poză")
+    let { data: { text } } = await Tesseract.recognize(file,'eng')
+    let cleaned=cleanOCR(text)
+    let matches=parseMatches(cleaned)
+    display(matches)
 }
 
 </script>
-
 </body>
 </html>
