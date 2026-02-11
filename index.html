@@ -2,21 +2,30 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 5.3 Offline 💥</title>
+<title>Geo Nuclear Quick Pick 5.5 💥</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
 body {font-family:Arial; background:#0f1220; color:#fff; padding:20px;}
-h2 {text-align:center; color:#00ffea;}
+h2 {text-align:center; color:#00ffea; margin-bottom:20px;}
 #preview, #output {margin-top:20px;}
-.match {background:#1f263d; margin-top:10px; padding:15px; border-left:5px solid #00ffea;}
-.value {border-left:5px solid #00ff00;}
+.match {
+    display:inline-block;
+    padding:10px 15px;
+    margin:3px;
+    border-radius:10px;
+    min-width:120px;
+    text-align:center;
+    font-weight:bold;
+    color:#000;
+    font-size:14px;
+}
 input, button {padding:10px; margin:5px; cursor:pointer;}
 </style>
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 5.3 Offline 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 5.5 Offline 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 <button onclick="exportCSV()">Export CSV</button>
@@ -24,18 +33,15 @@ input, button {padding:10px; margin:5px; cursor:pointer;}
 <h3>Preview OCR</h3>
 <div id="preview"></div>
 
-<h3>Meciuri Profitabile</h3>
+<h3>Value Bets în linie</h3>
 <div id="output"></div>
 
 <script>
 let finalResults = [];
+let seed = 987654;
 
 // Seeded random pentru consistență
-let seed = 123456;
-function random() {
-  var x = Math.sin(seed++) * 10000;
-  return x - Math.floor(x);
-}
+function random(){var x=Math.sin(seed++)*10000; return x - Math.floor(x);}
 
 // OCR + Parse
 function runOCR(){
@@ -44,7 +50,6 @@ function runOCR(){
     document.getElementById("preview").innerHTML="Se procesează OCR...";
     document.getElementById("output").innerHTML="";
     finalResults=[];
-
     Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
     .then(({data:{text}})=>{
         document.getElementById("preview").innerText=text;
@@ -59,45 +64,59 @@ function parseMatches(text){
     lines.forEach(line=>{
         let match=line.match(/([A-Za-z\s]+)\s*-\s*([A-Za-z\s]+)/);
         if(match){
-            const home=match[1].trim();
-            const away=match[2].trim();
-            matches.push({home, away});
+            matches.push({home:match[1].trim(), away:match[2].trim()});
         }
     });
     if(matches.length===0){
         document.getElementById("output").innerHTML="<p>Nu s-au găsit meciuri.</p>";
         return;
     }
-
     matches.forEach(m=>getPrediction(m.home, m.away));
 }
 
-// Simulare probabilități (consistent)
+// Simulare probabilități + calcul Edge
 function getPrediction(home, away){
     const pH = (random()*0.4 + 0.3).toFixed(2);
     const pX = (random()*0.3).toFixed(2);
     const pA = (1 - pH - pX).toFixed(2);
 
-    let pick="";
-    if(pH>pX && pH>pA) pick=home+" win";
-    else if(pX>pH && pX>pA) pick="Draw";
-    else pick=away+" win";
+    // Simulare cote implicite (poți ajusta după ligă/echipe)
+    const oddH = (1/pH).toFixed(2);
+    const oddX = (1/pX).toFixed(2);
+    const oddA = (1/pA).toFixed(2);
 
-    finalResults.push({match:home+" vs "+away, pick, pH, pX, pA});
+    // Calcul Edge
+    let edge = Math.max(pH*oddH -1, pX*oddX -1, pA*oddA -1);
+
+    // Determină pick-ul doar dacă edge > 0
+    let pick="", prob=0;
+    if(edge>0){
+        if(pH*oddH-1 === edge){ pick=home; prob=parseFloat(pH);}
+        else if(pX*oddX-1 === edge){ pick="Draw"; prob=parseFloat(pX);}
+        else { pick=away; prob=parseFloat(pA);}
+        finalResults.push({match:home+" vs "+away, pick, pH, pX, pA, prob, edge});
+    }
+
     renderResults();
 }
 
-// Afișare rezultate
+// Culoare progresivă după probabilitate
+function getColor(prob){
+    if(prob>=0.7) return '#00ff00'; // verde
+    if(prob>=0.5) return '#ffff33'; // galben
+    return '#ff8000'; // portocaliu
+}
+
+// Afișare favorite în linie
 function renderResults(){
     const output=document.getElementById("output");
     output.innerHTML="";
-    if(finalResults.length===0){output.innerHTML="<p>Nu există value bet-uri.</p>"; return;}
+    if(finalResults.length===0){output.innerHTML="<p>Nu există meciuri profitabile.</p>"; return;}
     finalResults.forEach(r=>{
         const div=document.createElement("div");
-        div.className="match value";
-        div.innerHTML=`<strong>${r.pick}</strong><br>
-                       ${r.match}<br>
-                       Probabilitate: ${r.pH}/${r.pX}/${r.pA}`;
+        div.className="match";
+        div.style.background=getColor(r.prob);
+        div.innerHTML=`${r.pick}`;
         output.appendChild(div);
     });
 }
@@ -105,15 +124,15 @@ function renderResults(){
 // Export CSV
 function exportCSV(){
     if(finalResults.length===0) return;
-    let csv="Match,Pick,P_H,P_X,P_A\n";
+    let csv="Match,Pick,P_H,P_X,P_A,Edge\n";
     finalResults.forEach(r=>{
-        csv+=`${r.match},${r.pick},${r.pH},${r.pX},${r.pA}\n`;
+        csv+=`${r.match},${r.pick},${r.pH},${r.pX},${r.pA},${r.edge.toFixed(2)}\n`;
     });
     const blob=new Blob([csv],{type:"text/csv"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
     a.href=url;
-    a.download="geo_valuebets_offline.csv";
+    a.download="geo_valuebets_5.5.csv";
     a.click();
 }
 </script>
