@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo OCR + xG Analyzer Complet</title>
+<title>Geo OCR + xG Analyzer Final</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -16,9 +16,9 @@ h3{margin-top:15px}
 </head>
 <body>
 
-<h2>📸 Geo OCR + xG Analyzer Complet</h2>
+<h2>📸 Geo OCR + xG Analyzer Final</h2>
 
-<p>Încarcă poza cu meciuri:</p>
+<p>Încarcă poza cu meciuri și cote (xG optional, rezultat optional 1/X/2):</p>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează Analiză</button>
 
@@ -42,21 +42,46 @@ function runOCR(){
 }
 
 function processText(text){
-  // Curățare text OCR: spații multiple, linii goale
+  // Curățare text OCR
   text=text.replace(/\r/g,'\n').replace(/\t/g,' ').replace(/\s+/g,' ').trim();
   let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
   let output="";
 
   for(let l of lines){
-    // Regex flexibil: detectează echipe (1+ caractere), cote (numere), X între cote, rezultat 1/X/2
-    // Ex: Real Madrid 1.6xG 2.10 X 3.40 Barcelona 1.4xG 3.50 1
-    let m=l.match(/([A-Za-z\s]+)\s*(\d*\.?\d*)xG?\s*([\d.]+)\s*X\s*([\d.]+)\s*([A-Za-z\s]+)\s*(\d*\.?\d*)xG?\s*([\d.]+)\s*([1X2])/i);
-    if(!m) continue;
+    // Flexibil: echipe cu spații, cote cu punct sau virgulă, xG optional, rezultat optional
+    // Caut cote: orice număr cu 1-2 zecimale
+    let numbers=l.match(/[\d]+\.[\d]+/g);
+    if(!numbers || numbers.length<2) continue; // trebuie minim 2 cote
 
-    let teamA=m[1].trim(), xgH=parseFloat(m[2])||1.5, odd1=parseFloat(m[3]),
-        oddX=parseFloat(m[4]), teamB=m[5].trim(), xgA=parseFloat(m[6])||1.5,
-        odd2=parseFloat(m[7]), resultReal=m[8].toUpperCase();
+    // Extragem echipe: partea text între început și prima cotă, și între cote
+    let parts=l.split(numbers[0]);
+    if(parts.length<2) continue;
+    let teamA=parts[0].trim();
+    let rest=parts[1];
+    let odd1=parseFloat(numbers[0]);
+    let oddX=parseFloat(numbers[1]);
+    let odd2=numbers.length>=3?parseFloat(numbers[2]):null;
 
+    let teamB="";
+    let xgH=1.5, xgA=1.5;
+    let resultReal="";
+
+    // Căutare xG și echipă B
+    let xgMatch=l.match(/(\d*\.?\d+)xG/gi);
+    if(xgMatch && xgMatch.length>=1) xgH=parseFloat(xgMatch[0]);
+    if(xgMatch && xgMatch.length>=2) xgA=parseFloat(xgMatch[1]);
+
+    // Extragem echipa B: text după ultima cotă până la xG sau rezultat
+    let lastNumberIndex=l.lastIndexOf(numbers[ numbers.length>=3?2:1 ]);
+    teamB=l.substring(lastNumberIndex+numbers[ numbers.length>=3?2:1 ].length).replace(/xG/gi,'').replace(/[1X2]/i,'').trim();
+
+    // Detect rezultat 1/X/2
+    let resultMatch=l.match(/[1X2]/i);
+    if(resultMatch) resultReal=resultMatch[0].toUpperCase();
+
+    if(!odd2) odd2=odd1; // fallback dacă nu există a treia cotă
+
+    // Monte Carlo
     let probs=monteCarlo(xgH,xgA);
     let edge=[probs[0]-1/odd1,probs[1]-1/oddX,probs[2]-1/odd2];
     let bestIndex=edge.indexOf(Math.max(...edge));
@@ -64,7 +89,7 @@ function processText(text){
 
     let cls=edge[bestIndex]>0.04?"good":"bad"; // edge>4% = value bet
     output+=`<p class="${cls}">
-      ${teamA} vs ${teamB} | Pick: ${pick} | Prob: ${(probs[bestIndex]*100).toFixed(2)}% | Edge: ${(edge[bestIndex]*100).toFixed(2)}% | Rezultat real: ${resultReal}
+      ${teamA} vs ${teamB} | Pick: ${pick} | Prob: ${(probs[bestIndex]*100).toFixed(2)}% | Edge: ${(edge[bestIndex]*100).toFixed(2)}%` + (resultReal?` | Rezultat real: ${resultReal}`:'') + `
     </p>`;
   }
 
