@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.12</title>
+<title>Geo Nuclear Quick Pick 4.13</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -18,7 +18,7 @@ input,button { padding:10px;margin:5px;font-size:16px; }
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.12 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.13 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 <button onclick="exportCSV()">Export CSV</button>
@@ -30,14 +30,16 @@ input,button { padding:10px;margin:5px;font-size:16px; }
 <div id="matches"></div>
 
 <script>
-const validTeams=["Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crystal Palace",
+const validTeams=[
+"Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crystal Palace",
 "Everton","Fulham","Liverpool","Luton","Man City","Man Utd","Newcastle",
-"Nottingham","Sheffield","Southampton","Tottenham","West Ham","Wolves"];
+"Nottingham","Sheffield","Southampton","Tottenham","West Ham","Wolves"
+];
 
 let results=[];
 
-// Fuzzy match + corecție adversar
-function fixTeam(t1, t2){
+// Fuzzy match echipe
+function fixTeam(t1,t2){
   t1=t1.toLowerCase().replace(/[^a-z ]/g,'').trim();
   t2=t2.toLowerCase().replace(/[^a-z ]/g,'').trim();
   let match1=validTeams.find(v=>v.toLowerCase().includes(t1)||t1.includes(v.toLowerCase()))||t1;
@@ -83,8 +85,11 @@ function runOCR(){
 
 // Curățare text OCR
 function cleanText(text){
-  text=text.replace(/\r|\n|\t/g,' ').replace(/[^\w\s\.\-\/–:]/gi,' ').replace(/\s+/g,' ').trim();
-  text=text.replace(/[–:]/g,'-');
+  text=text.replace(/\r|\n|\t/g,' ')
+           .replace(/[^\w\s\.\-\/–:]/gi,' ')
+           .replace(/\s+/g,' ')
+           .trim()
+           .replace(/[–:]/g,'-');
   return text;
 }
 
@@ -97,32 +102,25 @@ function processText(text){
   previewDiv.innerHTML=""; matchesDiv.innerHTML="";
   let matchesFound=[];
   
-  const teamRegex=/([A-Za-z\s]{3,})\s*(?:vs|-)\s*([A-Za-z\s]{3,})/gi;
-  const oddsRegex=/(\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})/gi;
-  const xgRegex=/(\d{1,2}\.\d{1,2})-(\d{1,2}\.\d{1,2})/gi;
+  // Extrage echipe + cote + xG doar din text curat
+  const matchLineRegex=/([A-Za-z\s]{3,})\s*(?:vs|-)\s*([A-Za-z\s]{3,})[^0-9]{0,10}(\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[^0-9]{0,10}(\d{1,2}\.\d{1,2})-(\d{1,2}\.\d{1,2})?/gi;
+  
+  let m;
+  while((m=matchLineRegex.exec(text))!==null){
+    let t1=m[1],t2=m[2];
+    let [team1,team2]=fixTeam(t1,t2);
+    if(!validTeams.includes(team1) || !validTeams.includes(team2)) continue; // ignore false
+    let odd1=parseFloat(m[3]),oddX=parseFloat(m[4]),odd2=parseFloat(m[5]);
+    let xgH=m[6]?parseFloat(m[6]):1.5, xgA=m[7]?parseFloat(m[7]):1.5;
+    let key=team1+"|"+team2; if(matchesFound.includes(key)) continue; matchesFound.push(key);
 
-  let teams=[],odds=[],xgs=[],m;
-  while((m=teamRegex.exec(text))!==null) teams.push(fixTeam(m[1],m[2]));
-  while((m=oddsRegex.exec(text))!==null) odds.push([parseFloat(m[1]),parseFloat(m[2]),parseFloat(m[3])]);
-  while((m=xgRegex.exec(text))!==null) xgs.push([parseFloat(m[1]),parseFloat(m[2])]);
-
-  // Preview
-  for(let i=0;i<teams.length;i++){
-    let t1=teams[i][0],t2=teams[i][1];
+    // Preview
     let divPrev=document.createElement("div"); divPrev.className="match"; divPrev.style.background="#333";
-    let xgText=xgs[i]?`${xgs[i][0]}-${xgs[i][1]}`:'1.5-1.5';
-    divPrev.innerHTML=`<h3>${t1} vs ${t2}</h3><p>xG: ${xgText}</p>`;
+    divPrev.innerHTML=`<h3>${team1} vs ${team2}</h3><p>Cote: ${odd1}/${oddX}/${odd2}</p><p>xG: ${xgH}-${xgA}</p>`;
     previewDiv.appendChild(divPrev);
-  }
 
-  // Asociere meciuri cu cote și xG
-  for(let i=0;i<Math.min(teams.length,odds.length);i++){
-    let t1=teams[i][0],t2=teams[i][1];
-    let odd1=odds[i][0],oddX=odds[i][1],odd2=odds[i][2];
-    let xgH=xgs[i]?xgs[i][0]:1.5, xgA=xgs[i]?xgs[i][1]:1.5;
-    let key=t1+"|"+t2; if(matchesFound.includes(key)) continue; matchesFound.push(key);
-    let seed=hashCode(t1+t2+odd1+oddX+odd2);
-
+    // Monte Carlo + Edge
+    let seed=hashCode(team1+team2+odd1+oddX+odd2);
     let sim=monteCarlo(xgH,xgA,100000,seed);
     let maxP=Math.max(sim.pH,sim.pX,sim.pA);
     let edge=0;
@@ -131,9 +129,9 @@ function processText(text){
     else edge=sim.pA*odd2-1;
 
     if(edge>0){
-      let pick=maxP==sim.pH?t1:maxP==sim.pX?"Egal":t2;
+      let pick=maxP==sim.pH?team1:maxP==sim.pX?"Egal":team2;
       let overProb=probOverUnder(xgH,xgA,2.5,seed);
-      results.push({pick,t1,t2,odd1,oddX,odd2,xgH,xgA,edge,overProb});
+      results.push({pick,team1,team2,odd1,oddX,odd2,xgH,xgA,edge,overProb});
     }
   }
 
@@ -146,7 +144,7 @@ function processText(text){
     if(index<3) div.classList.add("top3");
     div.style.background=getColor(r.edge);
     div.innerHTML=`<h3>${r.pick}</h3>
-                   <p>${r.t1} vs ${r.t2}</p>
+                   <p>${r.team1} vs ${r.team2}</p>
                    <p>Cote: ${r.odd1}/${r.oddX}/${r.odd2}</p>
                    <p>xG: ${r.xgH}-${r.xgA}</p>
                    <p>Edge: ${r.edge.toFixed(2)}</p>
@@ -159,7 +157,7 @@ function processText(text){
 function exportCSV(){
   if(results.length==0){alert("Nu sunt meciuri profitabile"); return;}
   let csv="Echipa1,Echipa2,Pick,Odd1,OddX,Odd2,xG1,xG2,Edge,Prob>2.5\n";
-  results.forEach(r=>csv+=`${r.t1},${r.t2},${r.pick},${r.odd1},${r.oddX},${r.odd2},${r.xgH},${r.xgA},${r.edge.toFixed(2)},${(r.overProb*100).toFixed(1)}%\n`);
+  results.forEach(r=>csv+=`${r.team1},${r.team2},${r.pick},${r.odd1},${r.oddX},${r.odd2},${r.xgH},${r.xgA},${r.edge.toFixed(2)},${(r.overProb*100).toFixed(1)}%\n`);
   let blob=new Blob([csv],{type:"text/csv"});
   let a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
