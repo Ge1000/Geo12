@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.15 Super Hybrid 💥</title>
+<title>Pick 5.6.16 Super Hybrid 2.0 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.15 Super Hybrid 💥</h1>
+<h1>Pick 5.6.16 Super Hybrid 2.0 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -59,47 +59,51 @@ button{
 
 <script>
 
-// ------------------ CLEAN OCR SUPER HYBRID ------------------
+// ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
-    text = text
-        .replace(/[\*|@#\$%®<>\-]/g,'.')  // elimină simboluri
-        .replace(/\s{2,}/g,' ')           // reduce spații multiple
-        .replace(/[^a-zA-Z0-9\.\/\s]/g,'') // elimină caractere nevalide
-    return text.split("\n").map(l=>l.trim()).filter(l=>l.length>1)
+    return text
+        .replace(/[\*|@#\$%®<>\-]/g,'.')
+        .replace(/\s{2,}/g,' ')
+        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
+        .split("\n")
+        .map(l=>l.trim())
+        .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER SUPER ROBUST ------------------
+// ------------------ PARSER ULTRA HYBRID FIXED ------------------
 function parseMatches(lines){
     let matches=[]
-    let tempLines=[]
+    let buffer=[]
 
     for(let line of lines){
-        // păstrează doar linii cu caractere utile
-        if(line.match(/\d+\.\d+/)){
-            // linie cu cote
-            let odds = line.match(/(\d+\.\d+)/g)
-            if(odds.length>=3){
-                let odd1=parseFloat(odds[0])
-                let oddX=parseFloat(odds[1])
-                let odd2=parseFloat(odds[2])
+        // ignorăm linii neimportante
+        let lower=line.toLowerCase()
+        if(lower.includes('acasa') || lower.includes('live') || lower.includes('bonus') || lower.includes('meni')) continue
 
-                // ultimele 2 linii cu text considerăm că sunt echipe
-                let home="", away=""
-                for(let i=tempLines.length-1;i>=0;i--){
-                    if(tempLines[i].length>1 && !tempLines[i].match(/\d/)){
-                        if(!away) away=tempLines[i]
-                        else { home=tempLines[i]; break }
-                    }
-                }
+        // verificăm dacă linia are cote
+        let odds = line.match(/(\d+\.\d+)/g)
+        if(odds && odds.length>=3){
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
 
-                if(home && away && home!==away){
-                    if(!matches.some(m=>m.home===home && m.away===away)){
-                        matches.push({home,away,odd1,oddX,odd2})
-                    }
+            // ultimele două linii utile din buffer sunt echipele
+            let home="", away=""
+            for(let i=buffer.length-1;i>=0;i--){
+                if(!buffer[i].match(/\d/)){
+                    if(!away) away=buffer[i]
+                    else { home=buffer[i]; break }
                 }
             }
+
+            if(home && away && home!==away){
+                if(!matches.some(m=>m.home===home && m.away===away)){
+                    matches.push({home,away,odd1,oddX,odd2})
+                }
+            }
+            buffer=[] // reset buffer după ce folosim echipele
         } else {
-            tempLines.push(line)
+            buffer.push(line)
         }
     }
     return matches
@@ -153,7 +157,7 @@ async function runOCR(){
         logger:m=>console.log(m)
     })
 
-    previewDiv.innerHTML="<pre>"+text+"</pre>" // vezi textul recunoscut
+    previewDiv.innerHTML="<pre>"+text+"</pre>"
 
     let cleaned=cleanOCR(text)
     let matches=parseMatches(cleaned)
