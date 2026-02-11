@@ -2,18 +2,18 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.5</title>
+<title>Geo Nuclear Quick Pick 4.6</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
 body {
   font-family: system-ui;
   background: #0f1220;
-  color: #00ff9d;
   margin: 0;
   padding: 20px;
+  color: #ffffff;
 }
-h2 {text-align:center; margin-bottom:10px;}
+h2 {text-align:center; margin-bottom:10px; color:#00ffea;}
 #matches {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -34,12 +34,12 @@ h2 {text-align:center; margin-bottom:10px;}
 .match p {
   margin: 2px 0;
   font-size: 12px;
-  color: #ffffffaa;
+  color: #ffffffcc;
 }
 .top3 {
   font-size: 22px;
-  border: 2px solid #00ff9d;
-  box-shadow: 0 0 15px #00ff9d;
+  border: 2px solid #00ffea;
+  box-shadow: 0 0 20px #00ffea;
   transform: scale(1.05);
 }
 input, button {
@@ -51,13 +51,20 @@ input, button {
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.5 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.6 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
 <div id="matches"></div>
 
 <script>
+// Lista echipelor valide pentru filtrare
+const validTeams = [
+  "Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crystal Palace",
+  "Everton","Fulham","Liverpool","Luton","Man City","Man Utd","Newcastle",
+  "Nottingham","Sheffield","Southampton","Tottenham","West Ham","Wolves"
+];
+
 // Monte Carlo
 function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
 function monteCarlo(xgH,xgA,sims=100000){
@@ -78,20 +85,21 @@ function runOCR(){
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Curatare text OCR
+// Curatare OCR agresivă
 function cleanText(text){
-  return text.replace(/\r|\n|\t/g,' ')
+  text = text.replace(/\r|\n|\t/g,' ')
              .replace(/Meci|Egal/gi,'')
              .replace(/[^\w\s\.\-xG]/gi,' ')
              .replace(/\s+/g,' ')
              .trim();
+  return text;
 }
 
 // Determinare culoare dupa edge
 function getColor(edge){
-  if(edge>=1.0) return '#00ff9d'; // verde
-  if(edge>=0.5) return '#ffff66'; // galben
-  return '#ff6666'; // rosu
+  if(edge>=1.0) return '#00ffea'; // verde neon
+  if(edge>=0.5) return '#ffff33'; // galben neon
+  return '#ff4500'; // portocaliu neon
 }
 
 // Parse și afișare
@@ -107,6 +115,10 @@ function processText(rawText){
   while((m = matchRegex.exec(text)) !== null){
     let team1 = m[1].trim();
     let team2 = m[2].trim();
+
+    // Filtrare echipe valide
+    if(!validTeams.includes(team1) || !validTeams.includes(team2)) continue;
+
     let odd1 = parseFloat(m[3]);
     let oddX = parseFloat(m[4]);
     let odd2 = parseFloat(m[5]);
@@ -135,13 +147,13 @@ function processText(rawText){
     return;
   }
 
-  // Sortare descrescator dupa edge
+  // Sortare descrescător după edge
   results.sort((a,b)=>b.edge - a.edge);
 
   results.forEach((r,index)=>{
     let div = document.createElement("div");
     div.className = "match";
-    if(index<3) div.classList.add("top3"); // top 3 evidențiat
+    if(index<3) div.classList.add("top3"); // Top 3 evidențiat
     div.style.background = getColor(r.edge);
     div.innerHTML = `<h3>${r.pick}</h3>
                      <p>${r.team1} vs ${r.team2}</p>
