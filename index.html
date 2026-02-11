@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.10 💥</title>
+<title>Pick 5.6.11 💥</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.10 💥</h1>
+<h1>Pick 5.6.11 💥</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -59,14 +59,16 @@ button{
 
 <script>
 
-// ------------------ CLEAN OCR FLEX ------------------
+// ------------------ CLEAN OCR INTELIGENT ------------------
 function cleanOCR(text){
-    // Înlocuim virgulă cu punct și spații multiple
-    text = text.replace(/,/g,'.').replace(/\s{2,}/g,' ')
-    return text.split("\n").map(line=>line.trim()).filter(line=>line.length>1)
+    return text.replace(/[^\w\s\.\-\/]/g,' ')  // elimină simboluri ciudate
+               .replace(/\s{2,}/g,' ')         // reduce spații multiple
+               .split("\n")
+               .map(l=>l.trim())
+               .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER FLEXIBIL ------------------
+// ------------------ PARSER AVANSAT ------------------
 function parseMatches(lines){
     let matches=[]
     let usedIndexes=new Set()
@@ -78,15 +80,20 @@ function parseMatches(lines){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
-            // Căutăm ultimele 3 linii înainte de cote pentru echipe
+
+            // căutăm ultimele 2 linii non-numerice valide înainte de cote
             let home="", away=""
-            for(let j=i-1;j>=0 && j>=i-3;j--){
+            for(let j=i-1;j>=0;j--){
                 if(!lines[j].match(/\d/)){
                     if(!away) away=lines[j]
                     else { home=lines[j]; break }
                 }
             }
+
             if(home && away && home!==away){
+                home=home.replace(/^\s*\W+/,'').trim()
+                away=away.replace(/^\s*\W+/,'').trim()
+                // evită duplicate
                 if(!matches.some(m=>m.home===home && m.away===away)){
                     matches.push({home,away,odd1,oddX,odd2})
                 }
