@@ -2,23 +2,23 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.8.2</title>
+<title>Geo Nuclear Quick Pick 4.9.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
-body { font-family: system-ui; background: #0f1220; margin: 0; padding: 20px; color: #ffffff; }
+body { font-family: system-ui; background: #0f1220; margin:0; padding:20px; color:#fff; }
 h2 { text-align:center; margin-bottom:10px; color:#00ffea; }
-#preview, #matches { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:12px; margin-top:20px; }
-.match { padding:12px; border-radius:10px; font-size:14px; color:#ffffff; transition: transform 0.2s; }
+#preview,#matches { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; margin-top:20px; }
+.match { padding:12px; border-radius:10px; font-size:14px; color:#fff; transition: transform 0.2s; }
 .match h3 { font-size:20px; margin:0 0 5px 0; }
 .match p { margin:2px 0; font-size:12px; color:#ffffffcc; }
 .top3 { font-size:22px; border:2px solid #00ffea; box-shadow:0 0 20px #00ffea; transform: scale(1.05); }
-input, button { padding:10px; margin:5px; font-size:16px; }
+input,button { padding:10px;margin:5px;font-size:16px; }
 </style>
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.8.2 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 4.9.0 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
@@ -29,22 +29,34 @@ input, button { padding:10px; margin:5px; font-size:16px; }
 <div id="matches"></div>
 
 <script>
-// Echipe fuzzy
-const validTeams = ["Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crystal Palace",
+// Lista echipelor pentru fuzzy match
+const validTeams=["Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crystal Palace",
 "Everton","Fulham","Liverpool","Luton","Man City","Man Utd","Newcastle",
 "Nottingham","Sheffield","Southampton","Tottenham","West Ham","Wolves"];
 
+// Fuzzy match
 function findTeam(name){
-  name = name.toLowerCase().replace(/[^a-z ]/g,'').trim();
-  for(let t of validTeams){
-    if(t.toLowerCase().includes(name) || name.includes(t.toLowerCase())) return t;
-  }
+  name=name.toLowerCase().replace(/[^a-z ]/g,'').trim();
+  for(let t of validTeams){if(t.toLowerCase().includes(name)||name.includes(t.toLowerCase())) return t;}
   return name;
 }
 
-// Monte Carlo
-function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
-function monteCarlo(xgH,xgA,sims=100000){let cH=0,cX=0,cA=0;for(let i=0;i<sims;i++){let h=poissonRandom(xgH),a=poissonRandom(xgA);if(h>a)cH++;else if(h==a)cX++;else cA++;}return {pH:cH/sims,pX:cX/sims,pA:cA/sims};}
+// Generator random cu seed determinist
+function seededRandom(seed){let x=Math.sin(seed)*10000; return x-Math.floor(x);}
+function hashCode(str){let h=0; for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0;} return Math.abs(h);}
+
+// Poisson random determinist
+function poissonRandom(lambda,seed){let L=Math.exp(-lambda),p=1,k=0; while(p>L){k++;p*=seededRandom(seed+k);} return k-1;}
+
+// Monte Carlo determinist
+function monteCarlo(xgH,xgA,sims,seed){
+  let cH=0,cX=0,cA=0;
+  for(let i=0;i<sims;i++){
+    let h=poissonRandom(xgH,seed+i),a=poissonRandom(xgA,seed+i+100000);
+    if(h>a)cH++; else if(h==a)cX++; else cA++;
+  }
+  return {pH:cH/sims,pX:cX/sims,pA:cA/sims};
+}
 
 // OCR
 function runOCR(){
@@ -52,52 +64,49 @@ function runOCR(){
   if(!file){alert("Alege poza"); return;}
   document.getElementById("preview").innerHTML="Se procesează OCR...";
   document.getElementById("matches").innerHTML="";
-  Tesseract.recognize(file,'eng',{logger:m=>console.log(m)}).then(({data:{text}})=>{processText(text);});
+  Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
+    .then(({data:{text}})=>{processText(text);});
 }
 
-// Curățare OCR
+// Curățare text OCR
 function cleanText(text){return text.replace(/\r|\n|\t/g,' ').replace(/[^\w\s\.\-\/]/gi,' ').replace(/\s+/g,' ').trim();}
 
-// Culoare după edge
+// Culoare după Edge
 function getColor(edge){if(edge>=1.0)return '#00ffea'; if(edge>=0.5)return '#ffff33'; return '#ff4500';}
 
-// Procesare text OCR
+// Procesare text
 function processText(rawText){
-  let text = cleanText(rawText);
-  let previewDiv = document.getElementById("preview");
-  let matchesDiv = document.getElementById("matches");
+  let text=cleanText(rawText);
+  let previewDiv=document.getElementById("preview"),matchesDiv=document.getElementById("matches");
   previewDiv.innerHTML=""; matchesDiv.innerHTML="";
-  let matchesFound=[], results=[];
+  let matchesFound=[],results=[];
 
   // Detectare echipe și cote flexibile
-  const teamRegex = /([A-Za-z\s]{3,})\s*(?:vs|-)\s*([A-Za-z\s]{3,})/gi;
-  const oddsRegex = /(\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})/gi;
+  const teamRegex=/([A-Za-z\s]{3,})\s*(?:vs|-)\s*([A-Za-z\s]{3,})/gi;
+  const oddsRegex=/(\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})/gi;
 
-  let teams = [], odds = [];
-  let m;
+  let teams=[],odds=[],m;
   while((m=teamRegex.exec(text))!==null) teams.push([findTeam(m[1]),findTeam(m[2])]);
   while((m=oddsRegex.exec(text))!==null) odds.push([parseFloat(m[1]),parseFloat(m[2]),parseFloat(m[3])]);
 
-  // Preview OCR
+  // Preview
   for(let i=0;i<teams.length;i++){
-    let t1=teams[i][0], t2=teams[i][1];
-    let divPrev=document.createElement("div");
-    divPrev.className="match"; divPrev.style.background="#333";
+    let t1=teams[i][0],t2=teams[i][1];
+    let divPrev=document.createElement("div"); divPrev.className="match"; divPrev.style.background="#333";
     divPrev.innerHTML=`<h3>${t1} vs ${t2}</h3>`;
     previewDiv.appendChild(divPrev);
   }
 
   // Asocieri meciuri cu cote
   for(let i=0;i<Math.min(teams.length,odds.length);i++){
-    let t1=teams[i][0], t2=teams[i][1];
-    let odd1=odds[i][0], oddX=odds[i][1], odd2=odds[i][2];
+    let t1=teams[i][0],t2=teams[i][1];
+    let odd1=odds[i][0],oddX=odds[i][1],odd2=odds[i][2];
     let key=t1+"|"+t2; if(matchesFound.includes(key)) continue; matchesFound.push(key);
 
-    // xG default 1.5-1.5
-    let xgH=1.5, xgA=1.5;
+    let xgH=1.5,xgA=1.5;
+    let seed=hashCode(t1+t2+odd1+oddX+odd2);
 
-    // Monte Carlo
-    let sim=monteCarlo(xgH,xgA);
+    let sim=monteCarlo(xgH,xgA,100000,seed);
     let maxP=Math.max(sim.pH,sim.pX,sim.pA);
     let edge=0;
     if(maxP==sim.pH) edge=sim.pH*odd1-1;
