@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Quick Single Pick</title>
+<title>Geo Nuclear Quick Pick 2.1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -24,27 +24,37 @@ input, button {
   font-size: 18px;
 }
 #pick {
-  font-size: 48px;
+  font-size: 60px;
   font-weight: bold;
   margin-top: 50px;
+}
+#info {
+  font-size: 18px;
+  color: #ffffff99;
+  margin-top: 10px;
 }
 </style>
 </head>
 <body>
 
-<h2>📸 Geo Quick Single Pick</h2>
+<h2>💥 Geo Nuclear Quick Pick 2.1 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
-<button onclick="runOCR()">Arată câștigătorul</button>
+<button onclick="runOCR()">Rulează analiză</button>
 
-<div id="pick"></div>
+<div id="pick">Rezultatul va apărea aici...</div>
+<div id="info"></div>
 
 <script>
-function poissonRandom(lambda){
-  let L=Math.exp(-lambda),p=1,k=0;
-  while(p>L){k++; p*=Math.random();}
-  return k-1;
-}
+// Lista echipe Premier League (poți extinde)
+const teamsList = [
+  "Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea",
+  "Crystal Palace","Everton","Fulham","Liverpool","Man City","Man United",
+  "Newcastle","Nottingham","Tottenham","West Ham","Wolves","Leicester",
+  "Sheffield","Burnley"
+];
 
+// Funcții Monte Carlo
+function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
 function monteCarlo(xgH,xgA,sims=100000){
   let cH=0, cX=0, cA=0;
   for(let i=0;i<sims;i++){
@@ -54,52 +64,65 @@ function monteCarlo(xgH,xgA,sims=100000){
   return {pH:cH/sims, pX:cX/sims, pA:cA/sims};
 }
 
+// OCR
 function runOCR(){
   let file=document.getElementById("imgInput").files[0];
   if(!file){alert("Alege poza"); return;}
   document.getElementById("pick").innerHTML = "Se procesează OCR...";
+  document.getElementById("info").innerHTML = "";
   Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
     .then(({data:{text}})=>{processText(text);});
 }
 
+// Procesare text și generare lista de meciuri
 function processText(text){
-  text=text.replace(/\r/g,'\n').replace(/\t/g,' ').replace(/\s+/g,' ').trim();
+  text=text.replace(/\r/g,'\n').replace(/\t/g,' ').replace(/[^\w\s\.\-]/gi,' ').replace(/\s+/g,' ').trim();
   let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
-  if(lines.length==0){document.getElementById("pick").innerHTML="Nu s-au găsit meciuri valide"; return;}
 
-  // Luăm doar primul meci pentru single pick
-  let l = lines[0];
+  let matches = [];
 
-  // Extragem cote
-  let numbers=l.match(/[\d]+\.[\d]+/g);
-  if(!numbers || numbers.length<2){document.getElementById("pick").innerHTML="Nu s-au găsit meciuri valide"; return;}
+  for(let l of lines){
+    let matchedTeams = teamsList.filter(t=>l.toLowerCase().includes(t.toLowerCase()));
+    if(matchedTeams.length>=2){
+      let teamA=matchedTeams[0];
+      let teamB=matchedTeams[1];
 
-  let parts=l.split(numbers[0]);
-  let teamA=parts[0].trim();
-  let odd1=parseFloat(numbers[0]);
-  let oddX=parseFloat(numbers[1]);
-  let odd2=numbers.length>=3?parseFloat(numbers[2]):odd1;
+      // Detectam cote (fallback)
+      let numbers=l.match(/[\d]+\.[\d]+/g);
+      if(!numbers || numbers.length<2) numbers=[1.5,3.0,2.5];
+      let odd1=parseFloat(numbers[0]), oddX=parseFloat(numbers[1]), odd2=numbers.length>=3?parseFloat(numbers[2]):numbers[0];
 
-  let lastIndex=l.lastIndexOf(numbers[numbers.length>=3?2:1]);
-  let teamB=l.substring(lastIndex+numbers[numbers.length>=3?2:1].length).replace(/xG/gi,'').trim();
+      // xG fallback
+      let xgMatch=l.match(/(\d*\.?\d+)xG/gi);
+      let xgH=1.5, xgA=1.5;
+      if(xgMatch && xgMatch.length>=1)xgH=parseFloat(xgMatch[0]);
+      if(xgMatch && xgMatch.length>=2)xgA=parseFloat(xgMatch[1]);
 
-  // xG fallback
-  let xgMatch=l.match(/(\d*\.?\d+)xG/gi);
-  let xgH=1.5, xgA=1.5;
-  if(xgMatch && xgMatch.length>=1)xgH=parseFloat(xgMatch[0]);
-  if(xgMatch && xgMatch.length>=2)xgA=parseFloat(xgMatch[1]);
+      // Monte Carlo și pick
+      let sim=monteCarlo(xgH,xgA);
+      let maxP=Math.max(sim.pH,sim.pX,sim.pA);
+      let pick="";
+      if(maxP==sim.pH) pick=teamA;
+      else if(maxP==sim.pX) pick="Egal";
+      else pick=teamB;
 
-  // Monte Carlo
-  let sim=monteCarlo(xgH,xgA);
+      // Salvează și info
+      matches.push({pick:pick, info:`Cote: ${odd1} / ${oddX} / ${odd2} | xG: ${xgH.toFixed(1)} - ${xgA.toFixed(1)}`});
+    }
+  }
 
-  // Pick câștigător
-  let maxP=Math.max(sim.pH,sim.pX,sim.pA);
-  let pick="";
-  if(maxP==sim.pH) pick=teamA;
-  else if(maxP==sim.pX) pick="Egal";
-  else pick=teamB;
+  if(matches.length==0){document.getElementById("pick").innerHTML="Nu s-au găsit meciuri valide"; return;}
 
-  document.getElementById("pick").innerHTML = pick;
+  // Afișare pe rând la 3 secunde
+  let index=0;
+  document.getElementById("pick").innerHTML = matches[index].pick;
+  document.getElementById("info").innerHTML = matches[index].info;
+
+  setInterval(()=>{
+    index = (index+1)%matches.length;
+    document.getElementById("pick").innerHTML = matches[index].pick;
+    document.getElementById("info").innerHTML = matches[index].info;
+  }, 3000);
 }
 </script>
 
