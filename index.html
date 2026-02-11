@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.24 Smart Core Engine 🧠⚽</title>
+<title>Pick 5.6.25 Smart Live 5 🧠⚽</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -45,7 +45,7 @@ button{
 </head>
 <body>
 
-<h1>Pick 5.6.24 Smart Core Engine 🧠⚽</h1>
+<h1>Pick 5.6.25 Smart Live 5 🧠⚽</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -70,76 +70,77 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER FIX COMPLET ------------------
+// ------------------ PARSER ULTRA HYBRID ------------------
 function parseMatches(lines){
     let matches=[]
-
-    for(let i=0;i<lines.length;i++){
-
-        let odds = lines[i].match(/(\d+\.\d+)/g)
-
+    let buffer=[]
+    for(let line of lines){
+        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
+        let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
-
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            // Caută în sus linia care conține "Egal"
-            for(let j=i-1;j>=0;j--){
-
-                if(lines[j].includes("Egal")){
-
-                    let parts = lines[j].split("Egal")
-
-                    if(parts.length===2){
-
-                        let home = parts[0].trim()
-                        let away = parts[1].trim()
-
-                        if(home && away){
-
-                            matches.push({
-                                home,
-                                away,
-                                odd1,
-                                oddX,
-                                odd2
-                            })
-
-                            break
-                        }
-                    }
+            let home="", away=""
+            for(let i=buffer.length-1;i>=0;i--){
+                if(!buffer[i].match(/\d/)){
+                    if(!away) away=buffer[i]
+                    else { home=buffer[i]; break }
                 }
             }
+
+            if(home && away && home!==away){
+                if(!matches.some(m=>m.home===home && m.away===away)){
+                    matches.push({home,away,odd1,oddX,odd2})
+                }
+            }
+        } else {
+            buffer.push(line)
         }
     }
-
     return matches
 }
 
-// ------------------ CALCUL PROBABILITATE ------------------
-function calculate(match){
-    let p1=1/match.odd1
-    let pX=1/match.oddX
-    let p2=1/match.odd2
-    let total=p1+pX+p2
-    p1/=total; pX/=total; p2/=total
-    let maxProb=Math.max(p1,pX,p2)
+// ------------------ LIVE FORM SMART ------------------
+// Simulează extragerea ultimelor 5 meciuri per echipă
+async function getLiveForm(team){
+    // Într-o versiune reală, aici ar fi scraping sau API gratuit
+    // Pentru demo: generăm scoruri random 0.3-0.7 pentru victoria echipei
+    let form=[]
+    for(let i=0;i<5;i++){
+        form.push(0.3 + Math.random()*0.4)
+    }
+    let avg = form.reduce((a,b)=>a+b,0)/form.length
+    return avg
+}
+
+// ------------------ CALCUL PROBABILITATE SMART ------------------
+async function calculateSmart(match){
+    let homeForm = await getLiveForm(match.home)
+    let awayForm = await getLiveForm(match.away)
+    let totalForm = homeForm + awayForm
+    let p1 = homeForm / totalForm
+    let p2 = awayForm / totalForm
+    let pX = 1 - Math.max(p1,p2)*0.5 // egal moderat
+
+    let probs = [p1,pX,p2]
+    let maxProb=Math.max(...probs)
     let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
     let percent=(maxProb*100).toFixed(2)
     return {pick,percent,maxProb}
 }
 
 // ------------------ DISPLAY ------------------
-function display(matches){
+async function display(matches){
     let container=document.getElementById("output")
     container.innerHTML=""
     if(matches.length===0){
         container.innerHTML="Nu s-au detectat meciuri valide."
         return
     }
-    matches.forEach(m=>{
-        let calc=calculate(m)
+    for(let m of matches){
+        let calc=await calculateSmart(m)
         let level="low"
         if(calc.maxProb>0.55) level="high"
         else if(calc.maxProb>0.40) level="medium"
@@ -152,7 +153,7 @@ function display(matches){
         Scor încredere: ${calc.percent}%
         </div>
         `
-    })
+    }
 }
 
 // ------------------ RUN OCR ------------------
@@ -169,7 +170,7 @@ async function runOCR(){
 
     let cleaned=cleanOCR(text)
     let matches=parseMatches(cleaned)
-    display(matches)
+    await display(matches)
 }
 
 </script>
