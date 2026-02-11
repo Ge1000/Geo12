@@ -1,168 +1,107 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 4.13</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<title>Geo Pro Betting System 5.0</title>
 <style>
-body { font-family: system-ui; background: #0f1220; margin:0; padding:20px; color:#fff; }
-h2 { text-align:center; margin-bottom:10px; color:#00ffea; }
-#preview,#matches { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; margin-top:20px; }
-.match { padding:12px; border-radius:10px; font-size:14px; color:#fff; transition: transform 0.2s; }
-.match h3 { font-size:20px; margin:0 0 5px 0; }
-.match p { margin:2px 0; font-size:12px; color:#ffffffcc; }
-.top3 { font-size:22px; border:2px solid #00ffea; box-shadow:0 0 20px #00ffea; transform: scale(1.05); }
-input,button { padding:10px;margin:5px;font-size:16px; }
+body{font-family:Arial;background:#0f1220;color:#fff;padding:20px}
+textarea{width:100%;height:150px;background:#1a1f35;color:#fff;border:1px solid #00ffea;padding:10px}
+button{padding:10px 15px;margin-top:10px;background:#00ffea;border:none;font-weight:bold}
+.result{background:#1f263d;margin-top:15px;padding:15px;border-left:5px solid #00ffea}
+.value{border-left:5px solid #00ff00}
 </style>
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 4.13 💥</h2>
-<input type="file" id="imgInput" accept="image/*">
-<button onclick="runOCR()">Rulează analiză</button>
+<h2>💥 Geo Pro Betting System 5.0</h2>
+
+<textarea id="inputData" placeholder="Home,Away,Odd1,OddX,Odd2,xGhome,xGaway"></textarea>
+<br>
+<button onclick="analyze()">Rulează analiză</button>
 <button onclick="exportCSV()">Export CSV</button>
 
-<h3>Preview OCR</h3>
-<div id="preview"></div>
-
-<h3>Meciuri Profitabile</h3>
-<div id="matches"></div>
+<div id="output"></div>
 
 <script>
-const validTeams=[
-"Arsenal","Aston Villa","Brighton","Burnley","Chelsea","Crystal Palace",
-"Everton","Fulham","Liverpool","Luton","Man City","Man Utd","Newcastle",
-"Nottingham","Sheffield","Southampton","Tottenham","West Ham","Wolves"
-];
+let finalResults = [];
 
-let results=[];
-
-// Fuzzy match echipe
-function fixTeam(t1,t2){
-  t1=t1.toLowerCase().replace(/[^a-z ]/g,'').trim();
-  t2=t2.toLowerCase().replace(/[^a-z ]/g,'').trim();
-  let match1=validTeams.find(v=>v.toLowerCase().includes(t1)||t1.includes(v.toLowerCase()))||t1;
-  let match2=validTeams.find(v=>v.toLowerCase().includes(t2)||t2.includes(v.toLowerCase()))||t2;
-  if(match1===match2){
-    let other=validTeams.find(v=>v!==match1);
-    if(other) match2=other;
-  }
-  return [match1,match2];
+function poisson(lambda){
+    let L=Math.exp(-lambda),p=1,k=0;
+    while(p>L){k++;p*=Math.random();}
+    return k-1;
 }
 
-// Random determinist
-function seededRandom(seed){let x=Math.sin(seed)*10000; return x-Math.floor(x);}
-function hashCode(str){let h=0; for(let i=0;i<str.length;i++){h=((h<<5)-h)+str.charCodeAt(i);h|=0;} return Math.abs(h);}
-function poissonRandom(lambda,seed){let L=Math.exp(-lambda),p=1,k=0; while(p>L){k++;p*=seededRandom(seed+k);} return k-1;}
-function monteCarlo(xgH,xgA,sims,seed){
-  let cH=0,cX=0,cA=0;
-  for(let i=0;i<sims;i++){
-    let h=poissonRandom(xgH,seed+i),a=poissonRandom(xgA,seed+i+100000);
-    if(h>a)cH++; else if(h==a)cX++; else cA++;
-  }
-  return {pH:cH/sims,pX:cX/sims,pA:cA/sims};
-}
-function probOverUnder(xgH,xgA,threshold,seed,sims=100000){
-  let over=0;
-  for(let i=0;i<sims;i++){
-    let h=poissonRandom(xgH,seed+i),a=poissonRandom(xgA,seed+i+100000);
-    if(h+a>threshold) over++;
-  }
-  return over/sims;
-}
-
-// OCR
-function runOCR(){
-  results=[];
-  let file=document.getElementById("imgInput").files[0];
-  if(!file){alert("Alege poza"); return;}
-  document.getElementById("preview").innerHTML="Se procesează OCR...";
-  document.getElementById("matches").innerHTML="";
-  Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
-    .then(({data:{text}})=>{processText(cleanText(text));});
-}
-
-// Curățare text OCR
-function cleanText(text){
-  text=text.replace(/\r|\n|\t/g,' ')
-           .replace(/[^\w\s\.\-\/–:]/gi,' ')
-           .replace(/\s+/g,' ')
-           .trim()
-           .replace(/[–:]/g,'-');
-  return text;
-}
-
-// Culoare după Edge
-function getColor(edge){if(edge>=1.0)return '#00ffea'; if(edge>=0.5)return '#ffff33'; return '#ff4500';}
-
-// Procesare text OCR
-function processText(text){
-  let previewDiv=document.getElementById("preview"),matchesDiv=document.getElementById("matches");
-  previewDiv.innerHTML=""; matchesDiv.innerHTML="";
-  let matchesFound=[];
-  
-  // Extrage echipe + cote + xG doar din text curat
-  const matchLineRegex=/([A-Za-z\s]{3,})\s*(?:vs|-)\s*([A-Za-z\s]{3,})[^0-9]{0,10}(\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[\/\s](\d{1,2}\.\d{1,2})[^0-9]{0,10}(\d{1,2}\.\d{1,2})-(\d{1,2}\.\d{1,2})?/gi;
-  
-  let m;
-  while((m=matchLineRegex.exec(text))!==null){
-    let t1=m[1],t2=m[2];
-    let [team1,team2]=fixTeam(t1,t2);
-    if(!validTeams.includes(team1) || !validTeams.includes(team2)) continue; // ignore false
-    let odd1=parseFloat(m[3]),oddX=parseFloat(m[4]),odd2=parseFloat(m[5]);
-    let xgH=m[6]?parseFloat(m[6]):1.5, xgA=m[7]?parseFloat(m[7]):1.5;
-    let key=team1+"|"+team2; if(matchesFound.includes(key)) continue; matchesFound.push(key);
-
-    // Preview
-    let divPrev=document.createElement("div"); divPrev.className="match"; divPrev.style.background="#333";
-    divPrev.innerHTML=`<h3>${team1} vs ${team2}</h3><p>Cote: ${odd1}/${oddX}/${odd2}</p><p>xG: ${xgH}-${xgA}</p>`;
-    previewDiv.appendChild(divPrev);
-
-    // Monte Carlo + Edge
-    let seed=hashCode(team1+team2+odd1+oddX+odd2);
-    let sim=monteCarlo(xgH,xgA,100000,seed);
-    let maxP=Math.max(sim.pH,sim.pX,sim.pA);
-    let edge=0;
-    if(maxP==sim.pH) edge=sim.pH*odd1-1;
-    else if(maxP==sim.pX) edge=sim.pX*oddX-1;
-    else edge=sim.pA*odd2-1;
-
-    if(edge>0){
-      let pick=maxP==sim.pH?team1:maxP==sim.pX?"Egal":team2;
-      let overProb=probOverUnder(xgH,xgA,2.5,seed);
-      results.push({pick,team1,team2,odd1,oddX,odd2,xgH,xgA,edge,overProb});
+function simulate(xgH,xgA,sims=100000){
+    let h=0,x=0,a=0;
+    for(let i=0;i<sims;i++){
+        let hg=poisson(xgH);
+        let ag=poisson(xgA);
+        if(hg>ag)h++;
+        else if(hg==ag)x++;
+        else a++;
     }
-  }
-
-  if(results.length==0){matchesDiv.innerHTML="Nu sunt meciuri profitabile"; return;}
-
-  // Sort și afișare
-  results.sort((a,b)=>b.edge-a.edge);
-  results.forEach((r,index)=>{
-    let div=document.createElement("div"); div.className="match";
-    if(index<3) div.classList.add("top3");
-    div.style.background=getColor(r.edge);
-    div.innerHTML=`<h3>${r.pick}</h3>
-                   <p>${r.team1} vs ${r.team2}</p>
-                   <p>Cote: ${r.odd1}/${r.oddX}/${r.odd2}</p>
-                   <p>xG: ${r.xgH}-${r.xgA}</p>
-                   <p>Edge: ${r.edge.toFixed(2)}</p>
-                   <p>Probabilitate >2.5 goluri: ${(r.overProb*100).toFixed(1)}%</p>`;
-    matchesDiv.appendChild(div);
-  });
+    return {pH:h/sims,pX:x/sims,pA:a/sims};
 }
 
-// Export CSV
+function analyze(){
+    const data=document.getElementById("inputData").value.trim().split("\n");
+    const output=document.getElementById("output");
+    output.innerHTML="";
+    finalResults=[];
+
+    data.forEach(line=>{
+        if(!line) return;
+        const [home,away,o1,oX,o2,xgH,xgA]=line.split(",");
+        if(!home||!away) return;
+
+        const sim=simulate(parseFloat(xgH),parseFloat(xgA));
+        const edge1=sim.pH*o1-1;
+        const edgeX=sim.pX*oX-1;
+        const edge2=sim.pA*o2-1;
+
+        const maxEdge=Math.max(edge1,edgeX,edge2);
+        if(maxEdge>0){
+            let pick="";
+            if(maxEdge===edge1) pick=home+" win";
+            if(maxEdge===edgeX) pick="Draw";
+            if(maxEdge===edge2) pick=away+" win";
+
+            finalResults.push({
+                match:home+" vs "+away,
+                pick:pick,
+                edge:maxEdge.toFixed(3)
+            });
+        }
+    });
+
+    if(finalResults.length===0){
+        output.innerHTML="<p>Nu există value bet-uri.</p>";
+        return;
+    }
+
+    finalResults.sort((a,b)=>b.edge-a.edge);
+
+    finalResults.forEach(r=>{
+        const div=document.createElement("div");
+        div.className="result value";
+        div.innerHTML=`<strong>${r.pick}</strong><br>${r.match}<br>Edge: ${r.edge}`;
+        output.appendChild(div);
+    });
+}
+
 function exportCSV(){
-  if(results.length==0){alert("Nu sunt meciuri profitabile"); return;}
-  let csv="Echipa1,Echipa2,Pick,Odd1,OddX,Odd2,xG1,xG2,Edge,Prob>2.5\n";
-  results.forEach(r=>csv+=`${r.team1},${r.team2},${r.pick},${r.odd1},${r.oddX},${r.odd2},${r.xgH},${r.xgA},${r.edge.toFixed(2)},${(r.overProb*100).toFixed(1)}%\n`);
-  let blob=new Blob([csv],{type:"text/csv"});
-  let a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="Geo_Nuclear_QuickPick.csv";
-  a.click();
+    if(finalResults.length===0) return;
+    let csv="Match,Pick,Edge\n";
+    finalResults.forEach(r=>{
+        csv+=`${r.match},${r.pick},${r.edge}\n`;
+    });
+
+    const blob=new Blob([csv],{type:"text/csv"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="geo_results.csv";
+    a.click();
 }
 </script>
 
