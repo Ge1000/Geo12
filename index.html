@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Geo Nuclear Quick Pick 2.1</title>
+<title>Geo Nuclear Quick Pick 3.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <style>
@@ -19,41 +19,48 @@ body {
   text-align: center;
 }
 input, button {
-  padding: 12px;
-  margin: 10px;
-  font-size: 18px;
+  padding: 10px;
+  margin: 8px;
+  font-size: 16px;
 }
 #pick {
-  font-size: 60px;
+  font-size: 36px;
   font-weight: bold;
-  margin-top: 50px;
+  margin-top: 30px;
 }
-#info {
-  font-size: 18px;
-  color: #ffffff99;
-  margin-top: 10px;
+#badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #111a33cc;
+  padding: 10px 15px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #ffffff;
+  text-align: right;
 }
 </style>
 </head>
 <body>
 
-<h2>💥 Geo Nuclear Quick Pick 2.1 💥</h2>
+<h2>💥 Geo Nuclear Quick Pick 3.0 💥</h2>
 <input type="file" id="imgInput" accept="image/*">
 <button onclick="runOCR()">Rulează analiză</button>
 
 <div id="pick">Rezultatul va apărea aici...</div>
-<div id="info"></div>
+<div id="badge"></div>
 
 <script>
-// Lista echipe Premier League (poți extinde)
-const teamsList = [
-  "Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea",
-  "Crystal Palace","Everton","Fulham","Liverpool","Man City","Man United",
-  "Newcastle","Nottingham","Tottenham","West Ham","Wolves","Leicester",
-  "Sheffield","Burnley"
-];
+// Liste echipe pe ligi (extensibil)
+const leagues = {
+  "Premier League": ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea","Crystal Palace","Everton","Fulham","Liverpool","Man City","Man United","Newcastle","Nottingham","Tottenham","West Ham","Wolves","Leicester","Sheffield","Burnley"],
+  "La Liga": ["Real Madrid","Barcelona","Atletico Madrid","Sevilla","Valencia","Villarreal","Real Sociedad","Real Betis","Athletic Bilbao"],
+  "Serie A": ["Juventus","Inter","Milan","Napoli","Roma","Lazio","Atalanta","Fiorentina","Torino","Sassuolo"],
+  "Bundesliga": ["Bayern","Dortmund","Leverkusen","RB Leipzig","Wolfsburg","Eintracht","Freiburg"],
+  "Ligue 1": ["PSG","Marseille","Monaco","Lyon","Lille","Nice","Lens"]
+};
 
-// Funcții Monte Carlo
+// Functii Monte Carlo
 function poissonRandom(lambda){let L=Math.exp(-lambda),p=1,k=0;while(p>L){k++;p*=Math.random();}return k-1;}
 function monteCarlo(xgH,xgA,sims=100000){
   let cH=0, cX=0, cA=0;
@@ -64,30 +71,43 @@ function monteCarlo(xgH,xgA,sims=100000){
   return {pH:cH/sims, pX:cX/sims, pA:cA/sims};
 }
 
+// Detectare liga
+function detectLeague(text){
+  for(let league in leagues){
+    for(let team of leagues[league]){
+      if(text.toLowerCase().includes(team.toLowerCase())) return league;
+    }
+  }
+  return null;
+}
+
 // OCR
 function runOCR(){
   let file=document.getElementById("imgInput").files[0];
   if(!file){alert("Alege poza"); return;}
   document.getElementById("pick").innerHTML = "Se procesează OCR...";
-  document.getElementById("info").innerHTML = "";
+  document.getElementById("badge").innerHTML = "";
   Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
     .then(({data:{text}})=>{processText(text);});
 }
 
-// Procesare text și generare lista de meciuri
+// Procesare text, filtrare meciuri profitabile
 function processText(text){
-  text=text.replace(/\r/g,'\n').replace(/\t/g,' ').replace(/[^\w\s\.\-]/gi,' ').replace(/\s+/g,' ').trim();
-  let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
+  text=text.replace(/\r/g,'\n').replace(/\t/g,' ')
+           .replace(/[^\w\s\.\-]/gi,' ').replace(/\s+/g,' ').trim();
 
+  let league = detectLeague(text);
+  if(!league){document.getElementById("pick").innerHTML="Nu s-a detectat liga."; return;}
+
+  let lines=text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
   let matches = [];
 
   for(let l of lines){
-    let matchedTeams = teamsList.filter(t=>l.toLowerCase().includes(t.toLowerCase()));
+    let matchedTeams = leagues[league].filter(t=>l.toLowerCase().includes(t.toLowerCase()));
     if(matchedTeams.length>=2){
-      let teamA=matchedTeams[0];
-      let teamB=matchedTeams[1];
+      let teamA=matchedTeams[0], teamB=matchedTeams[1];
 
-      // Detectam cote (fallback)
+      // Detectam cote
       let numbers=l.match(/[\d]+\.[\d]+/g);
       if(!numbers || numbers.length<2) numbers=[1.5,3.0,2.5];
       let odd1=parseFloat(numbers[0]), oddX=parseFloat(numbers[1]), odd2=numbers.length>=3?parseFloat(numbers[2]):numbers[0];
@@ -101,28 +121,31 @@ function processText(text){
       // Monte Carlo și pick
       let sim=monteCarlo(xgH,xgA);
       let maxP=Math.max(sim.pH,sim.pX,sim.pA);
-      let pick="";
-      if(maxP==sim.pH) pick=teamA;
-      else if(maxP==sim.pX) pick="Egal";
-      else pick=teamB;
 
-      // Salvează și info
-      matches.push({pick:pick, info:`Cote: ${odd1} / ${oddX} / ${odd2} | xG: ${xgH.toFixed(1)} - ${xgA.toFixed(1)}`});
+      // Calcul edge (simplu): dacă probabilitate pick / cotă > 1, considerăm profitabil
+      let edge=0;
+      if(maxP==sim.pH) edge=(sim.pH*odd1-1);
+      else if(maxP==sim.pX) edge=(sim.pX*oddX-1);
+      else edge=(sim.pA*odd2-1);
+
+      if(edge>0){ // filtrare profitabile
+        let pick=maxP==sim.pH?teamA:maxP==sim.pX?"Egal":teamB;
+        matches.push({pick:pick, info:`Liga: ${league} | Cote: ${odd1}/${oddX}/${odd2} | xG: ${xgH.toFixed(1)}-${xgA.toFixed(1)} | Edge: ${edge.toFixed(2)}`});
+      }
     }
   }
 
-  if(matches.length==0){document.getElementById("pick").innerHTML="Nu s-au găsit meciuri valide"; return;}
+  if(matches.length==0){document.getElementById("pick").innerHTML="Nu sunt meciuri profitabile"; return;}
 
-  // Afișare pe rând la 3 secunde
   let index=0;
-  document.getElementById("pick").innerHTML = matches[index].pick;
-  document.getElementById("info").innerHTML = matches[index].info;
+  document.getElementById("pick").innerHTML=matches[index].pick;
+  document.getElementById("badge").innerHTML=matches[index].info;
 
   setInterval(()=>{
-    index = (index+1)%matches.length;
-    document.getElementById("pick").innerHTML = matches[index].pick;
-    document.getElementById("info").innerHTML = matches[index].info;
-  }, 3000);
+    index=(index+1)%matches.length;
+    document.getElementById("pick").innerHTML=matches[index].pick;
+    document.getElementById("badge").innerHTML=matches[index].info;
+  },3000);
 }
 </script>
 
