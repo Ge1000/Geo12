@@ -70,17 +70,17 @@ function cleanOCR(text){
     return text
         .replace(/[\*|@#\$%®<>\-]/g,'.')
         .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\/\sÀ-ÿ]/g,'')
+        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER FIX PENTRU LINIILE AIUREA ------------------
+// ------------------ PARSER ULTRA HYBRID FIX ------------------
 function parseMatches(lines){
     let matches = [];
     let buffer = [];
-    const teamPattern = /^[a-zA-ZÀ-ÿ0-9\s\.\-]+$/;
+    const teamPattern = /^[a-zA-ZÀ-ÿ0-9\s\.\-]+$/; // doar caractere legitime echipe
 
     for(let line of lines){
         line = line.trim();
@@ -93,7 +93,6 @@ function parseMatches(lines){
             let odd2 = parseFloat(odds[2]);
 
             let home = "", away = "";
-            // ia ultimele două linii valide care par a fi echipe
             for(let i = buffer.length-1; i>=0; i--){
                 if(teamPattern.test(buffer[i])){
                     if(!away) away = buffer[i];
@@ -169,8 +168,10 @@ async function runOCR(){
 
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
+
         display(matches)
 
+        // Desenează casete pe cuvinte ce conțin cote
         ctx.strokeStyle="red"
         ctx.lineWidth=2
         ctx.font="18px Arial"
