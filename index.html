@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.25 Smart Live 5 🧠⚽</title>
+<title>Pick Smart Live 🧠⚽</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -51,7 +51,7 @@ canvas{
 </head>
 <body>
 
-<h1>Pick 5.6.25 Smart Live 5 🧠⚽</h1>
+<h1>Pick Smart Live 🧠⚽</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -65,7 +65,7 @@ canvas{
 
 <script>
 
-// ------------------ CLEAN OCR FLEX ------------------
+// ------------------ CLEAN OCR ------------------
 function cleanOCR(text){
     return text
         .replace(/[\*|@#\$%®<>\-]/g,'.')
@@ -76,7 +76,7 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID ------------------
+// ------------------ PARSER ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
@@ -88,12 +88,12 @@ function parseMatches(lines){
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            // extrage ultimele două linii fără cifre din buffer ca home/away
-            let lastTextLines = buffer.filter(l=>!l.match(/\d/));
-            let home="", away="";
-            if(lastTextLines.length>=2){
-                away = lastTextLines[lastTextLines.length-1];
-                home = lastTextLines[lastTextLines.length-2];
+            let home="", away=""
+            for(let i=buffer.length-1;i>=0;i--){
+                if(!buffer[i].match(/\d/)){
+                    if(!away) away=buffer[i]
+                    else { home=buffer[i]; break }
+                }
             }
 
             if(home && away && home!==away){
@@ -110,16 +110,15 @@ function parseMatches(lines){
 
 // ------------------ CALCUL PROBABILITATE ------------------
 function calculate(match){
-    let p1=1/match.odd1;
-    let pX=1/match.oddX;
-    let p2=1/match.odd2;
-    let total=p1+pX+p2;
-    p1/=total; pX/=total; p2/=total;
-    let maxProb=Math.max(p1,pX,p2);
-
-    let pick = maxProb === p1 ? match.home : maxProb === p2 ? match.away : "Egal";
-    let percent = (maxProb*100).toFixed(2);
-    return {pick,percent,maxProb};
+    let p1=1/match.odd1
+    let pX=1/match.oddX
+    let p2=1/match.odd2
+    let total=p1+pX+p2
+    p1/=total; pX/=total; p2/=total
+    let maxProb=Math.max(p1,pX,p2)
+    let pick = maxProb===p1 ? match.home : maxProb===p2 ? match.away : "Egal"
+    let percent=(maxProb*100).toFixed(2)
+    return {pick,percent,maxProb}
 }
 
 // ------------------ DISPLAY ------------------
@@ -167,7 +166,7 @@ async function fetchLiveForm(team){
     }
 }
 
-// ------------------ RUN OCR & DRAW ------------------
+// ------------------ RUN OCR ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
     if(!file){ alert("Selectează o poză"); return }
@@ -191,7 +190,6 @@ async function runOCR(){
         for(let m of matches){
             let homeScore = await fetchLiveForm(m.home)
             let awayScore = await fetchLiveForm(m.away)
-            // ajustăm scorul probabilității
             m.odd1 = m.odd1 * (1 - homeScore*0.2)
             m.odd2 = m.odd2 * (1 - awayScore*0.2)
             m.oddX = m.oddX * (1 - ((homeScore+awayScore)/2)*0.1)
