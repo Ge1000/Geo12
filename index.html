@@ -76,11 +76,10 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID FIX ------------------
+// ------------------ PARSER FIX PENTRU LINIILE AIUREA ------------------
 function parseMatches(lines){
     let matches = [];
     let buffer = [];
-
     const teamPattern = /^[a-zA-ZÀ-ÿ0-9\s\.\-]+$/;
 
     for(let line of lines){
@@ -94,7 +93,8 @@ function parseMatches(lines){
             let odd2 = parseFloat(odds[2]);
 
             let home = "", away = "";
-            for(let i = buffer.length-1; i >= 0; i--){
+            // ia ultimele două linii valide care par a fi echipe
+            for(let i = buffer.length-1; i>=0; i--){
                 if(teamPattern.test(buffer[i])){
                     if(!away) away = buffer[i];
                     else { home = buffer[i]; break; }
@@ -102,9 +102,7 @@ function parseMatches(lines){
             }
 
             if(home && away && home !== away){
-                if(!matches.some(m => m.home === home && m.away === away)){
-                    matches.push({home, away, odd1, oddX, odd2});
-                }
+                matches.push({home, away, odd1, oddX, odd2});
             }
         } else {
             if(teamPattern.test(line)) buffer.push(line);
