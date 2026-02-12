@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Live PRO+</title>
+<title>Smart Live PRO++</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
@@ -41,7 +41,7 @@ button{
 </head>
 <body>
 
-<h2>Smart Live PRO+ 🧠⚽</h2>
+<h2>Smart Live PRO++ 🧠⚽</h2>
 
 <input type="file" id="imageInput" accept="image/*"><br>
 <button onclick="runOCR()">Rulează analiză</button>
@@ -71,7 +71,7 @@ async function runOCR(){
     await worker.terminate()
 
     const lines = rebuildLines(data.words)
-    const matches = parseMatchesProPlus(lines)
+    const matches = parseMatches(lines)
 
     display(matches)
 }
@@ -81,9 +81,7 @@ function rebuildLines(words){
     let map = {}
 
     words.forEach(w=>{
-
         let y = Math.round(w.bbox.y0 / 12) * 12
-
         if(!map[y]) map[y] = []
 
         map[y].push({
@@ -104,41 +102,67 @@ function rebuildLines(words){
         .filter(l=>l.length>2)
 }
 
-function parseMatchesProPlus(lines){
+function parseMatches(lines){
 
     let matches=[]
+    let teamBuffer=[]
+
+    const bannedWords = [
+        "meci","egal","1","x","2",
+        "p","pj","v","e","i","g","pts"
+    ]
+
+    function isTeam(line){
+
+        let lower = line.toLowerCase()
+
+        if(line.match(/\d/)) return false
+
+        for(let word of bannedWords){
+            if(lower === word) return false
+            if(lower.startsWith(word+" ")) return false
+        }
+
+        if(lower.includes("cote")) return false
+
+        return line.length > 3
+    }
 
     for(let i=0;i<lines.length;i++){
 
-        let odds = lines[i].match(/(\d+\.\d+)/g)
+        let line = lines[i]
+
+        if(isTeam(line)){
+            teamBuffer.push(line)
+        }
+
+        let odds = line.match(/(\d+\.\d+)/g)
 
         if(odds && odds.length>=3){
 
-            let home = lines[i-2] || ""
-            let away = lines[i-1] || ""
+            if(teamBuffer.length>=2){
 
-            if(validTeam(home) && validTeam(away)){
+                let home = teamBuffer[teamBuffer.length-2]
+                let away = teamBuffer[teamBuffer.length-1]
 
                 matches.push({
-                    home:cleanTeam(home),
-                    away:cleanTeam(away),
+                    home:clean(home),
+                    away:clean(away),
                     odd1:parseFloat(odds[0]),
                     oddX:parseFloat(odds[1]),
                     odd2:parseFloat(odds[2])
                 })
             }
+
+            teamBuffer=[]
         }
     }
 
     return matches
 }
 
-function validTeam(t){
-    return t && !t.match(/\d/) && t.length>2
-}
-
-function cleanTeam(t){
-    return t.replace(/[^\w\s\.]/g,"").trim()
+function clean(text){
+    return text.replace(/[^\w\s\.\-]/g,"").trim()
 }
 
 function display(matches){
@@ -153,25 +177,29 @@ function display(matches){
 
     matches.forEach(m=>{
 
-        let prob1 = (1/m.odd1)
-        let probX = (1/m.oddX)
-        let prob2 = (1/m.odd2)
+        let prob1 = 1/m.odd1
+        let probX = 1/m.oddX
+        let prob2 = 1/m.odd2
 
         let sum = prob1+probX+prob2
 
-        let p1 = (prob1/sum*100).toFixed(2)
-        let pX = (probX/sum*100).toFixed(2)
-        let p2 = (prob2/sum*100).toFixed(2)
+        let p1 = (prob1/sum*100)
+        let pX = (probX/sum*100)
+        let p2 = (prob2/sum*100)
 
         let max = Math.max(p1,pX,p2)
-        let rec = max==p1?m.home:max==pX?"Egal":m.away
+
+        let rec =
+            max===p1 ? m.home :
+            max===pX ? "Egal" :
+            m.away
 
         out.innerHTML += `
         <div class="match">
             <strong>${m.home} vs ${m.away}</strong><br>
             Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
             🔥 Recomandare Smart: ${rec}<br>
-            Scor încredere: ${max}%
+            Scor încredere: ${max.toFixed(2)}%
         </div>`
     })
 }
