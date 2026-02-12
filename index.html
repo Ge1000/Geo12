@@ -65,41 +65,38 @@ canvas{
 
 <script>
 
-// ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
-        .replace(/[\*|@#\$%®<>\-]/g,'.')
+        .replace(/[\*|@#\$%®<>\-]/g,' ')
         .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
+        .replace(/[^a-zA-Z0-9\.\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER FINAL STABIL ------------------
+// ------------------ PARSER DEFINITIV ------------------
 function parseMatches(lines){
     let matches=[]
-    let buffer=[]
+    let tempTeams=[]
 
-    function normalizeTeam(text){
-        return text
-            .replace(/\.+/g,' ')
-            .replace(/\b[Ii]\b/g,'')
-            .replace(/\b[PJj]\b/g,'')
+    function cleanTeam(name){
+        return name
+            .replace(/\b(I|Jj|P)\b/g,'')
             .replace(/\s{2,}/g,' ')
             .trim()
     }
 
     for(let line of lines){
 
-        let lower=line.toLowerCase().trim()
+        let lower=line.toLowerCase()
 
         if(
             lower.includes('acasa') ||
             lower.includes('live') ||
             lower.includes('bonus') ||
             lower.includes('meni') ||
-            lower === 'meci' ||
+            lower==='meci' ||
             lower.includes('premier') ||
             lower.includes('efortuna')
         ) continue
@@ -108,47 +105,46 @@ function parseMatches(lines){
 
         if(odds && odds.length>=3){
 
-            let odd1=parseFloat(odds[0])
-            let oddX=parseFloat(odds[1])
-            let odd2=parseFloat(odds[2])
+            if(tempTeams.length>=2){
 
-            let home=""
-            let away=""
+                let home=tempTeams[tempTeams.length-2]
+                let away=tempTeams[tempTeams.length-1]
 
-            for(let i=buffer.length-1;i>=0;i--){
-                let candidate=normalizeTeam(buffer[i])
-
-                if(!candidate.match(/\d/) && candidate.toLowerCase()!=='meci'){
-
-                    // dacă OCR a pus ambele echipe pe aceeași linie
-                    let split=candidate.split(/\s{2,}/)
-
-                    if(split.length===2){
-                        home=split[0]
-                        away=split[1]
-                        break
-                    }
-
-                    if(!away) away=candidate
-                    else { home=candidate; break }
-                }
+                matches.push({
+                    home,
+                    away,
+                    odd1:parseFloat(odds[0]),
+                    oddX:parseFloat(odds[1]),
+                    odd2:parseFloat(odds[2])
+                })
             }
 
-            if(home && away && home!==away){
-                if(!matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({home,away,odd1,oddX,odd2})
+            tempTeams=[]
+        }
+        else{
+
+            if(!line.match(/\d/)){
+                let cleaned=cleanTeam(line)
+
+                let words=cleaned.split(" ")
+
+                // dacă sunt 3+ cuvinte, împărțim în două jumătăți
+                if(words.length>=3){
+                    let mid=Math.floor(words.length/2)
+                    let home=words.slice(0,mid).join(" ")
+                    let away=words.slice(mid).join(" ")
+                    tempTeams.push(home)
+                    tempTeams.push(away)
+                } else {
+                    tempTeams.push(cleaned)
                 }
             }
-
-        } else {
-            buffer.push(line)
         }
     }
 
     return matches
 }
 
-// ------------------ CALCUL PROBABILITATE ------------------
 function calculate(match){
     let p1=1/match.odd1
     let pX=1/match.oddX
@@ -161,14 +157,15 @@ function calculate(match){
     return {pick,percent,maxProb}
 }
 
-// ------------------ DISPLAY ------------------
 function display(matches){
     let container=document.getElementById("output")
     container.innerHTML=""
+
     if(matches.length===0){
         container.innerHTML="Nu s-au detectat meciuri valide."
         return
     }
+
     matches.forEach(m=>{
         let calc=calculate(m)
         let level="low"
@@ -186,7 +183,6 @@ function display(matches){
     })
 }
 
-// ------------------ LIVE FORM FETCH ------------------
 async function fetchLiveForm(team){
     const API_KEY="CHEIA_TA_API";
     try{
@@ -199,12 +195,10 @@ async function fetchLiveForm(team){
         })
         return score/5
     }catch(e){
-        console.error("Eroare API:",e)
         return 0.5
     }
 }
 
-// ------------------ RUN OCR ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
     if(!file){ alert("Selectează o poză"); return }
@@ -218,7 +212,7 @@ async function runOCR(){
         canvas.height=img.height
         ctx.drawImage(img,0,0)
 
-        let {data:{text,words}}=await Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
+        let {data:{text,words}}=await Tesseract.recognize(file,'eng')
 
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
@@ -250,6 +244,5 @@ async function runOCR(){
 }
 
 </script>
-
 </body>
 </html>
