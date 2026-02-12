@@ -64,6 +64,7 @@ canvas{
 <div id="output"></div>
 
 <script>
+
 // ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
@@ -90,8 +91,9 @@ function parseMatches(lines){
             let home="", away=""
             for(let i=buffer.length-1;i>=0;i--){
                 if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]
-                    else { home=buffer[i]; break }
+                    let cleanLine = buffer[i].replace(/^Meci vs\s*/i,'').trim() // FIX: curățăm „Meci vs”
+                    if(!away) away=cleanLine
+                    else { home=cleanLine; break }
                 }
             }
 
@@ -151,15 +153,17 @@ async function fetchLiveForm(team){
     try {
         let res = await fetch(`https://api.exemplu.com/results?team=${encodeURIComponent(team)}&last=5&apikey=${API_KEY}`)
         let data = await res.json()
+        // calcul simplu scor încredere pe baza rezultatelor
+        // Win=1, Draw=0.5, Loss=0
         let score=0
         data.results.forEach(r=>{
             if(r.result==="win") score+=1
             else if(r.result==="draw") score+=0.5
         })
-        return score / 5
+        return score / 5 // medie ultimele 5 meciuri
     } catch(e){
         console.error("Eroare API:", e)
-        return 0.5
+        return 0.5 // fallback neutru
     }
 }
 
@@ -183,10 +187,11 @@ async function runOCR(){
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
 
-        // ajustăm scorul live pentru fiecare echipă
+        // adaugă scorul live pentru fiecare echipă (dacă vrei integrarea API)
         for(let m of matches){
             let homeScore = await fetchLiveForm(m.home)
             let awayScore = await fetchLiveForm(m.away)
+            // ajustăm scorul probabilității
             m.odd1 = m.odd1 * (1 - homeScore*0.2)
             m.odd2 = m.odd2 * (1 - awayScore*0.2)
             m.oddX = m.oddX * (1 - ((homeScore+awayScore)/2)*0.1)
@@ -209,6 +214,7 @@ async function runOCR(){
     }
     img.src=URL.createObjectURL(file)
 }
+
 </script>
 
 </body>
