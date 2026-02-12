@@ -70,7 +70,7 @@ function cleanOCR(text){
     return text
         .replace(/[\*|@#\$%®<>\-]/g,'.')
         .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
+        .replace(/[^a-zA-Z0-9\.\/\sÀ-ÿ]/g,'')
         .split("\n")
         .map(l=>l.trim())
         .filter(l=>l.length>1)
@@ -78,31 +78,40 @@ function cleanOCR(text){
 
 // ------------------ PARSER ULTRA HYBRID FIX ------------------
 function parseMatches(lines){
-    let matches=[]
-    let buffer=[]
+    let matches = [];
+    let buffer = [];
+
+    const teamPattern = /^[a-zA-ZÀ-ÿ0-9\s\.\-]+$/;
+
     for(let line of lines){
-        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
+        line = line.trim();
+        if(!line || line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue;
+        
+        let odds = line.match(/(\d+\.\d+)/g);
+        if(odds && odds.length >= 3){
+            let odd1 = parseFloat(odds[0]);
+            let oddX = parseFloat(odds[1]);
+            let odd2 = parseFloat(odds[2]);
 
-        let cleanLine = line.replace(/[@#\$%¥{}\\*<>]/g,'').trim()
-        if(!cleanLine) continue
+            let home = "", away = "";
+            for(let i = buffer.length-1; i >= 0; i--){
+                if(teamPattern.test(buffer[i])){
+                    if(!away) away = buffer[i];
+                    else { home = buffer[i]; break; }
+                }
+            }
 
-        let odds = cleanLine.match(/(\d+\.\d+)/g)
-        if(odds && odds.length>=3){
-            let odd1=parseFloat(odds[0])
-            let oddX=parseFloat(odds[1])
-            let odd2=parseFloat(odds[2])
-
-            let teams = buffer.filter(l=>l.length>1)
-            let home = teams.length>=2 ? teams[teams.length-2] : "Meci"
-            let away = teams.length>=1 ? teams[teams.length-1] : "Meci"
-
-            matches.push({home, away, odd1, oddX, odd2})
-            buffer=[]
+            if(home && away && home !== away){
+                if(!matches.some(m => m.home === home && m.away === away)){
+                    matches.push({home, away, odd1, oddX, odd2});
+                }
+            }
         } else {
-            buffer.push(cleanLine)
+            if(teamPattern.test(line)) buffer.push(line);
         }
     }
-    return matches
+
+    return matches;
 }
 
 // ------------------ CALCUL PROBABILITATE ------------------
