@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.25 Smart Live 5 🧠⚽</title>
+<title>Smart Live PRO++ 🧠⚽</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -51,7 +51,7 @@ canvas{
 </head>
 <body>
 
-<h1>Pick 5.6.25 Smart Live 5 🧠⚽</h1>
+<h1>Smart Live PRO++ 🧠⚽</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -65,7 +65,7 @@ canvas{
 
 <script>
 
-// ------------------ CLEAN OCR FLEX ------------------
+// ------------------ CLEAN OCR ------------------
 function cleanOCR(text){
     return text
         .replace(/[\*|@#\$%®<>\-]/g,'.')
@@ -76,12 +76,11 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID ------------------
+// ------------------ PARSER ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
     for(let line of lines){
-        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
         let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
@@ -108,7 +107,7 @@ function parseMatches(lines){
     return matches
 }
 
-// ------------------ LIVE FORM FETCH (ULTIMELE 5 MECIURI) ------------------
+// ------------------ LIVE FORM FETCH ------------------
 async function fetchLiveForm(team){
     const API_KEY = "CHEIA_TA_API"; // <-- pune aici cheia ta API
     try {
@@ -119,14 +118,14 @@ async function fetchLiveForm(team){
             if(r.result==="win") score+=1
             else if(r.result==="draw") score+=0.5
         })
-        return score / 5 // medie ultimele 5 meciuri
+        return score / 5
     } catch(e){
         console.error("Eroare API:", e)
-        return 0.5 // fallback neutru
+        return 0.5
     }
 }
 
-// ------------------ DISPLAY FIXED ------------------
+// ------------------ DISPLAY ------------------
 function display(matches){
     let container = document.getElementById("output");
     container.innerHTML = "";
@@ -180,7 +179,6 @@ async function runOCR(){
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
 
-        // adaugă scorul live pentru fiecare echipă
         for(let m of matches){
             let homeScore = await fetchLiveForm(m.home)
             let awayScore = await fetchLiveForm(m.away)
