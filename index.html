@@ -68,59 +68,51 @@ canvas{
 // ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
-        .replace(/[\*|@#\$%®<>\-]/g,'.')
+        .replace(/[\*|@#\$%®<>]/g,'')
         .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
-        .filter(l=>l.length>1)
+        .filter(l=>l.length>0)
 }
 
-// ------------------ PARSER ULTRA HYBRID ------------------
+// ------------------ PARSER ULTRA HYBRID (FIX FINAL) ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
     for(let line of lines){
+        // ignorăm meniurile și elementele UI
         if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
+
         let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
+            // combinăm toate liniile text din buffer pentru home și away
+            let textBefore = buffer.join(' ').replace(/\s{2,}/g,' ').trim()
+            buffer=[]
+            let parts = textBefore.split(' vs ')
             let home="", away=""
-            for(let i=buffer.length-1;i>=0;i--){
-                if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]
-                    else { home=buffer[i]; break }
+            if(parts.length===2){
+                home=parts[0].trim()
+                away=parts[1].trim()
+            } else {
+                // fallback simplu: ultimele două cuvinte ca home/away
+                let words = textBefore.split(' ')
+                if(words.length>=2){
+                    away = words.pop().trim()
+                    home = words.join(' ').trim()
                 }
             }
 
             if(home && away && home!==away){
-                if(!matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({home,away,odd1,oddX,odd2})
-                }
+                matches.push({home,away,odd1,oddX,odd2})
             }
         } else {
             buffer.push(line)
         }
     }
-
-    // --------- FIX: adăugăm ultimul meci din buffer dacă există ----------
-    if(buffer.length >= 2){
-        let odds = buffer.slice(-3)
-        if(odds.every(o=>!isNaN(parseFloat(o)))){
-            let odd1=parseFloat(odds[0])
-            let oddX=parseFloat(odds[1])
-            let odd2=parseFloat(odds[2])
-            let home=buffer[buffer.length-3]
-            let away=buffer[buffer.length-2]
-            if(!matches.some(m=>m.home===home && m.away===away)){
-                matches.push({home,away,odd1,oddX,odd2})
-            }
-        }
-    }
-
     return matches
 }
 
@@ -181,7 +173,6 @@ async function runOCR(){
 
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
-
         display(matches)
 
         // Desenează casete pe cuvinte ce conțin cote
