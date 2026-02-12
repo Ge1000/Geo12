@@ -110,15 +110,20 @@ function parseMatches(lines){
 
 // ------------------ CALCUL PROBABILITATE ------------------
 function calculate(match){
-    let p1=1/match.odd1
-    let pX=1/match.oddX
-    let p2=1/match.odd2
-    let total=p1+pX+p2
-    p1/=total; pX/=total; p2/=total
-    let maxProb=Math.max(p1,pX,p2)
+    let p1 = 1 / match.odd1
+    let pX = 1 / match.oddX
+    let p2 = 1 / match.odd2
+    let total = p1 + pX + p2
+    p1 /= total; pX /= total; p2 /= total
 
-// FIX: afișăm echipa câștigătoare sau "Egal"
-let pick = maxProb === p1 ? match.home : maxProb === p2 ? match.away : "Egal"
+    let maxProb = Math.max(p1, pX, p2)
+
+    // FIX: afișăm echipa câștigătoare sau "Egal"
+    let pick = maxProb === p1 ? match.home : maxProb === p2 ? match.away : "Egal"
+
+    let percent = (maxProb * 100).toFixed(2)
+    return { pick, percent, maxProb }
+}
 
 // ------------------ DISPLAY ------------------
 function display(matches){
