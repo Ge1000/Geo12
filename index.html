@@ -76,23 +76,45 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID ------------------
+// ------------------ PARSER ULTRA HYBRID (FIXED) ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
+
     for(let line of lines){
-        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
+
+        let lower=line.toLowerCase().trim()
+
+        if(
+            lower.includes('acasa') ||
+            lower.includes('live') ||
+            lower.includes('bonus') ||
+            lower.includes('meni') ||
+            lower === 'meci' ||
+            lower.includes('premier') ||
+            lower.includes('efortuna')
+        ) continue
+
         let odds = line.match(/(\d+\.\d+)/g)
+
         if(odds && odds.length>=3){
+
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            let home="", away=""
+            let home=""
+            let away=""
+
             for(let i=buffer.length-1;i>=0;i--){
-                if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]
-                    else { home=buffer[i]; break }
+                let candidate=buffer[i].trim()
+
+                if(
+                    !candidate.match(/\d/) &&
+                    candidate.toLowerCase()!=='meci'
+                ){
+                    if(!away) away=candidate
+                    else { home=candidate; break }
                 }
             }
 
@@ -101,10 +123,12 @@ function parseMatches(lines){
                     matches.push({home,away,odd1,oddX,odd2})
                 }
             }
+
         } else {
             buffer.push(line)
         }
     }
+
     return matches
 }
 
@@ -148,21 +172,19 @@ function display(matches){
 
 // ------------------ LIVE FORM FETCH (ULTIMELE 5 MECIURI) ------------------
 async function fetchLiveForm(team){
-    const API_KEY = "CHEIA_TA_API"; // <-- pune aici cheia ta API
+    const API_KEY = "CHEIA_TA_API";
     try {
         let res = await fetch(`https://api.exemplu.com/results?team=${encodeURIComponent(team)}&last=5&apikey=${API_KEY}`)
         let data = await res.json()
-        // calcul simplu scor încredere pe baza rezultatelor
-        // Win=1, Draw=0.5, Loss=0
         let score=0
         data.results.forEach(r=>{
             if(r.result==="win") score+=1
             else if(r.result==="draw") score+=0.5
         })
-        return score / 5 // medie ultimele 5 meciuri
+        return score/5
     } catch(e){
         console.error("Eroare API:", e)
-        return 0.5 // fallback neutru
+        return 0.5
     }
 }
 
@@ -174,32 +196,30 @@ async function runOCR(){
     let canvas=document.getElementById("canvas")
     let ctx=canvas.getContext("2d")
     let img=new Image()
+
     img.onload = async function(){
-        canvas.width = img.width
-        canvas.height = img.height
+        canvas.width=img.width
+        canvas.height=img.height
         ctx.drawImage(img,0,0)
 
-        let { data: { text, words } } = await Tesseract.recognize(file,'eng',{
+        let { data:{ text, words } } = await Tesseract.recognize(file,'eng',{
             logger:m=>console.log(m)
         })
 
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
 
-        // adaugă scorul live pentru fiecare echipă
         for(let m of matches){
-            let homeScore = await fetchLiveForm(m.home)
-            let awayScore = await fetchLiveForm(m.away)
-            // ajustăm scorul probabilității
-            let totalScore = homeScore + awayScore
-            m.odd1 = m.odd1 * (1 - homeScore*0.2)
-            m.odd2 = m.odd2 * (1 - awayScore*0.2)
-            m.oddX = m.oddX * (1 - ((homeScore+awayScore)/2)*0.1)
+            let homeScore=await fetchLiveForm(m.home)
+            let awayScore=await fetchLiveForm(m.away)
+
+            m.odd1=m.odd1*(1-homeScore*0.2)
+            m.odd2=m.odd2*(1-awayScore*0.2)
+            m.oddX=m.oddX*(1-((homeScore+awayScore)/2)*0.1)
         }
 
         display(matches)
 
-        // Desenează casete pe cuvinte ce conțin cote
         ctx.strokeStyle="red"
         ctx.lineWidth=2
         ctx.font="18px Arial"
@@ -212,6 +232,7 @@ async function runOCR(){
             }
         })
     }
+
     img.src=URL.createObjectURL(file)
 }
 
