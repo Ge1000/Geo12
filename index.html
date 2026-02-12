@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Live PRO++ 🧠⚽</title>
+<title>Pick 5.6.25 Smart Live 5 🧠⚽</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -51,7 +51,7 @@ canvas{
 </head>
 <body>
 
-<h1>Smart Live PRO++ 🧠⚽</h1>
+<h1>Pick 5.6.25 Smart Live 5 🧠⚽</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -65,7 +65,7 @@ canvas{
 
 <script>
 
-// ------------------ CLEAN OCR ------------------
+// ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
         .replace(/[\*|@#\$%®<>\-]/g,'.')
@@ -76,11 +76,12 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ------------------
+// ------------------ PARSER ULTRA HYBRID ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
     for(let line of lines){
+        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
         let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
@@ -107,7 +108,45 @@ function parseMatches(lines){
     return matches
 }
 
-// ------------------ LIVE FORM FETCH ------------------
+// ------------------ CALCUL PROBABILITATE FIX ------------------
+function calculate(match){
+    let p1=1/match.odd1
+    let pX=1/match.oddX
+    let p2=1/match.odd2
+    let total=p1+pX+p2
+    p1/=total; pX/=total; p2/=total
+    let maxProb=Math.max(p1,pX,p2)
+    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
+    let percent=(maxProb*100).toFixed(2)
+    return {pick,percent,maxProb}
+}
+
+// ------------------ DISPLAY FIX ------------------
+function display(matches){
+    let container=document.getElementById("output")
+    container.innerHTML=""
+    if(matches.length===0){
+        container.innerHTML="Nu s-au detectat meciuri valide."
+        return
+    }
+    matches.forEach(m=>{
+        let calc=calculate(m)
+        let level="low"
+        if(calc.maxProb>0.55) level="high"
+        else if(calc.maxProb>0.40) level="medium"
+
+        container.innerHTML+=`
+        <div class="match ${level}">
+        <b>${m.home} vs ${m.away}</b><br>
+        Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
+        🔥 Recomandare Smart: <b>${calc.pick}</b><br>
+        Scor încredere: ${calc.percent}%
+        </div>
+        `
+    })
+}
+
+// ------------------ LIVE FORM FETCH (ULTIMELE 5 MECIURI) ------------------
 async function fetchLiveForm(team){
     const API_KEY = "CHEIA_TA_API"; // <-- pune aici cheia ta API
     try {
@@ -123,40 +162,6 @@ async function fetchLiveForm(team){
         console.error("Eroare API:", e)
         return 0.5
     }
-}
-
-// ------------------ DISPLAY ------------------
-function display(matches){
-    let container = document.getElementById("output");
-    container.innerHTML = "";
-    if(matches.length === 0){
-        container.innerHTML = "Nu s-au detectat meciuri valide.";
-        return;
-    }
-    matches.forEach(m => {
-        let p1 = 1 / m.odd1;
-        let pX = 1 / m.oddX;
-        let p2 = 1 / m.odd2;
-        let total = p1 + pX + p2;
-        p1 /= total; pX /= total; p2 /= total;
-
-        let maxProb = Math.max(p1, pX, p2);
-        let pick = maxProb === p1 ? m.home : maxProb === p2 ? m.away : "Egal";
-        let percent = (maxProb * 100).toFixed(2);
-
-        let level = "low";
-        if(maxProb > 0.55) level = "high";
-        else if(maxProb > 0.40) level = "medium";
-
-        container.innerHTML += `
-        <div class="match ${level}">
-            <b>${m.home} vs ${m.away}</b><br>
-            Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
-            🔥 Recomandare Smart: <b>${pick}</b><br>
-            Scor încredere: ${percent}%
-        </div>
-        `;
-    });
 }
 
 // ------------------ RUN OCR & DRAW ------------------
@@ -179,6 +184,7 @@ async function runOCR(){
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
 
+        // adaugă scorul live pentru fiecare echipă
         for(let m of matches){
             let homeScore = await fetchLiveForm(m.home)
             let awayScore = await fetchLiveForm(m.away)
@@ -189,6 +195,7 @@ async function runOCR(){
 
         display(matches)
 
+        // Desenează casete pe cuvinte ce conțin cote
         ctx.strokeStyle="red"
         ctx.lineWidth=2
         ctx.font="18px Arial"
