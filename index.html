@@ -88,12 +88,12 @@ function parseMatches(lines){
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            let home="", away=""
-            for(let i=buffer.length-1;i>=0;i--){
-                if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]
-                    else { home=buffer[i]; break }
-                }
+            // extrage ultimele două linii fără cifre din buffer ca home/away
+            let lastTextLines = buffer.filter(l=>!l.match(/\d/));
+            let home="", away="";
+            if(lastTextLines.length>=2){
+                away = lastTextLines[lastTextLines.length-1];
+                home = lastTextLines[lastTextLines.length-2];
             }
 
             if(home && away && home!==away){
@@ -108,7 +108,7 @@ function parseMatches(lines){
     return matches
 }
 
-// ------------------ CALCUL PROBABILITATE (FIX FINAL) ------------------
+// ------------------ CALCUL PROBABILITATE ------------------
 function calculate(match){
     let p1=1/match.odd1;
     let pX=1/match.oddX;
@@ -117,14 +117,9 @@ function calculate(match){
     p1/=total; pX/=total; p2/=total;
     let maxProb=Math.max(p1,pX,p2);
 
-    // FIX: Recomandarea Smart va afișa NUMELE echipei sau "Egal"
-    let pick="";
-    if(maxProb === p1) pick = match.home;
-    else if(maxProb === p2) pick = match.away;
-    else pick = "Egal";
-
-    let percent=(maxProb*100).toFixed(2);
-    return {pick, percent, maxProb};
+    let pick = maxProb === p1 ? match.home : maxProb === p2 ? match.away : "Egal";
+    let percent = (maxProb*100).toFixed(2);
+    return {pick,percent,maxProb};
 }
 
 // ------------------ DISPLAY ------------------
