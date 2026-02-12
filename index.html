@@ -64,51 +64,49 @@ canvas{
 <div id="output"></div>
 
 <script>
-
 // ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
         .replace(/[\*|@#\$%®<>\-]/g,'.')
         .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
-        .filter(l=>l.length>1)
+        .filter(l=>l.length>1 && !l.match(/^[\(\)Dczouwmai0-9]+$/i))
 }
 
-// ------------------ PARSER ULTRA HYBRID FIX ------------------
+// ------------------ PARSER ULTRA HYBRID ------------------
 function parseMatches(lines){
-    let matches = [];
-    let buffer = [];
-    const teamPattern = /^[a-zA-ZÀ-ÿ0-9\s\.\-]+$/; // doar caractere legitime echipe
-
+    let matches=[]
+    let buffer=[]
     for(let line of lines){
-        line = line.trim();
-        if(!line || line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue;
-        
-        let odds = line.match(/(\d+\.\d+)/g);
-        if(odds && odds.length >= 3){
-            let odd1 = parseFloat(odds[0]);
-            let oddX = parseFloat(odds[1]);
-            let odd2 = parseFloat(odds[2]);
+        // elimină linii inutile
+        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
 
-            let home = "", away = "";
-            for(let i = buffer.length-1; i>=0; i--){
-                if(teamPattern.test(buffer[i])){
-                    if(!away) away = buffer[i];
-                    else { home = buffer[i]; break; }
+        let odds = line.match(/(\d+\.\d+)/g)
+        if(odds && odds.length>=3){
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
+
+            let home="", away=""
+            for(let i=buffer.length-1;i>=0;i--){
+                if(!buffer[i].match(/\d/)){
+                    if(!away) away=buffer[i]
+                    else { home=buffer[i]; break }
                 }
             }
 
-            if(home && away && home !== away){
-                matches.push({home, away, odd1, oddX, odd2});
+            if(home && away && home!==away){
+                if(!matches.some(m=>m.home===home && m.away===away)){
+                    matches.push({home,away,odd1,oddX,odd2})
+                }
             }
+            buffer=[]
         } else {
-            if(teamPattern.test(line)) buffer.push(line);
+            buffer.push(line)
         }
     }
-
-    return matches;
+    return matches
 }
 
 // ------------------ CALCUL PROBABILITATE ------------------
@@ -149,6 +147,24 @@ function display(matches){
     })
 }
 
+// ------------------ LIVE FORM FETCH (ULTIMELE 5 MECIURI) ------------------
+async function fetchLiveForm(team){
+    const API_KEY = "CHEIA_TA_API"; // <-- pune aici cheia ta API
+    try {
+        let res = await fetch(`https://api.exemplu.com/results?team=${encodeURIComponent(team)}&last=5&apikey=${API_KEY}`)
+        let data = await res.json()
+        let score=0
+        data.results.forEach(r=>{
+            if(r.result==="win") score+=1
+            else if(r.result==="draw") score+=0.5
+        })
+        return score / 5
+    } catch(e){
+        console.error("Eroare API:", e)
+        return 0.5
+    }
+}
+
 // ------------------ RUN OCR & DRAW ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
@@ -169,6 +185,15 @@ async function runOCR(){
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
 
+        // LIVE FORM adjustments
+        for(let m of matches){
+            let homeScore = await fetchLiveForm(m.home)
+            let awayScore = await fetchLiveForm(m.away)
+            m.odd1 = m.odd1 * (1 - homeScore*0.2)
+            m.odd2 = m.odd2 * (1 - awayScore*0.2)
+            m.oddX = m.oddX * (1 - ((homeScore+awayScore)/2)*0.1)
+        }
+
         display(matches)
 
         // Desenează casete pe cuvinte ce conțin cote
@@ -186,7 +211,6 @@ async function runOCR(){
     }
     img.src=URL.createObjectURL(file)
 }
-
 </script>
 
 </body>
