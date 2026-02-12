@@ -3,115 +3,128 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pick 5.6.25 Smart Live 5 🧠⚽</title>
+<title>Smart Live PRO+</title>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
 body{
-  background:#0f172a;
-  color:#e2e8f0;
-  font-family:system-ui;
-  text-align:center;
-  padding:20px;
+    font-family: system-ui;
+    background:#0f1220;
+    color:white;
+    text-align:center;
+    padding:20px;
 }
-h1{color:#22c55e;font-size:22px}
 button{
-  padding:12px 20px;
-  margin:10px;
-  border:none;
-  border-radius:8px;
-  background:#22c55e;
-  color:#000;
-  font-weight:bold;
-  cursor:pointer;
+    padding:12px 20px;
+    font-size:16px;
+    border:none;
+    border-radius:8px;
+    background:#2ecc71;
+    color:black;
+    cursor:pointer;
+    margin-top:10px;
 }
-#preview, #output{
-  margin-top:20px;
-  text-align:left;
+.result{
+    margin-top:20px;
+    padding:15px;
+    background:#1a1f35;
+    border-radius:10px;
 }
 .match{
-  margin:10px 0;
-  padding:12px;
-  background:#111827;
-  border-radius:8px;
-}
-.high{border-left:5px solid #22c55e;}
-.medium{border-left:5px solid #facc15;}
-.low{border-left:5px solid #ef4444;}
-canvas{
-  max-width:100%;
-  margin-top:20px;
-  border:1px solid #444;
-  border-radius:8px;
+    margin-bottom:15px;
+    padding:10px;
+    background:#23284a;
+    border-radius:8px;
 }
 </style>
 </head>
 <body>
 
-<h1>Pick 5.6.25 Smart Live 5 🧠⚽</h1>
+<h2>Smart Live PRO+ 🧠⚽</h2>
 
-<input type="file" id="imageInput">
-<br>
+<input type="file" id="imageInput" accept="image/*"><br>
 <button onclick="runOCR()">Rulează analiză</button>
 
-<h3>Meciuri Detectate</h3>
-<div id="output"></div>
+<div id="output" class="result"></div>
 
 <script>
 
-// ------------------ CLEAN OCR ------------------
-function cleanOCR(text){
-    return text
-        .replace(/[\*|@#\$%®<>\-]/g,'.')
-        .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
-        .split("\n")
-        .map(l=>l.trim())
-        .filter(l=>l.length>1)
+async function runOCR(){
+
+    let file = document.getElementById("imageInput").files[0]
+    if(!file){
+        alert("Selectează o poză")
+        return
+    }
+
+    const worker = await Tesseract.createWorker()
+
+    await worker.loadLanguage('eng')
+    await worker.initialize('eng')
+
+    await worker.setParameters({
+        tessedit_pageseg_mode: 6
+    })
+
+    const { data } = await worker.recognize(file)
+    await worker.terminate()
+
+    const lines = rebuildLines(data.words)
+    const matches = parseMatchesProPlus(lines)
+
+    display(matches)
 }
 
-// ------------------ PARSER FIX DEFINITIV ------------------
-function parseMatches(lines){
-    let matches = []
+function rebuildLines(words){
 
-    for(let i = 0; i < lines.length; i++){
+    let map = {}
+
+    words.forEach(w=>{
+
+        let y = Math.round(w.bbox.y0 / 12) * 12
+
+        if(!map[y]) map[y] = []
+
+        map[y].push({
+            text:w.text,
+            x:w.bbox.x0
+        })
+    })
+
+    return Object.keys(map)
+        .sort((a,b)=>a-b)
+        .map(y=>{
+            return map[y]
+                .sort((a,b)=>a.x-b.x)
+                .map(w=>w.text)
+                .join(" ")
+                .trim()
+        })
+        .filter(l=>l.length>2)
+}
+
+function parseMatchesProPlus(lines){
+
+    let matches=[]
+
+    for(let i=0;i<lines.length;i++){
 
         let odds = lines[i].match(/(\d+\.\d+)/g)
 
-        if(odds && odds.length >= 3){
+        if(odds && odds.length>=3){
 
-            let odd1 = parseFloat(odds[0])
-            let oddX = parseFloat(odds[1])
-            let odd2 = parseFloat(odds[2])
+            let home = lines[i-2] || ""
+            let away = lines[i-1] || ""
 
-            let teams = []
+            if(validTeam(home) && validTeam(away)){
 
-            for(let j = i - 1; j >= 0 && teams.length < 2; j--){
-
-                let text = lines[j].toLowerCase()
-
-                if(
-                    text.includes("meci") ||
-                    text.includes("egal") ||
-                    text.includes("live") ||
-                    text.includes("bonus") ||
-                    text.includes("acasa") ||
-                    text.match(/\d/)
-                ){
-                    continue
-                }
-
-                teams.unshift(lines[j])
-            }
-
-            if(teams.length === 2){
                 matches.push({
-                    home: teams[0],
-                    away: teams[1],
-                    odd1,
-                    oddX,
-                    odd2
+                    home:cleanTeam(home),
+                    away:cleanTeam(away),
+                    odd1:parseFloat(odds[0]),
+                    oddX:parseFloat(odds[1]),
+                    odd2:parseFloat(odds[2])
                 })
             }
         }
@@ -120,64 +133,49 @@ function parseMatches(lines){
     return matches
 }
 
-// ------------------ CALCUL PROBABILITATE ------------------
-function calculate(match){
-    let p1 = 1 / match.odd1
-    let pX = 1 / match.oddX
-    let p2 = 1 / match.odd2
-    let total = p1 + pX + p2
-    p1 /= total; pX /= total; p2 /= total
-
-    let maxProb = Math.max(p1, pX, p2)
-
-    let pick = maxProb === p1 ? match.home : maxProb === p2 ? match.away : "Egal"
-    let percent = (maxProb * 100).toFixed(2)
-
-    return { pick, percent, maxProb }
+function validTeam(t){
+    return t && !t.match(/\d/) && t.length>2
 }
 
-// ------------------ DISPLAY ------------------
+function cleanTeam(t){
+    return t.replace(/[^\w\s\.]/g,"").trim()
+}
+
 function display(matches){
-    let container=document.getElementById("output")
-    container.innerHTML=""
+
+    const out = document.getElementById("output")
+    out.innerHTML = ""
 
     if(matches.length===0){
-        container.innerHTML="Nu s-au detectat meciuri valide."
+        out.innerHTML = "Nu s-au detectat meciuri."
         return
     }
 
     matches.forEach(m=>{
-        let calc=calculate(m)
-        let level="low"
-        if(calc.maxProb>0.55) level="high"
-        else if(calc.maxProb>0.40) level="medium"
 
-        container.innerHTML+=`
-        <div class="match ${level}">
-        <b>${m.home} vs ${m.away}</b><br>
-        Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
-        🔥 Recomandare Smart: <b>${calc.pick}</b><br>
-        Scor încredere: ${calc.percent}%
-        </div>
-        `
+        let prob1 = (1/m.odd1)
+        let probX = (1/m.oddX)
+        let prob2 = (1/m.odd2)
+
+        let sum = prob1+probX+prob2
+
+        let p1 = (prob1/sum*100).toFixed(2)
+        let pX = (probX/sum*100).toFixed(2)
+        let p2 = (prob2/sum*100).toFixed(2)
+
+        let max = Math.max(p1,pX,p2)
+        let rec = max==p1?m.home:max==pX?"Egal":m.away
+
+        out.innerHTML += `
+        <div class="match">
+            <strong>${m.home} vs ${m.away}</strong><br>
+            Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
+            🔥 Recomandare Smart: ${rec}<br>
+            Scor încredere: ${max}%
+        </div>`
     })
-}
-
-// ------------------ RUN OCR ------------------
-async function runOCR(){
-    let file=document.getElementById("imageInput").files[0]
-    if(!file){ alert("Selectează o poză"); return }
-
-    let { data: { text } } = await Tesseract.recognize(file,'eng',{
-        logger:m=>console.log(m)
-    })
-
-    let cleaned=cleanOCR(text)
-    let matches=parseMatches(cleaned)
-    display(matches)
 }
 
 </script>
-
 </body>
 </html>
