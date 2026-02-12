@@ -76,10 +76,19 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID (FIXED) ------------------
+// ------------------ PARSER FINAL STABIL ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
+
+    function normalizeTeam(text){
+        return text
+            .replace(/\.+/g,' ')
+            .replace(/\b[Ii]\b/g,'')
+            .replace(/\b[PJj]\b/g,'')
+            .replace(/\s{2,}/g,' ')
+            .trim()
+    }
 
     for(let line of lines){
 
@@ -95,7 +104,7 @@ function parseMatches(lines){
             lower.includes('efortuna')
         ) continue
 
-        let odds = line.match(/(\d+\.\d+)/g)
+        let odds=line.match(/(\d+\.\d+)/g)
 
         if(odds && odds.length>=3){
 
@@ -107,12 +116,19 @@ function parseMatches(lines){
             let away=""
 
             for(let i=buffer.length-1;i>=0;i--){
-                let candidate=buffer[i].trim()
+                let candidate=normalizeTeam(buffer[i])
 
-                if(
-                    !candidate.match(/\d/) &&
-                    candidate.toLowerCase()!=='meci'
-                ){
+                if(!candidate.match(/\d/) && candidate.toLowerCase()!=='meci'){
+
+                    // dacă OCR a pus ambele echipe pe aceeași linie
+                    let split=candidate.split(/\s{2,}/)
+
+                    if(split.length===2){
+                        home=split[0]
+                        away=split[1]
+                        break
+                    }
+
                     if(!away) away=candidate
                     else { home=candidate; break }
                 }
@@ -170,25 +186,25 @@ function display(matches){
     })
 }
 
-// ------------------ LIVE FORM FETCH (ULTIMELE 5 MECIURI) ------------------
+// ------------------ LIVE FORM FETCH ------------------
 async function fetchLiveForm(team){
-    const API_KEY = "CHEIA_TA_API";
-    try {
-        let res = await fetch(`https://api.exemplu.com/results?team=${encodeURIComponent(team)}&last=5&apikey=${API_KEY}`)
-        let data = await res.json()
+    const API_KEY="CHEIA_TA_API";
+    try{
+        let res=await fetch(`https://api.exemplu.com/results?team=${encodeURIComponent(team)}&last=5&apikey=${API_KEY}`)
+        let data=await res.json()
         let score=0
         data.results.forEach(r=>{
             if(r.result==="win") score+=1
             else if(r.result==="draw") score+=0.5
         })
         return score/5
-    } catch(e){
-        console.error("Eroare API:", e)
+    }catch(e){
+        console.error("Eroare API:",e)
         return 0.5
     }
 }
 
-// ------------------ RUN OCR & DRAW ------------------
+// ------------------ RUN OCR ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
     if(!file){ alert("Selectează o poză"); return }
@@ -197,14 +213,12 @@ async function runOCR(){
     let ctx=canvas.getContext("2d")
     let img=new Image()
 
-    img.onload = async function(){
+    img.onload=async function(){
         canvas.width=img.width
         canvas.height=img.height
         ctx.drawImage(img,0,0)
 
-        let { data:{ text, words } } = await Tesseract.recognize(file,'eng',{
-            logger:m=>console.log(m)
-        })
+        let {data:{text,words}}=await Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
 
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
@@ -212,7 +226,6 @@ async function runOCR(){
         for(let m of matches){
             let homeScore=await fetchLiveForm(m.home)
             let awayScore=await fetchLiveForm(m.away)
-
             m.odd1=m.odd1*(1-homeScore*0.2)
             m.odd2=m.odd2*(1-awayScore*0.2)
             m.oddX=m.oddX*(1-((homeScore+awayScore)/2)*0.1)
