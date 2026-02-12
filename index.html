@@ -65,79 +65,58 @@ canvas{
 
 <script>
 
+// ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
-        .replace(/[\*|@#\$%®<>\-]/g,' ')
+        .replace(/[\*|@#\$%®<>\-]/g,'.')
         .replace(/\s{2,}/g,' ')
-        .replace(/[^a-zA-Z0-9\.\s]/g,'')
+        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER DEFINITIV ------------------
+// ------------------ PARSER ULTRA HYBRID ------------------
 function parseMatches(lines){
     let matches=[]
-    let tempTeams=[]
-
-    function cleanTeam(name){
-        return name
-            .replace(/\b(I|Jj|P)\b/g,'')
-            .replace(/\s{2,}/g,' ')
-            .trim()
-    }
-
+    let buffer=[]
     for(let line of lines){
-
-        let lower=line.toLowerCase()
-
-        if(
-            lower.includes('acasa') ||
-            lower.includes('live') ||
-            lower.includes('bonus') ||
-            lower.includes('meni') ||
-            lower==='meci' ||
-            lower.includes('premier') ||
-            lower.includes('efortuna')
-        ) continue
-
-        let odds=line.match(/(\d+\.\d+)/g)
-
+        if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
+        let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
 
-            if(tempTeams.length>=2){
-
-                let home=tempTeams[tempTeams.length-2]
-                let away=tempTeams[tempTeams.length-1]
-
-                matches.push({
-                    home,
-                    away,
-                    odd1:parseFloat(odds[0]),
-                    oddX:parseFloat(odds[1]),
-                    odd2:parseFloat(odds[2])
-                })
+            let home="", away=""
+            for(let i=buffer.length-1;i>=0;i--){
+                if(!buffer[i].match(/\d/)){
+                    if(!away) away=buffer[i]
+                    else { home=buffer[i]; break }
+                }
             }
 
-            tempTeams=[]
-        }
-        else{
-
-            if(!line.match(/\d/)){
-                let cleaned=cleanTeam(line)
-
-                let words=cleaned.split(" ")
-
-                // dacă sunt 3+ cuvinte, împărțim în două jumătăți
-                if(words.length>=3){
-                    let mid=Math.floor(words.length/2)
-                    let home=words.slice(0,mid).join(" ")
-                    let away=words.slice(mid).join(" ")
-                    tempTeams.push(home)
-                    tempTeams.push(away)
-                } else {
-                    tempTeams.push(cleaned)
+            if(home && away && home!==away){
+                if(!matches.some(m=>m.home===home && m.away===away)){
+                    matches.push({home,away,odd1,oddX,odd2})
                 }
+            }
+        } else {
+            buffer.push(line)
+        }
+    }
+
+    // --------- FIX: adăugăm ultimul meci din buffer dacă există ----------
+    if(buffer.length >= 2){
+        let odds = buffer.slice(-3)
+        if(odds.every(o=>!isNaN(parseFloat(o)))){
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
+            let home=buffer[buffer.length-3]
+            let away=buffer[buffer.length-2]
+            if(!matches.some(m=>m.home===home && m.away===away)){
+                matches.push({home,away,odd1,oddX,odd2})
             }
         }
     }
@@ -145,6 +124,7 @@ function parseMatches(lines){
     return matches
 }
 
+// ------------------ CALCUL PROBABILITATE ------------------
 function calculate(match){
     let p1=1/match.odd1
     let pX=1/match.oddX
@@ -157,15 +137,14 @@ function calculate(match){
     return {pick,percent,maxProb}
 }
 
+// ------------------ DISPLAY ------------------
 function display(matches){
     let container=document.getElementById("output")
     container.innerHTML=""
-
     if(matches.length===0){
         container.innerHTML="Nu s-au detectat meciuri valide."
         return
     }
-
     matches.forEach(m=>{
         let calc=calculate(m)
         let level="low"
@@ -183,22 +162,7 @@ function display(matches){
     })
 }
 
-async function fetchLiveForm(team){
-    const API_KEY="CHEIA_TA_API";
-    try{
-        let res=await fetch(`https://api.exemplu.com/results?team=${encodeURIComponent(team)}&last=5&apikey=${API_KEY}`)
-        let data=await res.json()
-        let score=0
-        data.results.forEach(r=>{
-            if(r.result==="win") score+=1
-            else if(r.result==="draw") score+=0.5
-        })
-        return score/5
-    }catch(e){
-        return 0.5
-    }
-}
-
+// ------------------ RUN OCR & DRAW ------------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
     if(!file){ alert("Selectează o poză"); return }
@@ -206,27 +170,21 @@ async function runOCR(){
     let canvas=document.getElementById("canvas")
     let ctx=canvas.getContext("2d")
     let img=new Image()
-
-    img.onload=async function(){
-        canvas.width=img.width
-        canvas.height=img.height
+    img.onload = async function(){
+        canvas.width = img.width
+        canvas.height = img.height
         ctx.drawImage(img,0,0)
 
-        let {data:{text,words}}=await Tesseract.recognize(file,'eng')
+        let { data: { text, words } } = await Tesseract.recognize(file,'eng',{
+            logger:m=>console.log(m)
+        })
 
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
 
-        for(let m of matches){
-            let homeScore=await fetchLiveForm(m.home)
-            let awayScore=await fetchLiveForm(m.away)
-            m.odd1=m.odd1*(1-homeScore*0.2)
-            m.odd2=m.odd2*(1-awayScore*0.2)
-            m.oddX=m.oddX*(1-((homeScore+awayScore)/2)*0.1)
-        }
-
         display(matches)
 
+        // Desenează casete pe cuvinte ce conțin cote
         ctx.strokeStyle="red"
         ctx.lineWidth=2
         ctx.font="18px Arial"
@@ -239,10 +197,10 @@ async function runOCR(){
             }
         })
     }
-
     img.src=URL.createObjectURL(file)
 }
 
 </script>
+
 </body>
 </html>
