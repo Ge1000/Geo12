@@ -68,49 +68,38 @@ canvas{
 // ------------------ CLEAN OCR FLEX ------------------
 function cleanOCR(text){
     return text
-        .replace(/[\*|@#\$%®<>]/g,'')
+        .replace(/[\*|@#\$%®<>\-]/g,'.')
         .replace(/\s{2,}/g,' ')
+        .replace(/[^a-zA-Z0-9\.\/\s]/g,'')
         .split("\n")
         .map(l=>l.trim())
-        .filter(l=>l.length>0)
+        .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID (FIX FINAL) ------------------
+// ------------------ PARSER ULTRA HYBRID FIX ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
     for(let line of lines){
-        // ignorăm meniurile și elementele UI
         if(line.toLowerCase().includes('acasa') || line.toLowerCase().includes('live') || line.toLowerCase().includes('bonus') || line.toLowerCase().includes('meni')) continue
 
-        let odds = line.match(/(\d+\.\d+)/g)
+        let cleanLine = line.replace(/[@#\$%¥{}\\*<>]/g,'').trim()
+        if(!cleanLine) continue
+
+        let odds = cleanLine.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            // combinăm toate liniile text din buffer pentru home și away
-            let textBefore = buffer.join(' ').replace(/\s{2,}/g,' ').trim()
-            buffer=[]
-            let parts = textBefore.split(' vs ')
-            let home="", away=""
-            if(parts.length===2){
-                home=parts[0].trim()
-                away=parts[1].trim()
-            } else {
-                // fallback simplu: ultimele două cuvinte ca home/away
-                let words = textBefore.split(' ')
-                if(words.length>=2){
-                    away = words.pop().trim()
-                    home = words.join(' ').trim()
-                }
-            }
+            let teams = buffer.filter(l=>l.length>1)
+            let home = teams.length>=2 ? teams[teams.length-2] : "Meci"
+            let away = teams.length>=1 ? teams[teams.length-1] : "Meci"
 
-            if(home && away && home!==away){
-                matches.push({home,away,odd1,oddX,odd2})
-            }
+            matches.push({home, away, odd1, oddX, odd2})
+            buffer=[]
         } else {
-            buffer.push(line)
+            buffer.push(cleanLine)
         }
     }
     return matches
@@ -175,7 +164,6 @@ async function runOCR(){
         let matches=parseMatches(cleaned)
         display(matches)
 
-        // Desenează casete pe cuvinte ce conțin cote
         ctx.strokeStyle="red"
         ctx.lineWidth=2
         ctx.font="18px Arial"
