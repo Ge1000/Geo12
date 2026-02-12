@@ -116,7 +116,8 @@ function calculate(match){
     let total=p1+pX+p2
     p1/=total; pX/=total; p2/=total
     let maxProb=Math.max(p1,pX,p2)
-    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal" // <-- FIX: afișează echipa câștigătoare
+    // FIX: afișăm echipa câștigătoare sau "Egal"
+let pick = maxProb === p1 ? match.home : maxProb === p2 ? match.away : "Egal"
     let percent=(maxProb*100).toFixed(2)
     return {pick,percent,maxProb}
 }
