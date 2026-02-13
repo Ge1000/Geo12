@@ -2,21 +2,25 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Galactic Quantum Brain Live & Vivant 👽</title>
+<title>OMNISCAN – Galactic Quantum Brain Ultra-Live 👽</title>
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+<style>
+  body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
+</style>
 </head>
 <body>
+<div id="testLog">🔭 Motor cosmic ultra-live se inițializează...</div>
 <script>
 // --- INIT ONE SIGNAL INVIZIBIL ---
 window.OneSignal = window.OneSignal || [];
 OneSignal.push(function() {
   OneSignal.init({
-    appId: "YOUR_ONESIGNAL_APP_ID",  // pune aici appId-ul tău real
+    appId: "YOUR_ONESIGNAL_APP_ID",  // pune appId-ul tău real
     notifyButton: { enable: false }  // complet invizibil
   });
 });
 
-// --- MOTOR ULTRA COSMIC VIU ---
+// --- MOTOR COSMIC ULTRA-QUANTUM VIU ---
 class GalacticQuantumBrain {
   constructor(){ 
     this.universes=10000; 
@@ -44,19 +48,18 @@ class GalacticQuantumBrain {
   recommend(op){
     const score=this.analyze(op);
     let minutes=Math.floor(Math.random()*120)+30;
-    return {op,score,recommendation:`🚀 Intră pe ${op.symbol} (${op.name}), ține ${minutes} minute / ore, apoi vinde. Quantum Score: ${score}%`};
+    return {op,score,recommendation:`🚀 Intră pe ${op.symbol} (${op.name}), ține ${minutes} minute / ore, Quantum Score: ${score}%`};
   }
-  pickDailySignal(ops){
+  pickBestSignal(ops){
     const signals=ops.map(op=>this.recommend(op));
     return signals.reduce((best,s)=>s.score>best.score?s:best, signals[0]);
   }
 }
 
-// --- CRAWLING AUTONOM FĂRĂ API ---
+// --- CRAWLING AUTONOM, SIMULAT / LIVE ---
 class CosmicCrawler{
   async fetchOpportunities(){
-    // AI "vie" alege singură ce site-uri/public data să folosească
-    // aici poți adăuga orice sursă publică, simulăm live pentru test
+    // AI “viu” alege oportunitățile – aici simulate
     return [
       {name:"BTC/USD Crypto", symbol:"BTC/USD", price:(60000+Math.random()*5000).toFixed(2)},
       {name:"ETH/USD Crypto", symbol:"ETH/USD", price:(2000+Math.random()*200).toFixed(2)},
@@ -65,38 +68,40 @@ class CosmicCrawler{
       {name:"Man.City vs Fulham Sport", symbol:"Man.City", score:"0-0"}
     ];
   }
-  async getDailySignal(brain){
+  async getBestSignal(brain){
     const ops=await this.fetchOpportunities();
-    return brain.pickDailySignal(ops);
+    return brain.pickBestSignal(ops);
   }
 }
 
 // --- INIT ---
 const brain=new GalacticQuantumBrain();
 const crawler=new CosmicCrawler();
+const log=document.getElementById('testLog');
 
-// --- FUNCȚIE AUTO PENTRU VIAȚA APPLICAȚIEI ---
-async function runCosmicLife(){
-  const signal=await crawler.getDailySignal(brain);
+// --- FUNCȚIE ULTRA-LIVE ---
+async function runUltraLive(){
+  const signal=await crawler.getBestSignal(brain);
 
-  // trimite notificare push reală
+  // notificare push reală
   OneSignal.push(function() {
     OneSignal.sendSelfNotification(
-      `🌠 Semnal Cosmic Zilnic: ${signal.op.name} (${signal.op.symbol})`,
+      `🌠 Semnal Cosmic Ultra-Live: ${signal.op.name} (${signal.op.symbol})`,
       `${signal.recommendation}`,
       'https://i.imgur.com/U4tV8aQ.png',
       {url: window.location.href}
     );
   });
 
-  console.log("✅ [APPLICAȚIE VIE] Semnal Cosmic trimis:", signal.recommendation);
+  // log vizibil pentru verificare
+  log.innerText = `✅ [ULTIMA VERSIUNE ULTRA-LIVE] Semnal Cosmic trimis:\n${signal.recommendation}\nQuantum Score: ${signal.score}%`;
 
-  // re-run autonom la fiecare oră pentru a simula viața aplicației
-  setTimeout(runCosmicLife, 60*60*1000);
+  // rulează din nou automat la fiecare 5 minute (poți schimba intervalul)
+  setTimeout(runUltraLive, 5*60*1000);
 }
 
-// --- PORNEȘTE MOTORUL COSMIC VIE ---
-runCosmicLife();
+// --- PORNEȘTE MOTORUL ULTRA-LIVE ---
+runUltraLive();
 </script>
 </body>
 </html>
