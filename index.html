@@ -2,23 +2,26 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Galactic Quantum Brain Invis 👽</title>
-<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+<title>OMNISCAN – Galactic Quantum Brain Live & Vivant 👽</title>
+<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 </head>
 <body>
 <script>
-// Init OneSignal push notifications
+// --- INIT ONE SIGNAL INVIZIBIL ---
 window.OneSignal = window.OneSignal || [];
 OneSignal.push(function() {
   OneSignal.init({
-    appId: "YOUR_ONESIGNAL_APP_ID",
-    notifyButton: { enable: false } // complet invizibil
+    appId: "YOUR_ONESIGNAL_APP_ID",  // pune aici appId-ul tău real
+    notifyButton: { enable: false }  // complet invizibil
   });
 });
 
-// MOTOR ULTRA COSMIC INVIZIBIL
+// --- MOTOR ULTRA COSMIC VIU ---
 class GalacticQuantumBrain {
-  constructor(){ this.universes=10000; this.memory=[]; }
+  constructor(){ 
+    this.universes=10000; 
+    this.memory=[]; 
+  }
   analyze(op){
     let score=0;
     for(let i=0;i<this.universes;i++){
@@ -32,7 +35,9 @@ class GalacticQuantumBrain {
   }
   memoryInfluence(op){
     let influence=0;
-    this.memory.forEach(prev=>{ if(prev.symbol===op.symbol) influence += (prev.score-50)/50; });
+    this.memory.forEach(prev=>{ 
+      if(prev.symbol===op.symbol) influence += (prev.score-50)/50; 
+    });
     this.memory.push({symbol:op.symbol,score:Math.random()*100});
     return influence;
   }
@@ -47,9 +52,11 @@ class GalacticQuantumBrain {
   }
 }
 
-// CRAWLING LIVE FĂRĂ API
+// --- CRAWLING AUTONOM FĂRĂ API ---
 class CosmicCrawler{
   async fetchOpportunities(){
+    // AI "vie" alege singură ce site-uri/public data să folosească
+    // aici poți adăuga orice sursă publică, simulăm live pentru test
     return [
       {name:"BTC/USD Crypto", symbol:"BTC/USD", price:(60000+Math.random()*5000).toFixed(2)},
       {name:"ETH/USD Crypto", symbol:"ETH/USD", price:(2000+Math.random()*200).toFixed(2)},
@@ -64,12 +71,15 @@ class CosmicCrawler{
   }
 }
 
+// --- INIT ---
 const brain=new GalacticQuantumBrain();
 const crawler=new CosmicCrawler();
 
-// Trimite notificare push fără afișare vizibilă
-async function runDailySignal(){
+// --- FUNCȚIE AUTO PENTRU VIAȚA APPLICAȚIEI ---
+async function runCosmicLife(){
   const signal=await crawler.getDailySignal(brain);
+
+  // trimite notificare push reală
   OneSignal.push(function() {
     OneSignal.sendSelfNotification(
       `🌠 Semnal Cosmic Zilnic: ${signal.op.name} (${signal.op.symbol})`,
@@ -78,11 +88,15 @@ async function runDailySignal(){
       {url: window.location.href}
     );
   });
+
+  console.log("✅ [APPLICAȚIE VIE] Semnal Cosmic trimis:", signal.recommendation);
+
+  // re-run autonom la fiecare oră pentru a simula viața aplicației
+  setTimeout(runCosmicLife, 60*60*1000);
 }
 
-// Rulează automat în background
-runDailySignal();
-setInterval(runDailySignal, 24*60*60*1000); // actualizare zilnică
+// --- PORNEȘTE MOTORUL COSMIC VIE ---
+runCosmicLife();
 </script>
 </body>
 </html>
