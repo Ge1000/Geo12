@@ -3,28 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 Smart Bet Detector FUTURE AI</title>
+<title>Smart Bet Detector FUTURISTIC PRO 🧠⚽</title>
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
 <style>
-body{background:#0f172a;color:#e2e8f0;font-family:system-ui;text-align:center;padding:20px;}
-h1{color:#22c55e;font-size:24px;margin-bottom:10px;}
-button{padding:12px 20px;margin:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer;}
-#preview,#output{margin-top:20px;text-align:left;}
-.match{margin:10px 0;padding:12px;background:#111827;border-radius:8px;transition: transform 0.2s;}
-.match:hover{transform: scale(1.02);}
+body{
+  background:#0f172a;
+  color:#e2e8f0;
+  font-family:system-ui;
+  text-align:center;
+  padding:20px;
+}
+h1{color:#22c55e;font-size:22px;}
+button{
+  padding:12px 20px;
+  margin:10px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+#preview, #output{
+  margin-top:20px;
+  text-align:left;
+}
+.match{
+  margin:10px 0;
+  padding:12px;
+  background:#111827;
+  border-radius:8px;
+  transition: transform 0.2s;
+}
+.match:hover { transform: scale(1.02); }
 .high{border-left:5px solid #22c55e;}
 .medium{border-left:5px solid #facc15;}
 .low{border-left:5px solid #ef4444;}
-canvas{max-width:100%;margin-top:20px;border:1px solid #444;border-radius:8px;}
+canvas{
+  max-width:100%;
+  margin-top:20px;
+  border:1px solid #444;
+  border-radius:8px;
+}
 </style>
 </head>
 <body>
 
-<h1>🔥 Smart Bet Detector FUTURE AI 🧠⚽</h1>
+<h1>Smart Bet Detector FUTURISTIC PRO 🧠⚽</h1>
 
 <input type="file" id="imageInput">
 <br>
-<button onclick="runOCR()">Rulează analiză</button>
+<button onclick="runOCR()">Scanează</button>
 
 <h3>Preview OCR</h3>
 <canvas id="canvas"></canvas>
@@ -33,106 +64,128 @@ canvas{max-width:100%;margin-top:20px;border:1px solid #444;border-radius:8px;}
 <div id="output"></div>
 
 <script>
-// --------- CLEAN & SMART OCR ---------
+// --- Echipe simulate (Premier League)
+const teams = [
+  "Aston Villa","Brighton","Crystal Palace","Burnley","Man.City","Fulham",
+  "Nottingham","Wolverhampton","Sunderland","Liverpool"
+];
+
+// ------------------ CURĂȚARE OCR ------------------
 function cleanOCR(text){
-    return text.replace(/[\*|@#\$%®<>\-]/g,'')
-               .replace(/\s{2,}/g,' ')
-               .split("\n")
-               .map(l=>l.trim())
-               .filter(l=>l.length>1);
+    return text
+        .replace(/[\*|@#\$%®<>\-]/g,'.')
+        .replace(/\s{2,}/g,' ')
+        .split("\n")
+        .map(l=>l.trim())
+        .filter(l=>l.length>1)
 }
 
-// --------- FUTURISTIC PARSER ---------
+// ------------------ PARSARE MECIURI ------------------
 function parseMatches(lines){
-    const knownTeams = ["Aston Villa","Brighton","Crystal Palace","Burnley","Man.City","Fulham","Nottingham","Wolverhampton","Sunderland","Liverpool"];
-    let matches=[];
-    let buffer=[];
+    let matches=[]
+    let buffer=[]
     for(let line of lines){
-        let odds=line.match(/(\d+\.\d+)/g);
+        let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
-            let odd1=parseFloat(odds[0]), oddX=parseFloat(odds[1]), odd2=parseFloat(odds[2]);
-            let home="",away="";
-            for(let i=0;i<buffer.length;i++){
-                for(let team of knownTeams){
-                    if(buffer[i].includes(team)){
-                        if(!home){home=team;} 
-                        else if(!away){away=team;}
-                    }
-                }
+            let odd1=parseFloat(odds[0])
+            let oddX=parseFloat(odds[1])
+            let odd2=parseFloat(odds[2])
+            
+            let home="", away=""
+            for(let word of buffer){
+                if(teams.includes(word) && !home) home=word
+                else if(teams.includes(word) && !away) away=word
             }
+            
             if(home && away && home!==away){
-                matches.push({home,away,odd1,oddX,odd2});
+                matches.push({home,away,odd1,oddX,odd2})
             }
-        } else { buffer.push(line); }
+            buffer=[]
+        } else {
+            buffer.push(line)
+        }
     }
-    return matches;
+    return matches
 }
 
-// --------- CALCUL SMART AI ---------
-function calculate(match){
-    // simplu algoritm futuristic: scorăm probabilități + ajustăm cu "inteligență AI"
-    let p1=1/match.odd1, pX=1/match.oddX, p2=1/match.odd2;
-    let total=p1+pX+p2;
-    p1/=total; pX/=total; p2/=total;
-
-    // AI futurist ajustează scorul pentru echipe istorice
-    let homeFactor = Math.random()*0.05 + 0.95; // +/-5% randomizare
-    let awayFactor = Math.random()*0.05 + 0.95;
-    p1*=homeFactor; p2*=awayFactor;
-    let maxProb=Math.max(p1,pX,p2);
-    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal";
-    let percent=(maxProb*100).toFixed(2);
-
-    // Value index futurist
-    let value = ((maxProb - 1/Math.min(match.odd1,match.odd2,match.oddX))*10).toFixed(2);
-    return {pick,percent,maxProb,value};
+// ------------------ MINI AI PREDICTIV ------------------
+function predictWinner(match){
+    // Simplificat: combinăm cotele cu un scor aleator pentru “futuristic effect”
+    let p1=1/match.odd1 + Math.random()*0.05
+    let pX=1/match.oddX + Math.random()*0.03
+    let p2=1/match.odd2 + Math.random()*0.05
+    let total=p1+pX+p2
+    p1/=total; pX/=total; p2/=total
+    let maxProb=Math.max(p1,pX,p2)
+    let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
+    let percent=(maxProb*100).toFixed(2)
+    let valueIndex=(maxProb-0.5).toFixed(2)
+    return {pick,percent,maxProb,valueIndex}
 }
 
-// --------- DISPLAY MATCHES ---------
+// ------------------ AFIȘARE ------------------
 function display(matches){
-    let container=document.getElementById("output");
-    container.innerHTML="";
-    if(matches.length===0){container.innerHTML="Nu s-au detectat meciuri valide.";return;}
+    let container=document.getElementById("output")
+    container.innerHTML=""
+    if(matches.length===0){
+        container.innerHTML="Nu s-au detectat meciuri valide."
+        return
+    }
     matches.forEach(m=>{
-        let calc=calculate(m);
-        let level="low";
-        if(calc.maxProb>0.55) level="high";
-        else if(calc.maxProb>0.40) level="medium";
+        let calc=predictWinner(m)
+        let level="low"
+        if(calc.maxProb>0.55) level="high"
+        else if(calc.maxProb>0.40) level="medium"
+
         container.innerHTML+=`
         <div class="match ${level}">
         <b>${m.home} vs ${m.away}</b><br>
         Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
         🔥 Recomandare Smart: <b>${calc.pick}</b><br>
         Scor încredere: ${calc.percent}%<br>
-        Value index: ${calc.value}
+        Value index: ${calc.valueIndex}
         </div>
-        `;
-    });
+        `
+    })
 }
 
-// --------- RUN OCR & DRAW ---------
+// ------------------ RUN OCR ------------------
 async function runOCR(){
-    let file=document.getElementById("imageInput").files[0];
-    if(!file){alert("Selectează o poză");return;}
-    let canvas=document.getElementById("canvas");
-    let ctx=canvas.getContext("2d");
-    let img=new Image();
-    img.onload=async function(){
-        canvas.width=img.width; canvas.height=img.height; ctx.drawImage(img,0,0);
-        let { data:{ text, words } } = await Tesseract.recognize(file,'eng',{logger:m=>console.log(m)});
-        let cleaned=cleanOCR(text);
-        let matches=parseMatches(cleaned);
-        display(matches);
-        ctx.strokeStyle="red"; ctx.lineWidth=2; ctx.font="18px Arial"; ctx.fillStyle="yellow";
+    let file=document.getElementById("imageInput").files[0]
+    if(!file){ alert("Selectează o poză"); return }
+
+    let canvas=document.getElementById("canvas")
+    let ctx=canvas.getContext("2d")
+    let img=new Image()
+    img.onload = async function(){
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img,0,0)
+
+        let { data: { text, words } } = await Tesseract.recognize(file,'eng',{
+            logger:m=>console.log(m)
+        })
+
+        let cleaned=cleanOCR(text)
+        let matches=parseMatches(cleaned)
+        display(matches)
+
+        // Desenăm dreptunghiuri pe cote
+        ctx.strokeStyle="red"
+        ctx.lineWidth=2
+        ctx.font="18px Arial"
+        ctx.fillStyle="yellow"
+
         words.forEach(w=>{
             if(w.text.match(/\d+\.\d+/)){
-                ctx.strokeRect(w.bbox.x0,w.bbox.y0,w.bbox.x1-w.bbox.x0,w.bbox.y1-w.bbox.y0);
-                ctx.fillText(w.text,w.bbox.x0,w.bbox.y0-5);
+                ctx.strokeRect(w.bbox.x0,w.bbox.y0,w.bbox.x1-w.bbox.x0,w.bbox.y1-w.bbox.y0)
+                ctx.fillText(w.text,w.bbox.x0,w.bbox.y0-5)
             }
-        });
+        })
     }
-    img.src=URL.createObjectURL(file);
+    img.src=URL.createObjectURL(file)
 }
 </script>
+
 </body>
 </html>
