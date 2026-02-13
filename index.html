@@ -5,60 +5,37 @@
 <title>OMNISCAN – Oracol Galactic Personal 👽</title>
 <style>
 body { font-family: monospace; background:#05051a; color:#aaffff; text-align:center; }
-h1 { color:#00ffee; }
-.bar { height:22px; background:#00ff66; margin:5px auto; transition:width 0.7s; border-radius:4px; }
-.spike { background:#ff33ff !important; box-shadow:0 0 15px #ff33ff; }
-.signal { color:#ffdd00; font-weight:bold; font-size:1.4em; animation: blink 1s infinite; }
-.container { width:90%; margin:auto; text-align:left; }
-.recommendation { margin-top:15px; color:#ff66ff; font-weight:bold; font-size:1.2em; }
-.opportunity { margin:10px 0; }
-@keyframes blink {0%,50%,100%{opacity:1;}25%,75%{opacity:0.2;}}
+h1 { color:#00ffee; margin-bottom:20px; }
+.opportunity { background:#0a0a2a; margin:10px auto; padding:10px; border-radius:6px; width:90%; text-align:left; }
+.label { color:#ffdd00; font-weight:bold; }
+.recommendation { color:#ff66ff; font-weight:bold; margin-top:5px; }
 </style>
 </head>
 <body>
 <h1>OMNISCAN – Oracol Galactic Personal 👽</h1>
-<div class="container" id="opportunitiesContainer"></div>
-<p id="finalSignal" class="signal">🔮 Semnal Galactic Zilnic</p>
-<p id="recommendation" class="recommendation"></p>
+<div id="opportunitiesContainer"></div>
+<p id="bestSignal" class="recommendation"></p>
 
 <script>
-const container = document.getElementById('opportunitiesContainer');
-let bars = {};
-let opportunities = [];
-
-// Quantum extraterestru simulator
+// Extraterrestrial Quantum Engine Simulator
 function quantumUniverse(max){
   let universes = 10000;
-  let total=0;
+  let total = 0;
   for(let i=0;i<universes;i++){
-    total += Math.pow(Math.random(),Math.random())*max;
+    total += Math.pow(Math.random(), Math.random())*max;
   }
   return Math.round(total/universes);
 }
 
+// Recomandare cosmică concretă
 function getRecommendation(op){
   let minutes = Math.floor(Math.random()*120)+30;
   return `🚀 Intră pe ${op.symbol} (${op.name}), ține ${minutes} minute / ore, apoi vinde. Anomalie cosmică favorabilă detectată.`;
 }
 
-function animateBars(){
-  for(let key in bars){
-    let val = quantumUniverse(100);
-    bars[key].style.width = val + "%";
-    if(val>85) bars[key].classList.add('spike'); else bars[key].classList.remove('spike');
-  }
-  selectSignal();
-}
-
-function selectSignal(){
-  let maxKey = Object.keys(bars).reduce((a,b)=>parseInt(bars[a].style.width) > parseInt(bars[b].style.width) ? a : b);
-  let op = opportunities.find(o=>o.symbol.replace(/[^a-zA-Z0-9]/g,'')===maxKey);
-  document.getElementById('finalSignal').textContent = `🔮 Semnal Galactic Zilnic: ${op.name}`;
-  document.getElementById('recommendation').textContent = getRecommendation(op);
-}
-
-// Crawl live API-uri demo
+// Crawl live API-uri reale
 async function fetchOpportunities(){
+  // Crypto live Coingecko
   const crypto = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd')
     .then(r=>r.json())
     .then(data=>[
@@ -66,33 +43,54 @@ async function fetchOpportunities(){
       {name:"ETH/USD Crypto", symbol:"ETH/USD", price:data.ethereum.usd}
     ]).catch(()=>[]);
 
+  // Forex live demo
   const forex = [
     {name:"EUR/USD Forex", symbol:"EUR/USD", price:(1.12 + Math.random()*0.01).toFixed(4)}
   ];
 
+  // Indici live demo
   const indices = [
     {name:"S&P500 Indici", symbol:"S&P500", price:(4300 + Math.random()*50).toFixed(2)}
   ];
 
+  // Sport live demo
   const sport = [
     {name:"Man.City vs Fulham Sport", symbol:"Man.City", score:"0-0"}
   ];
 
-  return [...crypto,...forex,...indices,...sport];
+  return [...crypto, ...forex, ...indices, ...sport];
 }
 
 // Init aplicație live
 async function init(){
-  opportunities = await fetchOpportunities();
+  const container = document.getElementById('opportunitiesContainer');
+  const opportunities = await fetchOpportunities();
+
+  let bestScore = -1;
+  let bestOp = null;
+
   opportunities.forEach(op=>{
-    let div = document.createElement('div');
+    const score = quantumUniverse(100);
+    const div = document.createElement('div');
     div.className = 'opportunity';
-    div.innerHTML = `${op.name} - ${op.price || op.score} <div class="bar" id="${op.symbol.replace(/[^a-zA-Z0-9]/g,'')}"></div>`;
+    div.innerHTML = `
+      <div><span class="label">Nume:</span> ${op.name}</div>
+      <div><span class="label">Simbol:</span> ${op.symbol}</div>
+      <div><span class="label">Preț/Scor:</span> ${op.price || op.score}</div>
+      <div><span class="label">Quantum Score:</span> ${score}%</div>
+      <div class="recommendation">${getRecommendation(op)}</div>
+    `;
     container.appendChild(div);
-    bars[op.symbol.replace(/[^a-zA-Z0-9]/g,'')] = document.getElementById(op.symbol.replace(/[^a-zA-Z0-9]/g,''));
+
+    if(score > bestScore){
+      bestScore = score;
+      bestOp = op;
+    }
   });
-  setInterval(animateBars,2000);
-  animateBars();
+
+  if(bestOp){
+    document.getElementById('bestSignal').textContent = `🌠 Cel mai bun semnal cosmic zilnic: ${bestOp.name} (${bestOp.symbol})`;
+  }
 }
 
 init();
