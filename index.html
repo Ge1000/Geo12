@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Bet Detector FUTURISTIC PRO 🧠⚽</title>
+<title>Smart Bet Detector PRO+ 🧠⚽</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -15,7 +15,7 @@ body{
   text-align:center;
   padding:20px;
 }
-h1{color:#22c55e;font-size:22px;}
+h1{color:#22c55e;font-size:22px}
 button{
   padding:12px 20px;
   margin:10px;
@@ -51,7 +51,7 @@ canvas{
 </head>
 <body>
 
-<h1>Smart Bet Detector FUTURISTIC PRO 🧠⚽</h1>
+<h1>Smart Bet Detector PRO+ 🧠⚽</h1>
 
 <input type="file" id="imageInput">
 <br>
@@ -64,43 +64,57 @@ canvas{
 <div id="output"></div>
 
 <script>
-// --- Echipe simulate (Premier League)
-const teams = [
-  "Aston Villa","Brighton","Crystal Palace","Burnley","Man.City","Fulham",
-  "Nottingham","Wolverhampton","Sunderland","Liverpool"
-];
+// Lista echipelor pentru fuzzy matching
+const TEAMS = ["Aston Villa","Brighton","Crystal Palace","Burnley","Man.City","Fulham","Nottingham","Wolverhampton","Sunderland","Liverpool"];
 
-// ------------------ CURĂȚARE OCR ------------------
+// ------------------ UTILS ------------------
+function levenshtein(a,b){
+  const dp = Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++) dp[i][0]=i;
+  for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++){
+    for(let j=1;j<=b.length;j++){
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j-1],dp[i][j-1],dp[i-1][j]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+// Gaseste cel mai apropiat nume din lista
+function fuzzyTeam(name){
+  let best="",minDist=999;
+  for(let t of TEAMS){
+    let d=levenshtein(name.toLowerCase(),t.toLowerCase());
+    if(d<minDist){minDist=d;best=t;}
+  }
+  return best;
+}
+
+// ------------------ CLEAN OCR ------------------
 function cleanOCR(text){
     return text
         .replace(/[\*|@#\$%®<>\-]/g,'.')
         .replace(/\s{2,}/g,' ')
         .split("\n")
         .map(l=>l.trim())
-        .filter(l=>l.length>1)
+        .filter(l=>l.length>1);
 }
 
-// ------------------ PARSARE MECIURI ------------------
+// ------------------ PARSER MECIURI ------------------
 function parseMatches(lines){
-    let matches=[]
-    let buffer=[]
+    let matches=[];
+    let buffer=[];
     for(let line of lines){
         let odds = line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
             let odd1=parseFloat(odds[0])
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
-            
-            let home="", away=""
-            for(let word of buffer){
-                if(teams.includes(word) && !home) home=word
-                else if(teams.includes(word) && !away) away=word
-            }
-            
+            let home=fuzzyTeam(buffer[buffer.length-2]||"")
+            let away=fuzzyTeam(buffer[buffer.length-1]||"")
             if(home && away && home!==away){
                 matches.push({home,away,odd1,oddX,odd2})
             }
-            buffer=[]
         } else {
             buffer.push(line)
         }
@@ -108,22 +122,21 @@ function parseMatches(lines){
     return matches
 }
 
-// ------------------ MINI AI PREDICTIV ------------------
-function predictWinner(match){
-    // Simplificat: combinăm cotele cu un scor aleator pentru “futuristic effect”
-    let p1=1/match.odd1 + Math.random()*0.05
-    let pX=1/match.oddX + Math.random()*0.03
-    let p2=1/match.odd2 + Math.random()*0.05
+// ------------------ CALCULEAZĂ ------------------
+function calculate(match){
+    let p1=1/match.odd1
+    let pX=1/match.oddX
+    let p2=1/match.odd2
     let total=p1+pX+p2
     p1/=total; pX/=total; p2/=total
     let maxProb=Math.max(p1,pX,p2)
     let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
     let percent=(maxProb*100).toFixed(2)
-    let valueIndex=(maxProb-0.5).toFixed(2)
+    let valueIndex=(maxProb-(1/3)).toFixed(2)
     return {pick,percent,maxProb,valueIndex}
 }
 
-// ------------------ AFIȘARE ------------------
+// ------------------ DISPLAY ------------------
 function display(matches){
     let container=document.getElementById("output")
     container.innerHTML=""
@@ -132,7 +145,7 @@ function display(matches){
         return
     }
     matches.forEach(m=>{
-        let calc=predictWinner(m)
+        let calc=calculate(m)
         let level="low"
         if(calc.maxProb>0.55) level="high"
         else if(calc.maxProb>0.40) level="medium"
@@ -170,12 +183,11 @@ async function runOCR(){
         let matches=parseMatches(cleaned)
         display(matches)
 
-        // Desenăm dreptunghiuri pe cote
+        // Highlight pe cote în imagine
         ctx.strokeStyle="red"
         ctx.lineWidth=2
         ctx.font="18px Arial"
         ctx.fillStyle="yellow"
-
         words.forEach(w=>{
             if(w.text.match(/\d+\.\d+/)){
                 ctx.strokeRect(w.bbox.x0,w.bbox.y0,w.bbox.x1-w.bbox.x0,w.bbox.y1-w.bbox.y0)
