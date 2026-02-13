@@ -2,180 +2,86 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Bet Detector Quantic Extraterrestrial 5.0 🌌⚽</title>
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-
-<style>
-body { background:#010020; color:#00ffee; font-family:system-ui; text-align:center; padding:25px; }
-h1 { color:#ff00ff; font-size:32px; margin-bottom:15px; text-shadow:0 0 15px #00ffee; }
-button { padding:16px 24px; margin:10px; border:none; border-radius:16px; background:#ff00ff; color:#000; font-weight:bold; cursor:pointer; }
-#preview,#output,#parallel { margin-top:25px; text-align:left; }
-.match { margin:14px 0; padding:18px; background:#111; border-radius:16px; transition: transform 0.3s; box-shadow:0 0 12px #00ffee; }
-.match:hover { transform: scale(1.06); }
-.high { border-left:8px solid #ff00ff; }
-.medium { border-left:8px solid #00ffee; }
-.low { border-left:8px solid #ff9900; }
-canvas { max-width:100%; margin-top:20px; border:2px solid #444; border-radius:12px; }
-</style>
+<title>Quantum Extraterrestrial AI Predictor</title>
 </head>
 <body>
 
-<h1>Smart Bet Detector Quantic Extraterrestrial 5.0 🌌⚽</h1>
+<h1>Quantum Extraterrestrial AI Predictor – Top 5 Predicții</h1>
 
-<input type="file" id="imageInput">
-<br>
-<button onclick="runOCR()">Rulează analiza cosmică</button>
-<button onclick="generateParallelUniverse()">Simulează Univers Paralel ⚡</button>
+<label>Selectează data meciurilor:</label>
+<input type="date" id="matchDate">
+<button onclick="runExtraterrestrialAI()">Obține Top 5 Predicții</button>
 
-<h3>Preview OCR</h3>
-<canvas id="canvas"></canvas>
-
-<h3>Meciuri Detectate & Predicții Quantic Extraterestre</h3>
-<div id="output"></div>
-
-<h3>Univers Paralel Fotbal</h3>
-<div id="parallel"></div>
+<h3>Predicții Quantic Extraterestre</h3>
+<div id="output">Selectează o dată și rulează AI-ul din alt univers.</div>
 
 <script>
-// ---------- MEMORIE QUANTICĂ ----------
-let quantumMemory = {};
+// ------------------- MOTOR EXTRATERRESTRE AI -------------------
+async function extraterrestrialPredict(match){
+    // Factor quantum + extraterestru
+    const quantumBoost = Math.random() * 0.35; // 0-35%
+    const alienFactor = Math.sin(Math.random()*Math.PI*2)*0.2;
 
-// ---------- CLEAN OCR ----------
-function cleanOCR(text){
-    return text.replace(/[\*|@#\$%®<>\-]/g,'.')
-               .replace(/\s{2,}/g,' ')
-               .split("\n")
-               .map(l=>l.trim())
-               .filter(l=>l.length>1);
-}
+    let odd1 = match.odd1 || 2.0;
+    let oddX = match.oddX || 3.5;
+    let odd2 = match.odd2 || 2.5;
 
-// ---------- PARSER QUANTIC ----------
-function parseMatches(lines){
-    let matches=[], buffer=[];
-    for(let line of lines){
-        let odds=line.match(/(\d+\.\d+)/g);
-        if(odds && odds.length>=3){
-            let odd1=parseFloat(odds[0]), oddX=parseFloat(odds[1]), odd2=parseFloat(odds[2]);
-            let away="", home="";
-            for(let i=buffer.length-1;i>=0;i--){
-                if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]; else { home=buffer[i]; break; }
-                }
-            }
-            if(home && away && home!==away){
-                let key = `${home} vs ${away}`;
-                if(!matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({home,away,odd1,oddX,odd2,history: quantumMemory[key] || []});
-                }
-            }
-        } else buffer.push(line);
-    }
-    return matches;
-}
+    let p1 = 1/odd1 * (1 + quantumBoost);
+    let pX = 1/oddX * (1 + quantumBoost/2);
+    let p2 = 1/odd2 * (1 + quantumBoost);
 
-// ---------- AI QUANTIC EXTRATERRESTRE ----------
-function calculate(match){
-    let p1 = 1/match.odd1, pX = 1/match.oddX, p2 = 1/match.odd2;
-    let total = p1 + pX + p2; p1/=total; pX/=total; p2/=total;
+    p1 *= (1 + alienFactor);
+    pX *= (1 + alienFactor/2);
+    p2 *= (1 + alienFactor);
 
-    let histAvg = match.history.length>0 ? match.history.reduce((a,b)=>a+b,0)/match.history.length : 0.5;
-    let phase = Math.sin(Date.now()/5000);
-    p1 = p1*0.5 + histAvg*0.3 + Math.random()*0.2 + phase*0.05;
-    p2 = p2*0.5 + (1-histAvg)*0.3 + Math.random()*0.2 + phase*0.05;
-    pX = pX*0.5 + 0.3*Math.random() + phase*0.02;
+    let total = p1 + pX + p2;
+    p1 /= total; pX /= total; p2 /= total;
 
-    let pick = (p1>pX && p1>p2) ? match.home : (p2>p1 && p2>pX) ? match.away : "Egal";
     let maxProb = Math.max(p1,pX,p2);
+    let pick = maxProb===p1 ? match.home : maxProb===p2 ? match.away : "Egal";
     let percent = (maxProb*100).toFixed(2);
-    let valueIndex = ((match.odd1 - 1/p1) + (match.odd2 - 1/p2))/2 - 0.5;
 
-    let key = `${match.home} vs ${match.away}`;
-    if(!quantumMemory[key]) quantumMemory[key]=[];
-    quantumMemory[key].push(pick==="Egal"?0.5:(pick===match.home?1:0));
-    if(quantumMemory[key].length>50) quantumMemory[key].shift();
+    let valueIndex = ((p1*odd1 + p2*odd2 + pX*oddX)/3 - 1).toFixed(2);
 
-    return {pick,percent,maxProb,valueIndex:valueIndex.toFixed(2)};
+    return {pick, percent, valueIndex};
 }
 
-// ---------- DISPLAY QUANTIC ----------
-function display(matches){
-    let container=document.getElementById("output");
-    container.innerHTML="";
-    if(matches.length===0){ container.innerHTML="Nu s-au detectat meciuri valide."; return; }
-    matches.forEach(m=>{
-        let calc = calculate(m);
-        let level="low";
-        if(calc.maxProb>0.55) level="high";
-        else if(calc.maxProb>0.40) level="medium";
-        container.innerHTML+=`
-        <div class="match ${level}">
-        <b>${m.home} vs ${m.away}</b><br>
-        Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
-        🔥 Recomandare Quantic: <b>${calc.pick}</b><br>
-        Scor încredere: ${calc.percent}%<br>
-        Value index: ${calc.valueIndex}
-        </div>`;
-    });
+// ------------------- FETCH / SIMULARE MECIURI -------------------
+async function fetchFixtures(date){
+    return [
+        {home:"Aston Villa", away:"Brighton", odd1:1.98, oddX:3.55, odd2:3.6},
+        {home:"Crystal Palace", away:"Burnley", odd1:1.50, oddX:4.25, odd2:6.2},
+        {home:"Man.City", away:"Fulham", odd1:1.33, oddX:5.50, odd2:7.6},
+        {home:"Nottingham", away:"Wolverhampton", odd1:1.68, oddX:3.75, odd2:4.95},
+        {home:"Sunderland", away:"Liverpool", odd1:4.45, oddX:3.80, odd2:1.74}
+    ];
 }
 
-// ---------- RUN OCR & QUANTUM OVERLAY ----------
-async function runOCR(){
-    let file = document.getElementById("imageInput").files[0];
-    if(!file){ alert("Selectează o poză"); return; }
+// ------------------- RULARE AI EXTRATERRESTRE -------------------
+async function runExtraterrestrialAI(){
+    let date = document.getElementById("matchDate").value;
+    if(!date){ alert("Selectează o dată!"); return; }
 
-    let canvas = document.getElementById("canvas");
-    let ctx = canvas.getContext("2d");
-    let img = new Image();
-    img.onload = async function(){
-        canvas.width = img.width; canvas.height = img.height;
-        ctx.drawImage(img,0,0);
+    let matches = await fetchFixtures(date);
 
-        let { data:{text, words} } = await Tesseract.recognize(file,'eng',{logger:m=>console.log(m)});
-        let cleaned = cleanOCR(text);
-        let matches = parseMatches(cleaned);
-
-        matches.forEach(m=>{ for(let i=0;i<5;i++) m.history.push(Math.random(),Math.random()); });
-        display(matches);
-
-        ctx.strokeStyle="magenta"; ctx.lineWidth=2; ctx.font="18px Arial"; ctx.fillStyle="lime";
-        words.forEach(w=>{
-            if(w.text.match(/\d+\.\d+/)){
-                ctx.strokeRect(w.bbox.x0,w.bbox.y0,w.bbox.x1-w.bbox.x0,w.bbox.y1-w.bbox.y0);
-                ctx.fillText(w.text,w.bbox.x0,w.bbox.y0-5);
-            }
-        });
+    let predictions = [];
+    for(let m of matches){
+        let q = await extraterrestrialPredict(m);
+        predictions.push({...m, ...q});
     }
-    img.src=URL.createObjectURL(file);
+
+    predictions.sort((a,b)=>b.percent - a.percent);
+
+    let output = predictions.map(m=>{
+        return `<b>${m.home} vs ${m.away}</b><br>
+        🔮 Recomandare Quantic Extraterestră: <b>${m.pick}</b><br>
+        Scor încredere: ${m.percent}%<br>
+        Value index: ${m.valueIndex}<br><br>`;
+    }).join("");
+
+    document.getElementById("output").innerHTML = output;
 }
-
-// ---------- UNIVERS PARALLEL FOTBAL ----------
-function generateParallelUniverse(){
-    const teams=["Man.City","Aston Villa","Brighton","Crystal Palace","Burnley","Fulham","Nottingham","Wolverhampton","Sunderland","Liverpool"];
-    const container=document.getElementById("parallel");
-    container.innerHTML="";
-    for(let i=0;i<teams.length;i++){
-        for(let j=i+1;j<teams.length;j++){
-            let home=teams[i], away=teams[j];
-            let odd1=(1+Math.random()*2).toFixed(2), oddX=(2+Math.random()*3).toFixed(2), odd2=(1+Math.random()*2).toFixed(2);
-            let match={home,away,odd1:parseFloat(odd1),oddX:parseFloat(oddX),odd2:parseFloat(odd2),history:[]};
-            let calc = calculate(match);
-            container.innerHTML+=`
-            <div class="match ${calc.maxProb>0.55?"high":calc.maxProb>0.40?"medium":"low"}">
-            <b>${home} vs ${away}</b><br>
-            Cote: ${odd1} / ${oddX} / ${odd2}<br>
-            🔮 Predicție Univers Paralel: <b>${calc.pick}</b><br>
-            Scor încredere: ${calc.percent}%<br>
-            Value index: ${calc.valueIndex}
-            </div>`;
-        }
-    }
-}
-
-// ---------- LIVE FETCH SIMULAT QUANTIC (gratis API) ----------
-async function fetchLiveForm(team){ return Math.random(); }
-
 </script>
+
 </body>
 </html>
