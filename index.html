@@ -3,40 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate AI Smart Bet Predictor 🌌⚽</title>
+<title>Smart Bet Detector Quantic Extraterrestrial 4.1 🌌⚽</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
 <style>
-body { background:#0f172a; color:#e2e8f0; font-family:system-ui; text-align:center; padding:20px; }
-h1{color:#22c55e;font-size:24px;margin-bottom:15px;}
-button{padding:12px 20px;margin:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer;}
-#preview,#output{margin-top:20px;text-align:left;}
-.match{margin:10px 0;padding:12px;background:#111827;border-radius:8px;transition: transform 0.2s;}
-.match:hover{transform: scale(1.02);}
-.high{border-left:5px solid #22c55e;}
-.medium{border-left:5px solid #facc15;}
-.low{border-left:5px solid #ef4444;}
-canvas{max-width:100%;margin-top:20px;border:1px solid #444;border-radius:8px;}
+body { background:#020020; color:#00ffee; font-family:system-ui; text-align:center; padding:25px; }
+h1 { color:#ff00ff; font-size:30px; margin-bottom:15px; text-shadow:0 0 10px #00ffee; }
+button { padding:16px 24px; margin:10px; border:none; border-radius:14px; background:#ff00ff; color:#000; font-weight:bold; cursor:pointer; }
+#preview,#output,#parallel { margin-top:25px; text-align:left; }
+.match { margin:14px 0; padding:18px; background:#111; border-radius:16px; transition: transform 0.3s; box-shadow:0 0 10px #00ffee; }
+.match:hover { transform: scale(1.06); }
+.high { border-left:7px solid #ff00ff; }
+.medium { border-left:7px solid #00ffee; }
+.low { border-left:7px solid #ff9900; }
+canvas { max-width:100%; margin-top:20px; border:2px solid #444; border-radius:12px; }
 </style>
 </head>
 <body>
 
-<h1>Ultimate AI Smart Bet Predictor 🌌⚽</h1>
+<h1>Smart Bet Detector Quantic Extraterrestrial 4.1 🌌⚽</h1>
 
 <input type="file" id="imageInput">
 <br>
-<button onclick="runOCR()">Rulează analiză finală</button>
+<button onclick="runOCR()">Rulează analiza cosmică quantică</button>
+<button onclick="generateParallelUniverse()">Simulează Univers Paralel ⚡</button>
 
 <h3>Preview OCR</h3>
 <canvas id="canvas"></canvas>
 
-<h3>Meciuri Detectate & Predicții Finale</h3>
+<h3>Meciuri Detectate & Predicții Quantic Extraterestre</h3>
 <div id="output"></div>
 
-<script>
+<h3>Univers Paralel Fotbal</h3>
+<div id="parallel"></div>
 
-// ---------------- CLEAN OCR ----------------
+<script>
+// ---------- MEMORIE QUANTICĂ ----------
+let quantumMemory = {};
+
+// ---------- CLEAN OCR ----------
 function cleanOCR(text){
     return text.replace(/[\*|@#\$%®<>\-]/g,'.')
                .replace(/\s{2,}/g,' ')
@@ -45,7 +51,7 @@ function cleanOCR(text){
                .filter(l=>l.length>1);
 }
 
-// ---------------- PARSER ULTRA SMART ----------------
+// ---------- PARSER QUANTIC ----------
 function parseMatches(lines){
     let matches=[], buffer=[];
     for(let line of lines){
@@ -59,8 +65,9 @@ function parseMatches(lines){
                 }
             }
             if(home && away && home!==away){
+                let key = `${home} vs ${away}`;
                 if(!matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({home,away,odd1,oddX,odd2,history:[]});
+                    matches.push({home,away,odd1,oddX,odd2,history: quantumMemory[key] || []});
                 }
             }
         } else buffer.push(line);
@@ -68,80 +75,71 @@ function parseMatches(lines){
     return matches;
 }
 
-// ---------------- FUTURISTIC AI CALC ----------------
+// ---------- AI QUANTIC EXTRATERRESTRE ----------
 function calculate(match){
-    // Calcul probabilități clasice
-    let p1=1/match.odd1, pX=1/match.oddX, p2=1/match.odd2;
-    let total=p1+pX+p2; p1/=total; pX/=total; p2/=total;
+    let p1 = 1/match.odd1, pX = 1/match.oddX, p2 = 1/match.odd2;
+    let total = p1 + pX + p2; p1/=total; pX/=total; p2/=total;
 
-    // Self-learning AI: ajustare probabilități bazată pe istoric
-    let weightHistory = match.history.reduce((a,b)=>a+b,0)/Math.max(match.history.length,1);
-    p1 = p1*(0.7)+weightHistory*0.3;
-    p2 = p2*(0.7)+(1-weightHistory)*0.3;
+    let histAvg = match.history.length>0 ? match.history.reduce((a,b)=>a+b,0)/match.history.length : 0.5;
+    let phase = Math.sin(Date.now()/5000);
+    p1 = p1*0.5 + histAvg*0.3 + Math.random()*0.2 + phase*0.05;
+    p2 = p2*0.5 + (1-histAvg)*0.3 + Math.random()*0.2 + phase*0.05;
+    pX = pX*0.5 + 0.3*Math.random() + phase*0.02;
 
-    // Predicție finală game-end
-    let finalPick = (p1>pX && p1>p2) ? match.home : (p2>p1 && p2>pX) ? match.away : "Egal";
-
-    let maxProb=Math.max(p1,pX,p2);
-    let percent=(maxProb*100).toFixed(2);
-
-    // Value index futurist
+    let pick = (p1>pX && p1>p2) ? match.home : (p2>p1 && p2>pX) ? match.away : "Egal";
+    let maxProb = Math.max(p1,pX,p2);
+    let percent = (maxProb*100).toFixed(2);
     let valueIndex = ((match.odd1 - 1/p1) + (match.odd2 - 1/p2))/2 - 0.5;
 
-    return {pick:finalPick,percent,maxProb,valueIndex:valueIndex.toFixed(2)};
+    let key = `${match.home} vs ${match.away}`;
+    if(!quantumMemory[key]) quantumMemory[key]=[];
+    quantumMemory[key].push(pick==="Egal"?0.5:(pick===match.home?1:0));
+    if(quantumMemory[key].length>50) quantumMemory[key].shift();
+
+    return {pick,percent,maxProb,valueIndex:valueIndex.toFixed(2)};
 }
 
-// ---------------- DISPLAY ----------------
+// ---------- DISPLAY QUANTIC ----------
 function display(matches){
     let container=document.getElementById("output");
     container.innerHTML="";
-    if(matches.length===0){
-        container.innerHTML="Nu s-au detectat meciuri valide.";
-        return;
-    }
+    if(matches.length===0){ container.innerHTML="Nu s-au detectat meciuri valide."; return; }
     matches.forEach(m=>{
-        let calc=calculate(m);
+        let calc = calculate(m);
         let level="low";
         if(calc.maxProb>0.55) level="high";
         else if(calc.maxProb>0.40) level="medium";
-
         container.innerHTML+=`
         <div class="match ${level}">
         <b>${m.home} vs ${m.away}</b><br>
         Cote: ${m.odd1} / ${m.oddX} / ${m.odd2}<br>
-        🔥 Recomandare Smart: <b>${calc.pick}</b><br>
+        🔥 Recomandare Quantic: <b>${calc.pick}</b><br>
         Scor încredere: ${calc.percent}%<br>
         Value index: ${calc.valueIndex}
-        </div>
-        `;
+        </div>`;
     });
 }
 
-// ---------------- RUN OCR ----------------
+// ---------- RUN OCR & QUANTUM OVERLAY ----------
 async function runOCR(){
-    let file=document.getElementById("imageInput").files[0];
+    let file = document.getElementById("imageInput").files[0];
     if(!file){ alert("Selectează o poză"); return; }
 
-    let canvas=document.getElementById("canvas");
-    let ctx=canvas.getContext("2d");
-    let img=new Image();
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext("2d");
+    let img = new Image();
     img.onload = async function(){
-        canvas.width=img.width; canvas.height=img.height;
+        canvas.width = img.width; canvas.height = img.height;
         ctx.drawImage(img,0,0);
 
         let { data:{text, words} } = await Tesseract.recognize(file,'eng',{logger:m=>console.log(m)});
-        let cleaned=cleanOCR(text);
-        let matches=parseMatches(cleaned);
+        let cleaned = cleanOCR(text);
+        let matches = parseMatches(cleaned);
 
-        // AI self-learning: simulăm scoruri istorice
-        matches.forEach(m=>{
-            m.history = [Math.random(),Math.random(),Math.random(),Math.random(),Math.random()];
-        });
-
+        matches.forEach(m=>{ for(let i=0;i<5;i++) m.history.push(Math.random(),Math.random()); });
         display(matches);
 
-        // Highlight cote în imagine
-        ctx.strokeStyle="red"; ctx.lineWidth=2; ctx.font="18px Arial"; ctx.fillStyle="yellow";
+        ctx.strokeStyle="magenta"; ctx.lineWidth=2; ctx.font="18px Arial"; ctx.fillStyle="lime";
         words.forEach(w=>{
             if(w.text.match(/\d+\.\d+/)){
                 ctx.strokeRect(w.bbox.x0,w.bbox.y0,w.bbox.x1-w.bbox.x0,w.bbox.y1-w.bbox.y0);
@@ -150,6 +148,37 @@ async function runOCR(){
         });
     }
     img.src=URL.createObjectURL(file);
+}
+
+// ---------- UNIVERS PARALLEL FOTBAL ----------
+function generateParallelUniverse(){
+    const teams=["Man.City","Aston Villa","Brighton","Crystal Palace","Burnley","Fulham","Nottingham","Wolverhampton","Sunderland","Liverpool"];
+    const container=document.getElementById("parallel");
+    container.innerHTML="";
+    for(let i=0;i<teams.length;i++){
+        for(let j=i+1;j<teams.length;j++){
+            let home=teams[i], away=teams[j];
+            let odd1=(1+Math.random()*2).toFixed(2), oddX=(2+Math.random()*3).toFixed(2), odd2=(1+Math.random()*2).toFixed(2);
+            let match={home,away,odd1:parseFloat(odd1),oddX:parseFloat(oddX),odd2:parseFloat(odd2),history:[]};
+            let calc = calculate(match);
+            container.innerHTML+=`
+            <div class="match ${calc.maxProb>0.55?"high":calc.maxProb>0.40?"medium":"low"}">
+            <b>${home} vs ${away}</b><br>
+            Cote: ${odd1} / ${oddX} / ${odd2}<br>
+            🔮 Predicție Univers Paralel: <b>${calc.pick}</b><br>
+            Scor încredere: ${calc.percent}%<br>
+            Value index: ${calc.valueIndex}
+            </div>`;
+        }
+    }
+}
+
+// ---------- LIVE FETCH SIMULAT QUANTIC (opțional, gratis API) ----------
+async function fetchLiveForm(team){
+    try{
+        // simulăm valori random pentru demo, fără cheie API reală
+        return Math.random();
+    } catch(e){ return 0.5; }
 }
 </script>
 
