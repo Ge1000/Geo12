@@ -3,152 +3,188 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Bet Detector PRO+</title>
+<title>🔥 Smart Bet Detector PRO+</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
 <style>
 body{
-    font-family:system-ui;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
     background:#0f1220;
-    color:white;
+    color:#fff;
+    text-align:center;
     padding:20px;
 }
 button{
-    padding:10px 20px;
-    background:#00c896;
+    background:#00ff88;
     border:none;
-    color:black;
+    padding:12px 20px;
+    font-size:16px;
     font-weight:bold;
+    border-radius:8px;
     cursor:pointer;
     margin-top:10px;
 }
-input{
-    margin-top:15px;
-}
-.card{
-    background:#1a1f35;
+.result{
+    margin-top:20px;
+    text-align:left;
+    background:#1a1f38;
     padding:15px;
-    margin-top:15px;
     border-radius:10px;
 }
-.good{ color:#00ff99; }
-.warn{ color:#ffaa00; }
+.match{
+    margin-bottom:15px;
+    padding:10px;
+    background:#11152a;
+    border-radius:8px;
+}
+h1{color:#00ff88;}
+.conf{color:#00ff88;font-weight:bold;}
 </style>
 </head>
+
 <body>
 
-<h2>🔥 Smart Bet Detector PRO+</h2>
+<h1>🔥 Smart Bet Detector PRO+</h1>
 
 <input type="file" id="imageInput" accept="image/*">
 <br>
-<button onclick="runOCR()">Scanează</button>
+<button onclick="scanImage()">Scanează</button>
 
-<div id="output"></div>
+<div id="output" class="result">
+Meciuri Detectate
+</div>
 
 <script>
 
-function cleanText(text){
-    return text
-        .replace(/Meci/gi,"")
-        .replace(/Egal/gi,"")
-        .replace(/\s+/g," ")
-        .trim();
+async function scanImage(){
+
+    const file = document.getElementById("imageInput").files[0];
+    if(!file) return alert("Selectează o imagine");
+
+    document.getElementById("output").innerHTML="⏳ Scanare în curs...";
+
+    const { data:{ text } } = await Tesseract.recognize(
+        file,
+        'eng',
+        { logger:m=>console.log(m) }
+    );
+
+    console.log("OCR TEXT:", text);
+
+    const matches = parseMatches(text);
+
+    displayMatches(matches);
 }
+
+
 
 function parseMatches(text){
 
-    text = cleanText(text);
+    let lines = text
+        .split("\n")
+        .map(l=>l.trim())
+        .filter(l=>l.length>0);
 
-    const regex = /([A-Za-z\.\s]+?)\s+vs\s+([A-Za-z\.\s]+?)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)/g;
+    let matches=[];
 
-    let matches = [];
-    let match;
+    for(let i=0;i<lines.length;i++){
 
-    while((match = regex.exec(text)) !== null){
-        matches.push({
-            home: match[1].trim(),
-            away: match[2].trim(),
-            odds:[
-                parseFloat(match[3]),
-                parseFloat(match[4]),
-                parseFloat(match[5])
-            ]
-        });
+        if(
+            lines[i].match(/^\d+\.\d+$/) &&
+            lines[i+1]?.match(/^\d+\.\d+$/) &&
+            lines[i+2]?.match(/^\d+\.\d+$/)
+        ){
+
+            let o1=parseFloat(lines[i]);
+            let oX=parseFloat(lines[i+1]);
+            let o2=parseFloat(lines[i+2]);
+
+            let teams=[];
+
+            for(let j=i-1;j>=0;j--){
+                if(
+                    !lines[j].match(/^\d/) &&
+                    lines[j].toLowerCase()!=="egal" &&
+                    lines[j].toLowerCase()!=="meci"
+                ){
+                    teams.unshift(lines[j]);
+                }
+                if(teams.length===2) break;
+            }
+
+            if(teams.length===2){
+                matches.push({
+                    home:teams[0],
+                    away:teams[1],
+                    odds:[o1,oX,o2]
+                });
+            }
+        }
     }
 
     return matches;
 }
 
-function smartPick(match){
 
-    let [o1,oX,o2] = match.odds;
 
-    let implied1 = 1/o1;
-    let impliedX = 1/oX;
-    let implied2 = 1/o2;
+function calculateConfidence(odds){
 
-    let total = implied1 + impliedX + implied2;
+    let probs = odds.map(o=>1/o);
+    let total = probs.reduce((a,b)=>a+b,0);
+    probs = probs.map(p=>p/total);
 
-    let p1 = implied1/total;
-    let pX = impliedX/total;
-    let p2 = implied2/total;
-
-    let max = Math.max(p1,pX,p2);
-    let confidence = (max*100).toFixed(2);
-
-    let pick;
-
-    if(max === p1) pick = match.home;
-    else if(max === p2) pick = match.away;
-    else pick = "Egal";
-
-    return {pick,confidence};
+    let maxProb = Math.max(...probs);
+    return (maxProb*100).toFixed(2);
 }
 
-function render(matches){
 
-    let output = document.getElementById("output");
-    output.innerHTML = "<h3>Meciuri Detectate</h3>";
 
-    if(matches.length === 0){
-        output.innerHTML += "<p class='warn'>Nu s-au detectat meciuri valide.</p>";
+function getRecommendation(match){
+
+    let probs = match.odds.map(o=>1/o);
+    let total = probs.reduce((a,b)=>a+b,0);
+    probs = probs.map(p=>p/total);
+
+    let maxIndex = probs.indexOf(Math.max(...probs));
+
+    if(maxIndex===0) return match.home;
+    if(maxIndex===1) return "Egal";
+    if(maxIndex===2) return match.away;
+}
+
+
+
+function displayMatches(matches){
+
+    let output=document.getElementById("output");
+
+    if(matches.length===0){
+        output.innerHTML="<h2>Meciuri Detectate</h2>Nu s-au detectat meciuri valide.";
         return;
     }
 
-    matches.forEach(m=>{
-        let result = smartPick(m);
+    let html="<h2>Meciuri Detectate</h2>";
 
-        output.innerHTML += `
-        <div class="card">
-            <strong>${m.home} vs ${m.away}</strong><br>
-            Cote: ${m.odds[0]} / ${m.odds[1]} / ${m.odds[2]}<br>
-            🔥 Recomandare Smart: <span class="good">${result.pick}</span><br>
-            Scor încredere: ${result.confidence}%
+    matches.forEach(m=>{
+
+        let rec=getRecommendation(m);
+        let conf=calculateConfidence(m.odds);
+
+        html+=`
+        <div class="match">
+        ${m.home} vs ${m.away}<br>
+        Cote: ${m.odds[0]} / ${m.odds[1]} / ${m.odds[2]}<br>
+        🔥 Recomandare Smart: ${rec}<br>
+        <span class="conf">Scor încredere: ${conf}%</span>
         </div>
         `;
     });
-}
 
-async function runOCR(){
-
-    const file = document.getElementById("imageInput").files[0];
-    if(!file) return alert("Încarcă o imagine.");
-
-    const output = document.getElementById("output");
-    output.innerHTML = "Se procesează imaginea...";
-
-    const { data:{ text } } = await Tesseract.recognize(
-        file,
-        'eng',
-        { logger: m => console.log(m) }
-    );
-
-    let matches = parseMatches(text);
-
-    render(matches);
+    output.innerHTML=html;
 }
 
 </script>
+
 </body>
 </html>
