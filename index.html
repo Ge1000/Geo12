@@ -2,7 +2,8 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Oracol Galactic Personal 👽</title>
+<title>OMNISCAN – Galactic Quantum Brain Autonomous 👽</title>
+<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
 <style>
 body { font-family: monospace; background:#05051a; color:#aaffff; text-align:center; }
 h1 { color:#00ffee; margin-bottom:20px; }
@@ -12,88 +13,98 @@ h1 { color:#00ffee; margin-bottom:20px; }
 </style>
 </head>
 <body>
-<h1>OMNISCAN – Oracol Galactic Personal 👽</h1>
-<div id="opportunitiesContainer"></div>
-<p id="bestSignal" class="recommendation"></p>
+<h1>OMNISCAN – Galactic Quantum Brain Autonomous 👽</h1>
+<div id="dailySignal" class="opportunity"></div>
 
 <script>
-// Extraterrestrial Quantum Engine Simulator
-function quantumUniverse(max){
-  let universes = 10000;
-  let total = 0;
-  for(let i=0;i<universes;i++){
-    total += Math.pow(Math.random(), Math.random())*max;
+// Init OneSignal push notifications
+window.OneSignal = window.OneSignal || [];
+OneSignal.push(function() {
+  OneSignal.init({
+    appId: "YOUR_ONESIGNAL_APP_ID",
+    notifyButton: { enable: true }
+  });
+});
+
+// MOTOR ULTRA COSMIC – Autonomous
+class CosmicBrain {
+  constructor(){ this.universes = 10000; this.memory = []; }
+  analyzeOpportunity(op){
+    let score = 0;
+    for(let i=0;i<this.universes;i++){
+      let anomalyFactor = Math.pow(Math.random(), Math.random());
+      let trendFactor = Math.sin(Date.now()/100000 + i);
+      score += anomalyFactor * 50 + trendFactor*50;
+    }
+    score = Math.round(score/this.universes);
+    score += this.learnFromMemory(op);
+    return Math.min(100, Math.max(0, score));
   }
-  return Math.round(total/universes);
+  learnFromMemory(op){
+    let influence = 0;
+    this.memory.forEach(prev=>{
+      if(prev.symbol === op.symbol){ influence += (prev.score - 50)/50; }
+    });
+    this.memory.push({symbol: op.symbol, score: Math.random()*100});
+    return influence;
+  }
+  getRecommendation(op){
+    const score = this.analyzeOpportunity(op);
+    let minutes = Math.floor(Math.random()*120)+30;
+    return {op, quantumScore: score, recommendation:`🚀 Intră pe ${op.symbol} (${op.name}), ține ${minutes} minute / ore, apoi vinde. Quantum Score: ${score}%`};
+  }
+  pickDailySignal(ops){
+    const signals = ops.map(op=>this.getRecommendation(op));
+    return signals.reduce((best,s)=>s.quantumScore>best.quantumScore?s:best, signals[0]);
+  }
 }
 
-// Recomandare cosmică concretă
-function getRecommendation(op){
-  let minutes = Math.floor(Math.random()*120)+30;
-  return `🚀 Intră pe ${op.symbol} (${op.name}), ține ${minutes} minute / ore, apoi vinde. Anomalie cosmică favorabilă detectată.`;
-}
+const brain = new CosmicBrain();
 
-// Crawl live API-uri reale
+// Crawl live demo
 async function fetchOpportunities(){
-  // Crypto live Coingecko
   const crypto = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd')
     .then(r=>r.json())
     .then(data=>[
       {name:"BTC/USD Crypto", symbol:"BTC/USD", price:data.bitcoin.usd},
       {name:"ETH/USD Crypto", symbol:"ETH/USD", price:data.ethereum.usd}
     ]).catch(()=>[]);
-
-  // Forex live demo
-  const forex = [
-    {name:"EUR/USD Forex", symbol:"EUR/USD", price:(1.12 + Math.random()*0.01).toFixed(4)}
-  ];
-
-  // Indici live demo
-  const indices = [
-    {name:"S&P500 Indici", symbol:"S&P500", price:(4300 + Math.random()*50).toFixed(2)}
-  ];
-
-  // Sport live demo
-  const sport = [
-    {name:"Man.City vs Fulham Sport", symbol:"Man.City", score:"0-0"}
-  ];
-
-  return [...crypto, ...forex, ...indices, ...sport];
+  const forex = [{name:"EUR/USD Forex", symbol:"EUR/USD", price:(1.12 + Math.random()*0.01).toFixed(4)}];
+  const indices = [{name:"S&P500 Indici", symbol:"S&P500", price:(4300 + Math.random()*50).toFixed(2)}];
+  const sport = [{name:"Man.City vs Fulham Sport", symbol:"Man.City", score:"0-0"}];
+  const stocks = [{name:"AAPL Acțiuni", symbol:"AAPL", price:(150 + Math.random()*5).toFixed(2)}];
+  return [...crypto, ...forex, ...indices, ...sport, ...stocks];
 }
 
-// Init aplicație live
-async function init(){
-  const container = document.getElementById('opportunitiesContainer');
-  const opportunities = await fetchOpportunities();
-
-  let bestScore = -1;
-  let bestOp = null;
-
-  opportunities.forEach(op=>{
-    const score = quantumUniverse(100);
-    const div = document.createElement('div');
-    div.className = 'opportunity';
-    div.innerHTML = `
-      <div><span class="label">Nume:</span> ${op.name}</div>
-      <div><span class="label">Simbol:</span> ${op.symbol}</div>
-      <div><span class="label">Preț/Scor:</span> ${op.price || op.score}</div>
-      <div><span class="label">Quantum Score:</span> ${score}%</div>
-      <div class="recommendation">${getRecommendation(op)}</div>
-    `;
-    container.appendChild(div);
-
-    if(score > bestScore){
-      bestScore = score;
-      bestOp = op;
-    }
+// Push notification semnal zilnic
+function sendDailyPush(signal){
+  OneSignal.push(function() {
+    OneSignal.sendSelfNotification(
+      `🌠 Semnal Cosmic Zilnic: ${signal.op.name} (${signal.op.symbol})`,
+      `${signal.recommendation}`,
+      'https://i.imgur.com/U4tV8aQ.png',
+      {url: window.location.href}
+    );
   });
-
-  if(bestOp){
-    document.getElementById('bestSignal').textContent = `🌠 Cel mai bun semnal cosmic zilnic: ${bestOp.name} (${bestOp.symbol})`;
-  }
 }
 
-init();
+// Init semnal zilnic autonom
+async function initDailySignal(){
+  const container = document.getElementById('dailySignal');
+  const opportunities = await fetchOpportunities();
+  const dailySignal = brain.pickDailySignal(opportunities);
+  container.innerHTML = `
+    <div><span class="label">Nume:</span> ${dailySignal.op.name}</div>
+    <div><span class="label">Simbol:</span> ${dailySignal.op.symbol}</div>
+    <div><span class="label">Preț/Scor:</span> ${dailySignal.op.price || dailySignal.quantumScore}</div>
+    <div><span class="label">Quantum Score:</span> ${dailySignal.quantumScore}%</div>
+    <div class="recommendation">${dailySignal.recommendation}</div>
+  `;
+  sendDailyPush(dailySignal);
+}
+
+// Rulăm semnalul zilnic la încărcare
+initDailySignal();
 </script>
 </body>
 </html>
