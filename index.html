@@ -9,8 +9,8 @@ h1 { color:#00ffee; }
 .bar { height:22px; background:#00ff66; margin:5px auto; transition:width 0.7s; border-radius:4px; }
 .spike { background:#ff33ff !important; box-shadow:0 0 15px #ff33ff; }
 .signal { color:#ffdd00; font-weight:bold; font-size:1.4em; animation: blink 1s infinite; }
-.container { width:85%; margin:auto; text-align:left; }
-.recommendation { margin-top:15px; color:#ff66ff; font-weight:bold; font-size:1.1em; }
+.container { width:90%; margin:auto; text-align:left; }
+.recommendation { margin-top:15px; color:#ff66ff; font-weight:bold; font-size:1.2em; }
 .opportunity { margin:10px 0; }
 @keyframes blink {0%,50%,100%{opacity:1;}25%,75%{opacity:0.2;}}
 </style>
@@ -22,29 +22,11 @@ h1 { color:#00ffee; }
 <p id="recommendation" class="recommendation"></p>
 
 <script>
-// Lista demo oportunități
-const opportunities = [
-  {name:"BTC/USD Crypto", type:"Crypto"},
-  {name:"ETH/USD Crypto", type:"Crypto"},
-  {name:"EUR/USD Forex", type:"Forex"},
-  {name:"S&P500 Indici", type:"Indici"},
-  {name:"Man.City vs Fulham Sport", type:"Sport"},
-  {name:"NFT Rare Event", type:"Other"}
-];
-
 const container = document.getElementById('opportunitiesContainer');
 let bars = {};
+let opportunities = [];
 
-// Creează bare pentru fiecare oportunitate
-opportunities.forEach(op=>{
-  let div = document.createElement('div');
-  div.className = 'opportunity';
-  div.innerHTML = `${op.name} <div class="bar" id="${op.name.replace(/\s+/g,'')}"></div>`;
-  container.appendChild(div);
-  bars[op.name.replace(/\s+/g,'')] = document.getElementById(op.name.replace(/\s+/g,''));
-});
-
-// Motor Ultra Quantum Extraterestru
+// Quantum extraterestru simulator
 function quantumUniverse(max){
   let universes = 10000;
   let total=0;
@@ -54,14 +36,11 @@ function quantumUniverse(max){
   return Math.round(total/universes);
 }
 
-// Recomandare explicativă + pași concreți
-function getRecommendation(opName){
-  let base = opName.split(' ')[0];
-  let minutes = Math.floor(Math.random()*120)+30; // ține între 30 min – 2h
-  return `🚀 Intră pe ${base}, ține ${minutes} minute / ore, apoi vinde. Anomalie cosmică favorabilă detectată.`;
+function getRecommendation(op){
+  let minutes = Math.floor(Math.random()*120)+30;
+  return `🚀 Intră pe ${op.symbol} (${op.name}), ține ${minutes} minute / ore, apoi vinde. Anomalie cosmică favorabilă detectată.`;
 }
 
-// Animate + select semnal
 function animateBars(){
   for(let key in bars){
     let val = quantumUniverse(100);
@@ -71,16 +50,52 @@ function animateBars(){
   selectSignal();
 }
 
-// Semnal zilnic: oportunitatea cu cea mai mare anomalie
 function selectSignal(){
   let maxKey = Object.keys(bars).reduce((a,b)=>parseInt(bars[a].style.width) > parseInt(bars[b].style.width) ? a : b);
-  document.getElementById('finalSignal').textContent = `🔮 Semnal Galactic Zilnic: ${maxKey}`;
-  document.getElementById('recommendation').textContent = getRecommendation(maxKey);
+  let op = opportunities.find(o=>o.symbol.replace(/[^a-zA-Z0-9]/g,'')===maxKey);
+  document.getElementById('finalSignal').textContent = `🔮 Semnal Galactic Zilnic: ${op.name}`;
+  document.getElementById('recommendation').textContent = getRecommendation(op);
 }
 
-// Update live la fiecare 2 secunde
-setInterval(animateBars,2000);
-animateBars();
+// Crawl live API-uri demo
+async function fetchOpportunities(){
+  const crypto = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd')
+    .then(r=>r.json())
+    .then(data=>[
+      {name:"BTC/USD Crypto", symbol:"BTC/USD", price:data.bitcoin.usd},
+      {name:"ETH/USD Crypto", symbol:"ETH/USD", price:data.ethereum.usd}
+    ]).catch(()=>[]);
+
+  const forex = [
+    {name:"EUR/USD Forex", symbol:"EUR/USD", price:(1.12 + Math.random()*0.01).toFixed(4)}
+  ];
+
+  const indices = [
+    {name:"S&P500 Indici", symbol:"S&P500", price:(4300 + Math.random()*50).toFixed(2)}
+  ];
+
+  const sport = [
+    {name:"Man.City vs Fulham Sport", symbol:"Man.City", score:"0-0"}
+  ];
+
+  return [...crypto,...forex,...indices,...sport];
+}
+
+// Init aplicație live
+async function init(){
+  opportunities = await fetchOpportunities();
+  opportunities.forEach(op=>{
+    let div = document.createElement('div');
+    div.className = 'opportunity';
+    div.innerHTML = `${op.name} - ${op.price || op.score} <div class="bar" id="${op.symbol.replace(/[^a-zA-Z0-9]/g,'')}"></div>`;
+    container.appendChild(div);
+    bars[op.symbol.replace(/[^a-zA-Z0-9]/g,'')] = document.getElementById(op.symbol.replace(/[^a-zA-Z0-9]/g,''));
+  });
+  setInterval(animateBars,2000);
+  animateBars();
+}
+
+init();
 </script>
 </body>
 </html>
