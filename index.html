@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Meme Coins Ultra Mega Quantum (15m) – Doar Noi</title>
+<title>OMNISCAN – Meme Coins Ultra Mega Quantum (15m)</title>
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
@@ -10,6 +10,10 @@ h1 { color:#0ff; }
 .signal { margin-bottom:15px; border-bottom:1px solid #0f0; padding-bottom:5px; }
 .address { background:#111; padding:2px 4px; font-family:monospace; display:inline-block; width:auto; }
 button.copyBtn { margin-left:5px; cursor:pointer; }
+.sparkline { display:inline-block; height:20px; width:80px; margin-left:5px; background:#111; }
+.tooltip { position:relative; display:inline-block; }
+.tooltip .tiptext { visibility:hidden; width:60px; background-color:#222; color:#0f0; text-align:center; border-radius:5px; padding:2px 0; position:absolute; z-index:1; top:-25px; left:50%; margin-left:-30px; }
+.tooltip:hover .tiptext { visibility:visible; }
 </style>
 </head>
 <body>
@@ -47,6 +51,14 @@ function quantumLiquidityScore(liquidity){
     return liquidity>5000 ? 30 : 0;
 }
 
+// --- FUNCTION SPARKLINE MINI ---
+function generateSparkline(prices){
+    if(!prices || prices.length===0) return '';
+    const max = Math.max(...prices);
+    const min = Math.min(...prices);
+    return '<div class="sparkline">'+prices.map(p=>Math.round((p-min)/(max-min+0.0001)*100)+'%').join(' ')+'</div>';
+}
+
 // --- Binance Meme Noi (1-2 zile) ---
 async function fetchBinanceNewMemeSymbols(){
     try {
@@ -54,16 +66,13 @@ async function fetchBinanceNewMemeSymbols(){
         const data = await res.json();
         const memeKeywords = ["DOGE","SHIB","CAKE","PEPE","SAITAMA","ELON"];
         const now = Date.now();
-        const oneDayMs = 24*60*60*1000;
-        const twoDaysMs = 2*oneDayMs;
-
-        // aici filtram doar token-uri "noi" (aprox prin primul kline 15m)
+        const twoDaysMs = 2*24*60*60*1000;
         const newMemeSymbols = [];
         for(const s of data.symbols){
             if(s.quoteAsset==="USDT" && memeKeywords.some(k=>s.baseAsset.includes(k))){
                 try{
                     const kline = await fetch(`https://api.binance.com/api/v3/klines?symbol=${s.symbol}&interval=15m&limit=1`).then(r=>r.json());
-                    const firstTime = kline[0][0]; // timestamp primului kline
+                    const firstTime = kline[0][0]; 
                     if(now - firstTime <= twoDaysMs){
                         newMemeSymbols.push({symbol:s.symbol, address:s.contractAddress || s.baseAsset});
                     }
@@ -85,46 +94,48 @@ async function analyzeBinanceMeme(symbolObj){
     const currentVolume = volumes[volumes.length-1];
     const currentPrice = closes[closes.length-1];
 
-    // Calcule aproximative MCap
     const circulatingSupply = 1000000000; 
     const mcap = (currentPrice * circulatingSupply).toLocaleString('en-US', {style:'currency',currency:'USD'});
 
     const score = quantumTrendScore(closes) + quantumVolumeScore(currentVolume, avgVolume) + quantumLiquidityScore(avgVolume*1000);
-    return {symbol, score:Math.min(100,score), price:currentPrice, address:symbolObj.address, mcap};
+    
+    // Risc Rugpull simplu: volum mic sau lipsa lichiditate
+    const rugpull = avgVolume<1000 ? true : false;
+
+    return {symbol, score:Math.min(100,score), price:currentPrice, address:symbolObj.address, mcap, prices15m:closes, rugpull};
 }
 
-// --- Solana Meme Noi (1-2 zile) ---
+// --- Solana Meme Noi ---
 async function fetchSolanaNewTokens(){
     try{
         const res = await fetch('https://api.dexscreener.com/latest/dex/tokens?chain=solana');
         const data = await res.json();
         const now = Date.now();
         const twoDaysMs = 2*24*60*60*1000;
-
-        return data.pairs
-            .filter(t=>t.baseToken.dayData.volumeUsd>1000 && parseFloat(t.liquidity)>5000)
-            .slice(0,50)
-            .map(t=>{
-                const createdAt = t.baseToken.createdAt || now; // timestamp in ms
-                if(now - createdAt <= twoDaysMs){
-                    return {
-                        name:t.baseToken.name,
-                        symbol:t.baseToken.symbol,
-                        price:parseFloat(t.priceUsd),
-                        prices15m:t.baseToken.priceData15m || [],
-                        volume:parseFloat(t.baseToken.dayData.volumeUsd),
-                        liquidity:parseFloat(t.liquidity),
-                        address:t.baseToken.address,
-                        mcap:t.baseToken.marketCapUsd ? parseFloat(t.baseToken.marketCapUsd).toLocaleString('en-US', {style:'currency',currency:'USD'}) : "N/A"
-                    };
-                }
-            }).filter(Boolean);
+        return data.pairs.filter(t=>t.baseToken.dayData.volumeUsd>1000 && parseFloat(t.liquidity)>5000)
+                         .slice(0,50)
+                         .map(t=>{
+                            const createdAt = t.baseToken.createdAt || now;
+                            if(now - createdAt <= twoDaysMs){
+                                return {
+                                    name:t.baseToken.name,
+                                    symbol:t.baseToken.symbol,
+                                    price:parseFloat(t.priceUsd),
+                                    prices15m:t.baseToken.priceData15m || [],
+                                    volume:parseFloat(t.baseToken.dayData.volumeUsd),
+                                    liquidity:parseFloat(t.liquidity),
+                                    address:t.baseToken.address,
+                                    mcap:t.baseToken.marketCapUsd ? parseFloat(t.baseToken.marketCapUsd).toLocaleString('en-US', {style:'currency',currency:'USD'}) : "N/A"
+                                };
+                            }
+                         }).filter(Boolean);
     }catch(e){console.error(e); return [];}
 }
 
 function analyzeSolanaToken(token){
     const score = quantumTrendScore(token.prices15m) + quantumVolumeScore(token.volume, 1000) + quantumLiquidityScore(token.liquidity);
-    return {...token, score:Math.min(100,score)};
+    const rugpull = token.volume<1000;
+    return {...token, score:Math.min(100,score), rugpull};
 }
 
 // --- MOTOR QUANTUM ---
@@ -132,7 +143,7 @@ async function runQuantumScanner(){
     const output=document.getElementById("output");
     let signals=[];
 
-    // Binance meme automat
+    // Binance
     const binanceNewMemeSymbols = await fetchBinanceNewMemeSymbols();
     for(const s of binanceNewMemeSymbols){
         try{
@@ -141,12 +152,16 @@ async function runQuantumScanner(){
         }catch(e){console.error(e);}
     }
 
-    // Solana meme
+    // Solana
     const solTokens = await fetchSolanaNewTokens();
     solTokens.forEach(t=>{
         const analyzed = analyzeSolanaToken(t);
         if(analyzed.score>=60) signals.push(analyzed);
     });
+
+    // Top 5 după scor
+    signals.sort((a,b)=>b.score-a.score);
+    signals = signals.slice(0,5);
 
     if(signals.length===0){
         output.innerHTML="⚠️ Nicio oportunitate meme nouă ≥60% momentan.";
@@ -156,15 +171,18 @@ async function runQuantumScanner(){
             OneSignal.push(function(){
                 OneSignal.sendSelfNotification(
                     `🌠 Quantum Meme Signal: ${s.symbol}`,
-                    `Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap} | Address: ${s.address}`,
+                    `Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap} | Address: ${s.address} ${s.rugpull?"⚠️ Risc Rugpull":""}`,
                     'https://i.imgur.com/U4tV8aQ.png',
                     {url: window.location.href}
                 );
             });
             return `<div class="signal">
-🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap}  
+🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap} ${s.rugpull?"⚠️ Risc Rugpull":""}  
 <input type="text" id="${inputId}" value="${s.address}" readonly class="address">
-<button class="copyBtn" onclick="navigator.clipboard.writeText(document.getElementById('${inputId}').value)">Copy Address</button>
+<button class="copyBtn tooltip" onclick="navigator.clipboard.writeText(document.getElementById('${inputId}').value)">
+Copy Address<span class="tiptext">Copied!</span>
+</button>
+<span class="sparkline">${generateSparkline(s.prices15m)}</span>
 </div>`;
         }).join("");
     }
@@ -173,7 +191,6 @@ async function runQuantumScanner(){
 // --- RUN AUTOMATIC LA 1 MIN ---
 runQuantumScanner();
 setInterval(runQuantumScanner,60000);
-
 </script>
 </body>
 </html>
