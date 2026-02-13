@@ -3,187 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Bet Detector PRO+++ Futuristic 🧠⚽</title>
-
+<title>🔥 Smart Bet Detector Live PRO Futurist</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-
 <style>
-body {
-  background:#0f172a;
-  color:#e2e8f0;
-  font-family:system-ui;
-  text-align:center;
-  padding:20px;
-}
-h1 {color:#22c55e;font-size:26px;}
-button {
-  padding:12px 20px;
-  margin:10px;
-  border:none;
-  border-radius:8px;
-  background:#22c55e;
-  color:#000;
-  font-weight:bold;
-  cursor:pointer;
-}
-#preview, #output {
-  margin-top:20px;
-  text-align:left;
-}
-.match {
-  margin:10px 0;
-  padding:12px;
-  background:#111827;
-  border-radius:8px;
-  transition: transform 0.2s;
-}
-.match:hover { transform: scale(1.02); }
-.high{border-left:5px solid #22c55e;}
-.medium{border-left:5px solid #facc15;}
-.low{border-left:5px solid #ef4444;}
-canvas {max-width:100%;margin-top:20px;border:1px solid #444;border-radius:8px;}
+body{background:#0f172a;color:#e2e8f0;font-family:system-ui;text-align:center;padding:20px}
+h1{color:#22c55e;font-size:24px;margin-bottom:10px}
+button{padding:12px 20px;margin:10px;border:none;border-radius:8px;background:#22c55e;color:#000;font-weight:bold;cursor:pointer}
+#preview,#output{margin-top:20px;text-align:left}
+.match{margin:10px 0;padding:12px;background:#111827;border-radius:8px;transition:transform 0.2s}
+.match:hover{transform:scale(1.02)}
+.high{border-left:5px solid #22c55e}
+.medium{border-left:5px solid #facc15}
+.low{border-left:5px solid #ef4444}
+canvas{max-width:100%;margin-top:20px;border:1px solid #444;border-radius:8px}
 </style>
 </head>
 <body>
 
-<h1>Smart Bet Detector PRO+++ Futuristic 🧠⚽</h1>
-
-<input type="file" id="imageInput">
-<br>
-<button onclick="runOCR()">Scanează & Analizează</button>
+<h1>🔥 Smart Bet Detector Live PRO Futurist</h1>
+<input type="file" id="imageInput"><br>
+<button onclick="runOCR()">Scanează & Rulează Analiză</button>
 
 <h3>Preview OCR</h3>
 <canvas id="canvas"></canvas>
 
-<h3>Meciuri Detectate</h3>
+<h3>Top 5 Predicții Zilnice</h3>
 <div id="output"></div>
 
 <script>
-// ---------------- CLEAN OCR -----------------
+// ----------------- CLEAN OCR -----------------
 function cleanOCR(text){
-    return text
-        .replace(/[\*|@#\$%®<>\-]/g,'')
-        .replace(/\s{2,}/g,' ')
-        .split("\n")
-        .map(l=>l.trim())
-        .filter(l=>l.length>1)
+    return text.replace(/[\*|@#\$%®<>\-]/g,'.')
+               .replace(/\s{2,}/g,' ')
+               .split("\n")
+               .map(l=>l.trim())
+               .filter(l=>l.length>1)
 }
 
-// ---------------- PARSER MECIURI -----------------
+// ----------------- PARSER MESE -----------------
 function parseMatches(lines){
-    let matches=[];
-    let buffer=[];
+    let matches=[], buffer=[]
     for(let line of lines){
-        let odds = line.match(/(\d+\.\d+)/g);
+        let odds=line.match(/(\d+\.\d+)/g)
         if(odds && odds.length>=3){
-            let odd1=parseFloat(odds[0])
-            let oddX=parseFloat(odds[1])
-            let odd2=parseFloat(odds[2])
-
-            let home="", away="";
+            let odd1=parseFloat(odds[0]), oddX=parseFloat(odds[1]), odd2=parseFloat(odds[2])
+            let home="", away=""
             for(let i=buffer.length-1;i>=0;i--){
                 if(!buffer[i].match(/\d/)){
                     if(!away) away=buffer[i]
                     else { home=buffer[i]; break }
                 }
             }
-
-            if(home && away && home!==away){
-                if(!matches.some(m=>m.home===home && m.away===away)){
-                    matches.push({home,away,odd1,oddX,odd2})
-                }
+            if(home && away && home!==away && !matches.some(m=>m.home===home && m.away===away)){
+                matches.push({home,away,odd1,oddX,odd2})
             }
-        } else {
-            buffer.push(line)
-        }
+        } else buffer.push(line)
     }
-    return matches;
+    return matches
 }
 
-// ---------------- CALCULE FUTURISTE -----------------
-function calculate(match){
-    // Probabilități implicite
-    let p1=1/match.odd1
-    let pX=1/match.oddX
-    let p2=1/match.odd2
-    let total=p1+pX+p2
-    p1/=total; pX/=total; p2/=total
+// ----------------- FETCH LIVE FORM SIMULATED -----------------
+async function fetchLiveForm(team){
+    // Simulăm forma echipelor cu valori random (în realitate folosește API real)
+    return 0.3 + Math.random()*0.7
+}
 
-    // Algoritm futurist: bias și trend simulare
-    let trendHome=Math.random()*0.1
-    let trendAway=Math.random()*0.1
-    let trendDraw=Math.random()*0.05
+// ----------------- ULTRA SMART CALC -----------------
+async function calculateUltra(match){
+    let homeForm = await fetchLiveForm(match.home)
+    let awayForm = await fetchLiveForm(match.away)
 
-    p1=Math.min(1,p1+trendHome)
-    p2=Math.min(1,p2+trendAway)
-    pX=Math.min(1,pX+trendDraw)
-    total=p1+pX+p2
-    p1/=total; pX/=total; p2/=total
+    // Ajustare cote futuristă
+    let adjOdd1 = match.odd1 * (1 - homeForm*0.2)
+    let adjOdd2 = match.odd2 * (1 - awayForm*0.2)
+    let adjOddX = match.oddX * (1 - ((homeForm+awayForm)/2)*0.1)
+
+    let p1=1/adjOdd1, pX=1/adjOddX, p2=1/adjOdd2
+    let total=p1+pX+p2; p1/=total; pX/=total; p2/=total
 
     let maxProb=Math.max(p1,pX,p2)
     let pick=maxProb===p1?match.home:maxProb===p2?match.away:"Egal"
     let percent=(maxProb*100).toFixed(2)
-
-    // Value index futurist
-    let bestOdd=maxProb===p1?match.odd1:maxProb===p2?match.odd2:match.oddX
-    let valueIndex=((bestOdd*maxProb)-1).toFixed(2)
-
-    return {pick,percent,maxProb,valueIndex}
+    let valueIndex=(maxProb-(1/3)).toFixed(2)
+    return {pick,percent,maxProb,valueIndex,adjOdd1,adjOddX,adjOdd2}
 }
 
-// ---------------- AFISARE -----------------
-function display(matches){
+// ----------------- SELECT TOP 5 -----------------
+async function getTop5(matches){
+    let results=[]
+    for(let m of matches){
+        let calc=await calculateUltra(m)
+        results.push({...m,...calc})
+    }
+    results.sort((a,b)=>b.maxProb-a.maxProb)
+    return results.slice(0,5)
+}
+
+// ----------------- DISPLAY ULTRA -----------------
+async function display(matches){
     let container=document.getElementById("output")
     container.innerHTML=""
-    if(matches.length===0){
-        container.innerHTML="Nu s-au detectat meciuri valide."
-        return
-    }
-    matches.forEach(m=>{
-        let calc=calculate(m)
-        let level="low"
-        if(calc.maxProb>0.55) level="high"
-        else if(calc.maxProb>0.40) level="medium"
-
+    if(matches.length===0){container.innerHTML="Nu s-au detectat meciuri valide."; return}
+    let top5 = await getTop5(matches)
+    for(let m of top5){
+        let level="low"; if(m.maxProb>0.55) level="high"; else if(m.maxProb>0.40) level="medium"
         container.innerHTML+=`
         <div class="match ${level}">
         <b>${m.home} vs ${m.away}</b><br>
-        Cote: ${m.odd1.toFixed(2)} / ${m.oddX.toFixed(2)} / ${m.odd2.toFixed(2)}<br>
-        🔥 Recomandare Smart: <b>${calc.pick}</b><br>
-        Scor încredere: ${calc.percent}%<br>
-        Value index: ${calc.valueIndex}
+        Cote: ${m.adjOdd1.toFixed(2)} / ${m.adjOddX.toFixed(2)} / ${m.adjOdd2.toFixed(2)}<br>
+        🔥 Recomandare Smart: <b>${m.pick}</b><br>
+        Scor încredere: ${m.percent}%<br>
+        Value index: ${m.valueIndex}
         </div>
         `
-    })
+    }
 }
 
-// ---------------- RUN OCR -----------------
+// ----------------- RUN OCR -----------------
 async function runOCR(){
     let file=document.getElementById("imageInput").files[0]
-    if(!file){ alert("Selectează o poză"); return }
-
-    let canvas=document.getElementById("canvas")
-    let ctx=canvas.getContext("2d")
+    if(!file){alert("Selectează o poză"); return}
+    let canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d")
     let img=new Image()
-    img.onload = async function(){
-        canvas.width = img.width
-        canvas.height = img.height
+    img.onload=async function(){
+        canvas.width=img.width; canvas.height=img.height
         ctx.drawImage(img,0,0)
 
-        let { data: { text, words } } = await Tesseract.recognize(file,'eng',{
-            logger:m=>console.log(m)
-        })
-
+        let { data: { text, words } } = await Tesseract.recognize(file,'eng',{logger:m=>console.log(m)})
         let cleaned=cleanOCR(text)
         let matches=parseMatches(cleaned)
+        await display(matches)
 
-        display(matches)
-
-        // Highlight cote pe canvas
-        ctx.strokeStyle="red"
-        ctx.lineWidth=2
-        ctx.font="18px Arial"
-        ctx.fillStyle="yellow"
+        // Vizualizare cote pe imagine
+        ctx.strokeStyle="red"; ctx.lineWidth=2; ctx.font="18px Arial"; ctx.fillStyle="yellow"
         words.forEach(w=>{
             if(w.text.match(/\d+\.\d+/)){
                 ctx.strokeRect(w.bbox.x0,w.bbox.y0,w.bbox.x1-w.bbox.x0,w.bbox.y1-w.bbox.y0)
@@ -194,6 +146,5 @@ async function runOCR(){
     img.src=URL.createObjectURL(file)
 }
 </script>
-
 </body>
 </html>
