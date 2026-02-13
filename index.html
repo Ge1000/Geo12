@@ -2,128 +2,147 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Galactic Quantum Brain Ultra-Live Total REAL 👽</title>
+<title>OMNISCAN – Crypto + Solana Meme Coins 15m REAL TREND</title>
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 <style>
-  body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
+body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
+h1 { color:#0ff; }
+.signal { margin-bottom:15px; border-bottom:1px solid #0f0; padding-bottom:5px; }
 </style>
 </head>
 <body>
-<div id="testLog">🔭 Motor cosmic total real se inițializează...</div>
+
+<h1>OMNISCAN – Crypto + Solana Meme Coins (15m) REAL TREND</h1>
+<div id="output">Se analizează piața...</div>
+
 <script>
-// --- INIT ONE SIGNAL INVIZIBIL ---
+// --- INIT OneSignal ---
 window.OneSignal = window.OneSignal || [];
 OneSignal.push(function() {
   OneSignal.init({
-    appId: "YOUR_REAL_ONESIGNAL_APP_ID", // pune aici appId-ul tău real
-    notifyButton: { enable: false }
+    appId: "YOUR_REAL_ONESIGNAL_APP_ID",
+    notifyButton: { enable:false }
   });
 });
 
-// --- MOTOR COSMIC ULTRA-QUANTUM ---
-class GalacticQuantumBrain {
-  constructor(){ 
-    this.universes=10000; 
-    this.memory=[]; 
-  }
-  analyze(op){
+// --- Crypto tradițional ---
+const cryptoSymbols = ["BTCUSDT","ETHUSDT"];
+
+function calculateEMA(data, period){
+    const k = 2/(period+1);
+    let ema = data[0];
+    for(let i=1;i<data.length;i++){
+        ema = data[i]*k + ema*(1-k);
+    }
+    return ema;
+}
+
+function calculateRSI(closes, period=14){
+    let gains=0, losses=0;
+    for(let i=closes.length-period;i<closes.length-1;i++){
+        const diff = closes[i+1]-closes[i];
+        if(diff>0) gains+=diff;
+        else losses-=diff;
+    }
+    const rs = gains/(losses||1);
+    return 100 - (100/(1+rs));
+}
+
+async function analyzeCrypto(symbol){
+    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=15m&limit=100`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const closes = data.map(c=>parseFloat(c[4]));
+    const volumes = data.map(c=>parseFloat(c[5]));
+    const ema9 = calculateEMA(closes.slice(-9),9);
+    const ema21 = calculateEMA(closes.slice(-21),21);
+    const rsi = calculateRSI(closes);
+    const avgVolume = volumes.slice(0,-1).reduce((a,b)=>a+b)/(volumes.length-1);
+    const currentVolume = volumes[volumes.length-1];
+
     let score=0;
-    for(let i=0;i<this.universes;i++){
-      let anomaly=Math.pow(Math.random(),Math.random());
-      let trend=Math.sin(Date.now()/100000+i);
-      score += anomaly*50 + trend*50;
-    }
-    score=Math.round(score/this.universes);
-    score += this.memoryInfluence(op);
-    return Math.min(100,Math.max(0,score));
-  }
-  memoryInfluence(op){
-    let influence=0;
-    this.memory.forEach(prev=>{ 
-      if(prev.symbol===op.symbol) influence += (prev.score-50)/50; 
-    });
-    this.memory.push({symbol:op.symbol,score:Math.random()*100});
-    return influence;
-  }
-  recommend(op){
-    const score=this.analyze(op);
-    let minutes=Math.floor(Math.random()*120)+30;
-    return {op,score,recommendation:`🚀 Intră pe ${op.symbol} (${op.name}), ține ${minutes} minute / ore, Quantum Score: ${score}%`};
-  }
+    if(ema9>ema21) score+=30;
+    if(rsi>55 && rsi<75) score+=25;
+    if(currentVolume>avgVolume*1.5) score+=25;
+    if(closes[closes.length-1] > closes[closes.length-5]) score+=20;
+
+    return {symbol, score, ema9, ema21, rsi};
 }
 
-// --- CRAWLING LIVE TOTAL REAL ---
-class CosmicCrawler{
-  async fetchOpportunities(){
-    const results = [];
-    try {
-      // Crypto live
-      const btc = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd').then(r=>r.json());
-      results.push({name:"BTC/USD Crypto", symbol:"BTC/USD", price:btc.bitcoin.usd});
-      
-      const eth = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd').then(r=>r.json());
-      results.push({name:"ETH/USD Crypto", symbol:"ETH/USD", price:eth.ethereum.usd});
-
-      // Forex live
-      const forex = await fetch('https://api.exchangerate.host/latest?base=EUR&symbols=USD').then(r=>r.json());
-      results.push({name:"EUR/USD Forex", symbol:"EUR/USD", price:forex.rates.USD});
-
-      // Indici live
-      const sp500 = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/^GSPC')
-        .then(r=>r.json())
-        .then(d=>d.chart.result[0].meta.regularMarketPrice);
-      results.push({name:"S&P500 Indici", symbol:"S&P500", price:sp500});
-
-      // Sport live – exemplu site public (poți integra API sport real)
-      const sportResp = await fetch('https://www.scorebat.com/video-api/v3/feed/?token=YOUR_SCOREBAT_API_KEY').then(r=>r.json());
-      const match = sportResp.response.find(m=>m.title.includes("Man City vs Fulham"));
-      results.push({name:"Man.City vs Fulham Sport", symbol:"Man.City", score:match ? match.matchviewUrl : "0-0"});
-
-    } catch(e){
-      console.error("Eroare fetching:", e);
-    }
-    return results;
-  }
-
-  async getHighPotentialSignals(brain){
-    const ops = await this.fetchOpportunities();
-    const signals = ops.map(op=>brain.recommend(op));
-    return signals.filter(s=>s.score >= 80); // doar peste 80%
-  }
+// --- Solana Meme Coins ---
+async function fetchSolanaTokens(){
+    try{
+        const res = await fetch('https://api.dexscreener.com/latest/dex/tokens?chain=solana');
+        const data = await res.json();
+        return data.pairs.slice(0,50).map(t=>({
+            name:t.baseToken.name,
+            symbol:t.baseToken.symbol,
+            price:parseFloat(t.priceUsd),
+            prices15m:t.baseToken.priceData15m || [], // array cu ultimele 15 lumânări, dacă e disponibil
+            volume:parseFloat(t.baseToken.dayData.volumeUsd),
+            liquidity:parseFloat(t.liquidity)
+        }));
+    }catch(e){console.error(e); return [];}
 }
 
-// --- INIT ---
-const brain = new GalacticQuantumBrain();
-const crawler = new CosmicCrawler();
-const log = document.getElementById('testLog');
+function analyzeSolanaToken(token){
+    let score=0;
+    // Trend real 15m: preț constant sau în creștere
+    if(token.prices15m.length>=5){
+        const last5 = token.prices15m.slice(-5);
+        let trend = 0;
+        for(let i=0;i<last5.length-1;i++){
+            if(last5[i+1]>last5[i]) trend+=1;
+        }
+        score += trend*10; // maxim 40 pct
+    }
 
-// --- FUNCȚIE ULTRA-LIVE INSTANT TOTAL ---
-async function runUltraLiveTotalReal(){
-  const signals = await crawler.getHighPotentialSignals(brain);
+    if(token.volume > 5000) score+=30; 
+    if(token.liquidity > 10000) score+=30; 
 
-  if(signals.length === 0){
-    log.innerText = `⚠️ Niciun semnal cu potențial mare (≥80%) găsit momentan.`;
-  } else {
-    signals.forEach(signal=>{
-      OneSignal.push(function() {
-        OneSignal.sendSelfNotification(
-          `🌠 Semnal Cosmic Ultra-Live Total: ${signal.op.name} (${signal.op.symbol})`,
-          `${signal.recommendation}`,
-          'https://i.imgur.com/U4tV8aQ.png',
-          {url: window.location.href}
-        );
-      });
+    return {...token, score:Math.min(100,score)};
+}
+
+// --- RUN SCANNER ---
+async function runScanner(){
+    const output = document.getElementById("output");
+    let signals=[];
+
+    // Crypto tradițional
+    for(const s of cryptoSymbols){
+        try{
+            const res = await analyzeCrypto(s);
+            if(res.score>=60) signals.push(res);
+        }catch(e){console.error(e);}
+    }
+
+    // Meme coins Solana
+    const solTokens = await fetchSolanaTokens();
+    solTokens.forEach(t=>{
+        const analyzed = analyzeSolanaToken(t);
+        if(analyzed.score>=60) signals.push(analyzed);
     });
 
-    log.innerText = `✅ [ULTIMA VERSIUNE ULTRA-LIVE TOTAL REAL] Semnale cu potențial mare trimise:\n` +
-                    signals.map(s=>`${s.recommendation} | Quantum Score: ${s.score}%`).join('\n');
-  }
-
-  setTimeout(runUltraLiveTotalReal, 60*1000); // verificare la fiecare 1 minut
+    if(signals.length===0){
+        output.innerHTML="⚠️ Nicio oportunitate validă ≥60% momentan.";
+    }else{
+        output.innerHTML = signals.map(s=>{
+            OneSignal.push(function(){
+                OneSignal.sendSelfNotification(
+                    `🌠 Semnal Crypto/Meme: ${s.symbol}`,
+                    `Score: ${s.score}%`,
+                    'https://i.imgur.com/U4tV8aQ.png',
+                    {url: window.location.href}
+                );
+            });
+            return `<div class="signal">🚀 ${s.symbol} | Score: ${s.score}% | Price: ${s.price}</div>`;
+        }).join("");
+    }
 }
 
-// --- PORNEȘTE MOTORUL ULTRA-LIVE TOTAL REAL ---
-runUltraLiveTotalReal();
+runScanner();
+setInterval(runScanner,60000);
+
 </script>
 </body>
 </html>
