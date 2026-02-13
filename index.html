@@ -53,9 +53,10 @@ async function fetchBinanceNewMemeSymbols(){
         const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
         const data = await res.json();
         const memeKeywords = ["DOGE","SHIB","CAKE","PEPE","SAITAMA","ELON"];
+        // Aici luam addressul real din Binance
         const newMemeSymbols = data.symbols
             .filter(s => s.quoteAsset === "USDT" && memeKeywords.some(k=>s.baseAsset.includes(k)))
-            .map(s => ({symbol:s.symbol, address:s.baseAsset}));
+            .map(s => ({symbol:s.symbol, address:s.contractAddress || s.baseAsset}));
         return newMemeSymbols;
     } catch(e) { console.error(e); return []; }
 }
@@ -93,7 +94,7 @@ async function fetchSolanaNewTokens(){
                              prices15m:t.baseToken.priceData15m || [],
                              volume:parseFloat(t.baseToken.dayData.volumeUsd),
                              liquidity:parseFloat(t.liquidity),
-                             address:t.baseToken.address,
+                             address:t.baseToken.address, // adresa reala
                              mcap:t.baseToken.marketCapUsd ? parseFloat(t.baseToken.marketCapUsd).toLocaleString('en-US', {style:'currency',currency:'USD'}) : "N/A"
                          }));
     }catch(e){console.error(e); return [];}
