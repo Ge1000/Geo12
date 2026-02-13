@@ -8,6 +8,7 @@
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
 h1 { color:#0ff; }
 .signal { margin-bottom:15px; border-bottom:1px solid #0f0; padding-bottom:5px; }
+.address { background:#111; padding:2px 4px; font-family:monospace; display:inline-block; }
 </style>
 </head>
 <body>
@@ -69,8 +70,12 @@ async function analyzeBinanceMeme(symbolObj){
     const currentVolume = volumes[volumes.length-1];
     const currentPrice = closes[closes.length-1];
 
+    // Calcule aproximative MCap (dacă există circulating supply, aici punem doar exemplu placeholder)
+    const circulatingSupply = 1000000000; // placeholder, poți integra API real pentru supply
+    const mcap = (currentPrice * circulatingSupply).toLocaleString('en-US', {style:'currency',currency:'USD'});
+
     const score = quantumTrendScore(closes) + quantumVolumeScore(currentVolume, avgVolume) + quantumLiquidityScore(avgVolume*1000);
-    return {symbol, score:Math.min(100,score), price:currentPrice, address:symbolObj.address};
+    return {symbol, score:Math.min(100,score), price:currentPrice, address:symbolObj.address, mcap};
 }
 
 // --- SOLANA MEME NOU ---
@@ -87,7 +92,8 @@ async function fetchSolanaNewTokens(){
                              prices15m:t.baseToken.priceData15m || [],
                              volume:parseFloat(t.baseToken.dayData.volumeUsd),
                              liquidity:parseFloat(t.liquidity),
-                             address:t.baseToken.address
+                             address:t.baseToken.address,
+                             mcap:t.baseToken.marketCapUsd ? parseFloat(t.baseToken.marketCapUsd).toLocaleString('en-US', {style:'currency',currency:'USD'}) : "N/A"
                          }));
     }catch(e){console.error(e); return [];}
 }
@@ -125,12 +131,14 @@ async function runQuantumScanner(){
             OneSignal.push(function(){
                 OneSignal.sendSelfNotification(
                     `🌠 Quantum Meme Signal: ${s.symbol}`,
-                    `Score: ${Math.round(s.score)}% | Price: ${s.price} | Address: ${s.address}`,
+                    `Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap} | Address: ${s.address}`,
                     'https://i.imgur.com/U4tV8aQ.png',
                     {url: window.location.href}
                 );
             });
-            return `<div class="signal">🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price} | Address: ${s.address}</div>`;
+            return `<div class="signal">
+🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap} | Address: <span class="address">${s.address}</span>
+</div>`;
         }).join("");
     }
 }
