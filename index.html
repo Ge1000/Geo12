@@ -8,7 +8,8 @@
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
 h1 { color:#0ff; }
 .signal { margin-bottom:15px; border-bottom:1px solid #0f0; padding-bottom:5px; }
-.address { background:#111; padding:2px 4px; font-family:monospace; display:inline-block; }
+.address { background:#111; padding:2px 4px; font-family:monospace; display:inline-block; width:auto; }
+button.copyBtn { margin-left:5px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -70,8 +71,8 @@ async function analyzeBinanceMeme(symbolObj){
     const currentVolume = volumes[volumes.length-1];
     const currentPrice = closes[closes.length-1];
 
-    // Calcule aproximative MCap (dacă există circulating supply, aici punem doar exemplu placeholder)
-    const circulatingSupply = 1000000000; // placeholder, poți integra API real pentru supply
+    // Calcule aproximative MCap (placeholder)
+    const circulatingSupply = 1000000000; 
     const mcap = (currentPrice * circulatingSupply).toLocaleString('en-US', {style:'currency',currency:'USD'});
 
     const score = quantumTrendScore(closes) + quantumVolumeScore(currentVolume, avgVolume) + quantumLiquidityScore(avgVolume*1000);
@@ -127,7 +128,8 @@ async function runQuantumScanner(){
     if(signals.length===0){
         output.innerHTML="⚠️ Nicio oportunitate meme nouă ≥60% momentan.";
     }else{
-        output.innerHTML=signals.map(s=>{
+        output.innerHTML=signals.map((s,i)=>{
+            const inputId = `addr${i}`;
             OneSignal.push(function(){
                 OneSignal.sendSelfNotification(
                     `🌠 Quantum Meme Signal: ${s.symbol}`,
@@ -137,7 +139,9 @@ async function runQuantumScanner(){
                 );
             });
             return `<div class="signal">
-🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap} | Address: <span class="address">${s.address}</span>
+🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price} | MCap: ${s.mcap}  
+<input type="text" id="${inputId}" value="${s.address}" readonly class="address">
+<button class="copyBtn" onclick="navigator.clipboard.writeText(document.getElementById('${inputId}').value)">Copy Address</button>
 </div>`;
         }).join("");
     }
