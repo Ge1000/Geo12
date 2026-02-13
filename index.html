@@ -76,7 +76,7 @@ function cleanOCR(text){
         .filter(l=>l.length>1)
 }
 
-// ------------------ PARSER ULTRA HYBRID ------------------
+// ------------------ PARSER ULTRA HYBRID (FIXED) ------------------
 function parseMatches(lines){
     let matches=[]
     let buffer=[]
@@ -88,11 +88,14 @@ function parseMatches(lines){
             let oddX=parseFloat(odds[1])
             let odd2=parseFloat(odds[2])
 
-            let home="", away=""
-            for(let i=buffer.length-1;i>=0;i--){
-                if(!buffer[i].match(/\d/)){
-                    if(!away) away=buffer[i]
-                    else { home=buffer[i]; break }
+            // FIX: corectarea extragerii echipelor din buffer
+            let home="", away="";
+            for(let i=buffer.length-1; i>=0; i--){
+                let l = buffer[i].trim();
+                if(l.length > 0 && !l.match(/\d/)){
+                    if(!home) home = l;
+                    else if(!away) away = l;
+                    if(home && away) break;
                 }
             }
 
@@ -108,7 +111,7 @@ function parseMatches(lines){
     return matches
 }
 
-// ------------------ CALCUL PROBABILITATE FIX ------------------
+// ------------------ CALCUL PROBABILITATE ------------------
 function calculate(match){
     let p1=1/match.odd1
     let pX=1/match.oddX
@@ -121,7 +124,7 @@ function calculate(match){
     return {pick,percent,maxProb}
 }
 
-// ------------------ DISPLAY FIX ------------------
+// ------------------ DISPLAY ------------------
 function display(matches){
     let container=document.getElementById("output")
     container.innerHTML=""
@@ -146,7 +149,7 @@ function display(matches){
     })
 }
 
-// ------------------ LIVE FORM FETCH (ULTIMELE 5 MECIURI) ------------------
+// ------------------ LIVE FORM FETCH ------------------
 async function fetchLiveForm(team){
     const API_KEY = "CHEIA_TA_API"; // <-- pune aici cheia ta API
     try {
