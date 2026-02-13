@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Crypto + Solana Meme Coins 15m REAL TREND</title>
+<title>OMNISCAN – Meme Coins Noi REAL TREND</title>
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
@@ -12,7 +12,7 @@ h1 { color:#0ff; }
 </head>
 <body>
 
-<h1>OMNISCAN – Crypto + Solana Meme Coins (15m) REAL TREND</h1>
+<h1>OMNISCAN – Meme Coins Noi (15m) REAL TREND</h1>
 <div id="output">Se analizează piața...</div>
 
 <script>
@@ -25,112 +25,97 @@ OneSignal.push(function() {
   });
 });
 
-// --- Crypto tradițional ---
-const cryptoSymbols = ["BTCUSDT","ETHUSDT"];
+// --- ANALIZĂ MEME COINS BINANCE NOI ---
+const binanceNewMemeSymbols = ["SHIBUSDT","DOGEUSDT","CAKEUSDT"]; // extinde lista cu meme noi Binance
 
-function calculateEMA(data, period){
-    const k = 2/(period+1);
-    let ema = data[0];
-    for(let i=1;i<data.length;i++){
-        ema = data[i]*k + ema*(1-k);
-    }
-    return ema;
-}
-
-function calculateRSI(closes, period=14){
-    let gains=0, losses=0;
-    for(let i=closes.length-period;i<closes.length-1;i++){
-        const diff = closes[i+1]-closes[i];
-        if(diff>0) gains+=diff;
-        else losses-=diff;
-    }
-    const rs = gains/(losses||1);
-    return 100 - (100/(1+rs));
-}
-
-async function analyzeCrypto(symbol){
-    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=15m&limit=100`;
+async function analyzeBinanceMeme(symbol){
+    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=15m&limit=15`;
     const res = await fetch(url);
     const data = await res.json();
     const closes = data.map(c=>parseFloat(c[4]));
     const volumes = data.map(c=>parseFloat(c[5]));
-    const ema9 = calculateEMA(closes.slice(-9),9);
-    const ema21 = calculateEMA(closes.slice(-21),21);
-    const rsi = calculateRSI(closes);
     const avgVolume = volumes.slice(0,-1).reduce((a,b)=>a+b)/(volumes.length-1);
     const currentVolume = volumes[volumes.length-1];
+    const currentPrice = closes[closes.length-1];
 
     let score=0;
-    if(ema9>ema21) score+=30;
-    if(rsi>55 && rsi<75) score+=25;
+    // Trend real 15m
+    if(closes.length>=5){
+        let trend=0;
+        for(let i=closes.length-5;i<closes.length-1;i++){
+            if(closes[i+1]>closes[i]) trend++;
+        }
+        score += trend*15; // maxim 60
+    }
     if(currentVolume>avgVolume*1.5) score+=25;
-    if(closes[closes.length-1] > closes[closes.length-5]) score+=20;
+    if(currentPrice>0) score+=15;
 
-    return {symbol, score, ema9, ema21, rsi};
+    return {symbol, score, price: currentPrice};
 }
 
-// --- Solana Meme Coins ---
-async function fetchSolanaTokens(){
+// --- ANALIZĂ MEME COINS SOLANA NOI ---
+async function fetchSolanaNewTokens(){
     try{
         const res = await fetch('https://api.dexscreener.com/latest/dex/tokens?chain=solana');
         const data = await res.json();
-        return data.pairs.slice(0,50).map(t=>({
-            name:t.baseToken.name,
-            symbol:t.baseToken.symbol,
-            price:parseFloat(t.priceUsd),
-            prices15m:t.baseToken.priceData15m || [], // array cu ultimele 15 lumânări, dacă e disponibil
-            volume:parseFloat(t.baseToken.dayData.volumeUsd),
-            liquidity:parseFloat(t.liquidity)
-        }));
+        // filtrăm doar tokenuri noi cu volum și lichiditate minimă
+        return data.pairs.filter(t=>t.baseToken.dayData.volumeUsd>1000 && parseFloat(t.liquidity)>5000)
+                         .slice(0,50)
+                         .map(t=>({
+                             name:t.baseToken.name,
+                             symbol:t.baseToken.symbol,
+                             price:parseFloat(t.priceUsd),
+                             prices15m:t.baseToken.priceData15m || [],
+                             volume:parseFloat(t.baseToken.dayData.volumeUsd),
+                             liquidity:parseFloat(t.liquidity)
+                         }));
     }catch(e){console.error(e); return [];}
 }
 
 function analyzeSolanaToken(token){
     let score=0;
-    // Trend real 15m: preț constant sau în creștere
+    // Trend real 15m
     if(token.prices15m.length>=5){
         const last5 = token.prices15m.slice(-5);
-        let trend = 0;
+        let trend=0;
         for(let i=0;i<last5.length-1;i++){
-            if(last5[i+1]>last5[i]) trend+=1;
+            if(last5[i+1]>last5[i]) trend++;
         }
-        score += trend*10; // maxim 40 pct
+        score+=trend*10; // maxim 40
     }
-
-    if(token.volume > 5000) score+=30; 
-    if(token.liquidity > 10000) score+=30; 
-
+    if(token.volume>1000) score+=30;
+    if(token.liquidity>5000) score+=30;
     return {...token, score:Math.min(100,score)};
 }
 
 // --- RUN SCANNER ---
 async function runScanner(){
-    const output = document.getElementById("output");
+    const output=document.getElementById("output");
     let signals=[];
 
-    // Crypto tradițional
-    for(const s of cryptoSymbols){
+    // Meme coins Binance noi
+    for(const s of binanceNewMemeSymbols){
         try{
-            const res = await analyzeCrypto(s);
+            const res = await analyzeBinanceMeme(s);
             if(res.score>=60) signals.push(res);
         }catch(e){console.error(e);}
     }
 
-    // Meme coins Solana
-    const solTokens = await fetchSolanaTokens();
+    // Meme coins Solana noi
+    const solTokens = await fetchSolanaNewTokens();
     solTokens.forEach(t=>{
         const analyzed = analyzeSolanaToken(t);
         if(analyzed.score>=60) signals.push(analyzed);
     });
 
     if(signals.length===0){
-        output.innerHTML="⚠️ Nicio oportunitate validă ≥60% momentan.";
+        output.innerHTML="⚠️ Nicio oportunitate meme nouă validă ≥60% momentan.";
     }else{
-        output.innerHTML = signals.map(s=>{
+        output.innerHTML=signals.map(s=>{
             OneSignal.push(function(){
                 OneSignal.sendSelfNotification(
-                    `🌠 Semnal Crypto/Meme: ${s.symbol}`,
-                    `Score: ${s.score}%`,
+                    `🌠 Semnal Meme Nou: ${s.symbol}`,
+                    `Score: ${s.score}% | Price: ${s.price}`,
                     'https://i.imgur.com/U4tV8aQ.png',
                     {url: window.location.href}
                 );
@@ -140,6 +125,7 @@ async function runScanner(){
     }
 }
 
+// --- RUN AUTOMATIC LA 1 MIN ---
 runScanner();
 setInterval(runScanner,60000);
 
