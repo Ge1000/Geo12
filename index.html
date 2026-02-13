@@ -31,7 +31,6 @@ function quantumTrendScore(prices){
     if(prices.length>=5){
         for(let i=prices.length-5;i<prices.length-1;i++){
             const diff=prices[i+1]-prices[i];
-            // algoritm quantum: creștere lină + accelerație
             score += diff>0 ? 10 + Math.log(1+diff*100) : 0;
         }
     }
@@ -46,10 +45,21 @@ function quantumLiquidityScore(liquidity){
     return liquidity>5000 ? 30 : 0;
 }
 
-// --- BINANCE MEME NOU ---
-const binanceNewMemeSymbols = ["DOGEUSDT","SHIBUSDT","CAKEUSDT"]; 
+// --- BINANCE MEME NOU AUTOMAT ---
+async function fetchBinanceNewMemeSymbols(){
+    try {
+        const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+        const data = await res.json();
+        const memeKeywords = ["DOGE","SHIB","CAKE","PEPE","SAITAMA","ELON"];
+        const newMemeSymbols = data.symbols
+            .filter(s => s.quoteAsset === "USDT" && memeKeywords.some(k=>s.baseAsset.includes(k)))
+            .map(s => ({symbol:s.symbol, address:s.baseAsset}));
+        return newMemeSymbols;
+    } catch(e) { console.error(e); return []; }
+}
 
-async function analyzeBinanceMeme(symbol){
+async function analyzeBinanceMeme(symbolObj){
+    const symbol = symbolObj.symbol;
     const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=15m&limit=15`;
     const res = await fetch(url);
     const data = await res.json();
@@ -60,7 +70,7 @@ async function analyzeBinanceMeme(symbol){
     const currentPrice = closes[closes.length-1];
 
     const score = quantumTrendScore(closes) + quantumVolumeScore(currentVolume, avgVolume) + quantumLiquidityScore(avgVolume*1000);
-    return {symbol, score:Math.min(100,score), price:currentPrice};
+    return {symbol, score:Math.min(100,score), price:currentPrice, address:symbolObj.address};
 }
 
 // --- SOLANA MEME NOU ---
@@ -76,7 +86,8 @@ async function fetchSolanaNewTokens(){
                              price:parseFloat(t.priceUsd),
                              prices15m:t.baseToken.priceData15m || [],
                              volume:parseFloat(t.baseToken.dayData.volumeUsd),
-                             liquidity:parseFloat(t.liquidity)
+                             liquidity:parseFloat(t.liquidity),
+                             address:t.baseToken.address
                          }));
     }catch(e){console.error(e); return [];}
 }
@@ -91,7 +102,8 @@ async function runQuantumScanner(){
     const output=document.getElementById("output");
     let signals=[];
 
-    // Binance meme
+    // Binance meme automat
+    const binanceNewMemeSymbols = await fetchBinanceNewMemeSymbols();
     for(const s of binanceNewMemeSymbols){
         try{
             const res = await analyzeBinanceMeme(s);
@@ -113,12 +125,12 @@ async function runQuantumScanner(){
             OneSignal.push(function(){
                 OneSignal.sendSelfNotification(
                     `🌠 Quantum Meme Signal: ${s.symbol}`,
-                    `Score: ${Math.round(s.score)}% | Price: ${s.price}`,
+                    `Score: ${Math.round(s.score)}% | Price: ${s.price} | Address: ${s.address}`,
                     'https://i.imgur.com/U4tV8aQ.png',
                     {url: window.location.href}
                 );
             });
-            return `<div class="signal">🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price}</div>`;
+            return `<div class="signal">🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price} | Address: ${s.address}</div>`;
         }).join("");
     }
 }
@@ -126,6 +138,7 @@ async function runQuantumScanner(){
 // --- RUN AUTOMATIC LA 1 MIN ---
 runQuantumScanner();
 setInterval(runQuantumScanner,60000);
+
 </script>
 </body>
 </html>
