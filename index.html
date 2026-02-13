@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Meme Coins Noi REAL TREND</title>
+<title>OMNISCAN – Meme Coins Ultra Mega Quantum (15m)</title>
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
@@ -12,8 +12,8 @@ h1 { color:#0ff; }
 </head>
 <body>
 
-<h1>OMNISCAN – Meme Coins Noi (15m) REAL TREND</h1>
-<div id="output">Se analizează piața...</div>
+<h1>OMNISCAN – Meme Coins Ultra Mega Quantum (15m) ≥60%</h1>
+<div id="output">Motor cosmic quantum se inițializează...</div>
 
 <script>
 // --- INIT OneSignal ---
@@ -25,8 +25,29 @@ OneSignal.push(function() {
   });
 });
 
-// --- ANALIZĂ MEME COINS BINANCE NOI ---
-const binanceNewMemeSymbols = ["SHIBUSDT","DOGEUSDT","CAKEUSDT"]; // extinde lista cu meme noi Binance
+// --- FUNCTII QUANTUM ---
+function quantumTrendScore(prices){
+    let score=0;
+    if(prices.length>=5){
+        for(let i=prices.length-5;i<prices.length-1;i++){
+            const diff=prices[i+1]-prices[i];
+            // algoritm quantum: creștere lină + accelerație
+            score += diff>0 ? 10 + Math.log(1+diff*100) : 0;
+        }
+    }
+    return Math.min(score,40);
+}
+
+function quantumVolumeScore(currentVolume, avgVolume){
+    return currentVolume>avgVolume*1.2 ? 30 : 0;
+}
+
+function quantumLiquidityScore(liquidity){
+    return liquidity>5000 ? 30 : 0;
+}
+
+// --- BINANCE MEME NOU ---
+const binanceNewMemeSymbols = ["DOGEUSDT","SHIBUSDT","CAKEUSDT"]; 
 
 async function analyzeBinanceMeme(symbol){
     const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=15m&limit=15`;
@@ -38,27 +59,15 @@ async function analyzeBinanceMeme(symbol){
     const currentVolume = volumes[volumes.length-1];
     const currentPrice = closes[closes.length-1];
 
-    let score=0;
-    // Trend real 15m
-    if(closes.length>=5){
-        let trend=0;
-        for(let i=closes.length-5;i<closes.length-1;i++){
-            if(closes[i+1]>closes[i]) trend++;
-        }
-        score += trend*15; // maxim 60
-    }
-    if(currentVolume>avgVolume*1.5) score+=25;
-    if(currentPrice>0) score+=15;
-
-    return {symbol, score, price: currentPrice};
+    const score = quantumTrendScore(closes) + quantumVolumeScore(currentVolume, avgVolume) + quantumLiquidityScore(avgVolume*1000);
+    return {symbol, score:Math.min(100,score), price:currentPrice};
 }
 
-// --- ANALIZĂ MEME COINS SOLANA NOI ---
+// --- SOLANA MEME NOU ---
 async function fetchSolanaNewTokens(){
     try{
         const res = await fetch('https://api.dexscreener.com/latest/dex/tokens?chain=solana');
         const data = await res.json();
-        // filtrăm doar tokenuri noi cu volum și lichiditate minimă
         return data.pairs.filter(t=>t.baseToken.dayData.volumeUsd>1000 && parseFloat(t.liquidity)>5000)
                          .slice(0,50)
                          .map(t=>({
@@ -73,27 +82,16 @@ async function fetchSolanaNewTokens(){
 }
 
 function analyzeSolanaToken(token){
-    let score=0;
-    // Trend real 15m
-    if(token.prices15m.length>=5){
-        const last5 = token.prices15m.slice(-5);
-        let trend=0;
-        for(let i=0;i<last5.length-1;i++){
-            if(last5[i+1]>last5[i]) trend++;
-        }
-        score+=trend*10; // maxim 40
-    }
-    if(token.volume>1000) score+=30;
-    if(token.liquidity>5000) score+=30;
+    const score = quantumTrendScore(token.prices15m) + quantumVolumeScore(token.volume, 1000) + quantumLiquidityScore(token.liquidity);
     return {...token, score:Math.min(100,score)};
 }
 
-// --- RUN SCANNER ---
-async function runScanner(){
+// --- MOTOR QUANTUM ---
+async function runQuantumScanner(){
     const output=document.getElementById("output");
     let signals=[];
 
-    // Meme coins Binance noi
+    // Binance meme
     for(const s of binanceNewMemeSymbols){
         try{
             const res = await analyzeBinanceMeme(s);
@@ -101,7 +99,7 @@ async function runScanner(){
         }catch(e){console.error(e);}
     }
 
-    // Meme coins Solana noi
+    // Solana meme
     const solTokens = await fetchSolanaNewTokens();
     solTokens.forEach(t=>{
         const analyzed = analyzeSolanaToken(t);
@@ -109,26 +107,25 @@ async function runScanner(){
     });
 
     if(signals.length===0){
-        output.innerHTML="⚠️ Nicio oportunitate meme nouă validă ≥60% momentan.";
+        output.innerHTML="⚠️ Nicio oportunitate meme nouă ≥60% momentan.";
     }else{
         output.innerHTML=signals.map(s=>{
             OneSignal.push(function(){
                 OneSignal.sendSelfNotification(
-                    `🌠 Semnal Meme Nou: ${s.symbol}`,
-                    `Score: ${s.score}% | Price: ${s.price}`,
+                    `🌠 Quantum Meme Signal: ${s.symbol}`,
+                    `Score: ${Math.round(s.score)}% | Price: ${s.price}`,
                     'https://i.imgur.com/U4tV8aQ.png',
                     {url: window.location.href}
                 );
             });
-            return `<div class="signal">🚀 ${s.symbol} | Score: ${s.score}% | Price: ${s.price}</div>`;
+            return `<div class="signal">🚀 ${s.symbol} | Score: ${Math.round(s.score)}% | Price: ${s.price}</div>`;
         }).join("");
     }
 }
 
 // --- RUN AUTOMATIC LA 1 MIN ---
-runScanner();
-setInterval(runScanner,60000);
-
+runQuantumScanner();
+setInterval(runQuantumScanner,60000);
 </script>
 </body>
 </html>
