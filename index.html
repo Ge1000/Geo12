@@ -2,49 +2,82 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Cosmic Radar</title>
+<title>OMNISCAN – Oracol Galactic Personal 👽</title>
 <style>
-  body { font-family: monospace; background:#0a0a1a; color:#ccffdd; text-align:center; }
-  h1 { color:#00ffcc; }
-  .bar { height:20px; background:#00ff66; margin:5px auto; transition:width 0.5s; }
-  .spike { background:#ff33ff !important; }
-  .signal { color:#ffdd00; font-weight:bold; font-size:1.2em; animation: blink 1s infinite; }
-  @keyframes blink { 0%,50%,100% {opacity:1;} 25%,75% {opacity:0.2;} }
-  .container { width:80%; margin:auto; }
+body { font-family: monospace; background:#05051a; color:#aaffff; text-align:center; }
+h1 { color:#00ffee; }
+.bar { height:22px; background:#00ff66; margin:5px auto; transition:width 0.7s; border-radius:4px; }
+.spike { background:#ff33ff !important; box-shadow:0 0 15px #ff33ff; }
+.signal { color:#ffdd00; font-weight:bold; font-size:1.4em; animation: blink 1s infinite; }
+.container { width:85%; margin:auto; text-align:left; }
+.recommendation { margin-top:15px; color:#ff66ff; font-weight:bold; font-size:1.1em; }
+.opportunity { margin:10px 0; }
+@keyframes blink {0%,50%,100%{opacity:1;}25%,75%{opacity:0.2;}}
 </style>
 </head>
 <body>
-<h1>OMNISCAN – Cosmic Radar 👽</h1>
-<div class="container">
-  <div>Crypto BTC/USD <div id="btc" class="bar" style="width:0%"></div></div>
-  <div>Forex EUR/USD <div id="eur" class="bar" style="width:0%"></div></div>
-  <div>Indici S&P500 <div id="sp" class="bar" style="width:0%"></div></div>
-  <div>Sport Man.City vs Fulham <div id="sport" class="bar" style="width:0%"></div></div>
-</div>
-<p id="finalSignal" class="signal">🔮 Semnal Cosmic Zilnic</p>
+<h1>OMNISCAN – Oracol Galactic Personal 👽</h1>
+<div class="container" id="opportunitiesContainer"></div>
+<p id="finalSignal" class="signal">🔮 Semnal Galactic Zilnic</p>
+<p id="recommendation" class="recommendation"></p>
 
 <script>
-const bars = {
-  btc: document.getElementById('btc'),
-  eur: document.getElementById('eur'),
-  sp: document.getElementById('sp'),
-  sport: document.getElementById('sport')
-};
+// Demo oportunități pentru ziua curentă
+const opportunities = [
+  {name:"BTC/USD Crypto", type:"Crypto"},
+  {name:"EUR/USD Forex", type:"Forex"},
+  {name:"S&P500 Indici", type:"Indici"},
+  {name:"Man.City vs Fulham Sport", type:"Sport"},
+  {name:"NFT Rare Event", type:"Other"}
+];
 
-// Doar animație pur vizuală, fără calcul smart
-function animateBars() {
-  for (let key in bars) {
-    let value = Math.floor(Math.random() * 100);
-    bars[key].style.width = value + '%';
-    if (value > 85) bars[key].classList.add('spike');
-    else bars[key].classList.remove('spike');
+const container = document.getElementById('opportunitiesContainer');
+let bars = {};
+
+// Creează bare pentru fiecare oportunitate
+opportunities.forEach(op=>{
+  let div = document.createElement('div');
+  div.className = 'opportunity';
+  div.innerHTML = `${op.name} <div class="bar" id="${op.name.replace(/\s+/g,'')}"></div>`;
+  container.appendChild(div);
+  bars[op.name.replace(/\s+/g,'')] = document.getElementById(op.name.replace(/\s+/g,''));
+});
+
+// Motor Ultra Quantum Extraterestru
+function quantumUniverse(max){
+  let universes = 10000;
+  let total=0;
+  for(let i=0;i<universes;i++){
+    total += Math.pow(Math.random(),Math.random())*max; // intensitate cosmică
   }
+  return Math.round(total/universes);
 }
 
-// Update vizual la fiecare 2 secunde
-setInterval(animateBars, 2000);
+// Recomandare explicativă
+function getRecommendation(opName){
+  let base = opName.split(' ')[0];
+  return `Pariu / acțiune recomandată pe ${base} – anomalie cosmică favorabilă detectată.`;
+}
 
-// Initial run
+// Animate + select semnal
+function animateBars(){
+  for(let key in bars){
+    let val = quantumUniverse(100);
+    bars[key].style.width = val + "%";
+    if(val>85) bars[key].classList.add('spike'); else bars[key].classList.remove('spike');
+  }
+  selectSignal();
+}
+
+// Semnal zilnic: oportunitatea cu cea mai mare anomalie
+function selectSignal(){
+  let maxKey = Object.keys(bars).reduce((a,b)=>parseInt(bars[a].style.width) > parseInt(bars[b].style.width) ? a : b);
+  document.getElementById('finalSignal').textContent = `🔮 Semnal Galactic Zilnic: ${maxKey}`;
+  document.getElementById('recommendation').textContent = getRecommendation(maxKey);
+}
+
+// Update live la fiecare 2 secunde
+setInterval(animateBars,2000);
 animateBars();
 </script>
 </body>
