@@ -9,40 +9,40 @@
 
 <style>
 body{
-    font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+    font-family: system-ui;
     background:#0f1220;
     color:#fff;
     text-align:center;
     padding:20px;
 }
 button{
-    background:#00ff88;
-    border:none;
-    padding:12px 20px;
+    padding:12px 25px;
     font-size:16px;
-    font-weight:bold;
+    border:none;
     border-radius:8px;
+    background:#ff9800;
+    color:#000;
     cursor:pointer;
     margin-top:10px;
 }
-.result{
+#results{
     margin-top:20px;
     text-align:left;
-    background:#1a1f38;
-    padding:15px;
-    border-radius:10px;
+    max-width:700px;
+    margin-left:auto;
+    margin-right:auto;
 }
 .match{
+    background:#1c2035;
+    padding:15px;
+    border-radius:10px;
     margin-bottom:15px;
-    padding:10px;
-    background:#11152a;
-    border-radius:8px;
 }
-h1{color:#00ff88;}
-.conf{color:#00ff88;font-weight:bold;}
+.confidence{
+    color:#00e676;
+}
 </style>
 </head>
-
 <body>
 
 <h1>🔥 Smart Bet Detector PRO+</h1>
@@ -51,73 +51,91 @@ h1{color:#00ff88;}
 <br>
 <button onclick="scanImage()">Scanează</button>
 
-<div id="output" class="result">
-Meciuri Detectate
-</div>
+<div id="results"></div>
 
 <script>
 
 async function scanImage(){
-
-    const file = document.getElementById("imageInput").files[0];
+    const file = document.getElementById('imageInput').files[0];
     if(!file) return alert("Selectează o imagine");
 
-    document.getElementById("output").innerHTML="⏳ Scanare în curs...";
+    document.getElementById("results").innerHTML="🔍 Analizez...";
 
-    const { data:{ text } } = await Tesseract.recognize(
+    const { data: { text } } = await Tesseract.recognize(
         file,
         'eng',
-        { logger:m=>console.log(m) }
+        { logger: m => console.log(m) }
     );
 
-    console.log("OCR TEXT:", text);
+    console.log("OCR RAW:", text);
 
     const matches = parseMatches(text);
 
-    displayMatches(matches);
+    displayResults(matches);
 }
 
+function cleanText(text){
+    return text
+        .replace(/,/g,".")
+        .replace(/[^\w.\s]/g," ")
+        .replace(/\s+/g," ")
+        .trim();
+}
 
+function normalizeOdd(val){
 
-function parseMatches(text){
+    if(!val) return null;
 
-    let lines = text
-        .split("\n")
-        .map(l=>l.trim())
-        .filter(l=>l.length>0);
+    if(/^\d+\.\d+$/.test(val))
+        return parseFloat(val);
+
+    if(/^\d{3}$/.test(val))
+        return parseFloat(val[0]+"."+val.slice(1));
+
+    if(/^\d{4}$/.test(val))
+        return parseFloat(val.slice(0,2)+"."+val.slice(2));
+
+    return null;
+}
+
+function parseMatches(rawText){
+
+    let text = cleanText(rawText);
+    let tokens = text.split(" ");
 
     let matches=[];
 
-    for(let i=0;i<lines.length;i++){
+    for(let i=0;i<tokens.length;i++){
 
-        if(
-            lines[i].match(/^\d+\.\d+$/) &&
-            lines[i+1]?.match(/^\d+\.\d+$/) &&
-            lines[i+2]?.match(/^\d+\.\d+$/)
-        ){
+        let o1 = normalizeOdd(tokens[i]);
+        let oX = normalizeOdd(tokens[i+1]);
+        let o2 = normalizeOdd(tokens[i+2]);
 
-            let o1=parseFloat(lines[i]);
-            let oX=parseFloat(lines[i+1]);
-            let o2=parseFloat(lines[i+2]);
+        if(o1 && oX && o2 && o1>1 && oX>1 && o2>1){
 
             let teams=[];
 
             for(let j=i-1;j>=0;j--){
                 if(
-                    !lines[j].match(/^\d/) &&
-                    lines[j].toLowerCase()!=="egal" &&
-                    lines[j].toLowerCase()!=="meci"
+                    !/^\d/.test(tokens[j]) &&
+                    tokens[j].toLowerCase()!=="egal" &&
+                    tokens[j].toLowerCase()!=="meci" &&
+                    tokens[j].length>2
                 ){
-                    teams.unshift(lines[j]);
+                    teams.unshift(tokens[j]);
                 }
                 if(teams.length===2) break;
             }
 
             if(teams.length===2){
+
+                let confidence = calculateConfidence(o1,oX,o2);
+
                 matches.push({
                     home:teams[0],
                     away:teams[1],
-                    odds:[o1,oX,o2]
+                    odds:[o1,oX,o2],
+                    confidence:confidence
                 });
             }
         }
@@ -126,62 +144,40 @@ function parseMatches(text){
     return matches;
 }
 
+function calculateConfidence(o1,oX,o2){
 
+    let inv = (1/o1 + 1/oX + 1/o2);
+    let margin = inv - 1;
 
-function calculateConfidence(odds){
+    let score = (1 - margin) * 100;
 
-    let probs = odds.map(o=>1/o);
-    let total = probs.reduce((a,b)=>a+b,0);
-    probs = probs.map(p=>p/total);
+    if(score>100) score=100;
+    if(score<0) score=0;
 
-    let maxProb = Math.max(...probs);
-    return (maxProb*100).toFixed(2);
+    return score.toFixed(2);
 }
 
+function displayResults(matches){
 
-
-function getRecommendation(match){
-
-    let probs = match.odds.map(o=>1/o);
-    let total = probs.reduce((a,b)=>a+b,0);
-    probs = probs.map(p=>p/total);
-
-    let maxIndex = probs.indexOf(Math.max(...probs));
-
-    if(maxIndex===0) return match.home;
-    if(maxIndex===1) return "Egal";
-    if(maxIndex===2) return match.away;
-}
-
-
-
-function displayMatches(matches){
-
-    let output=document.getElementById("output");
+    const container = document.getElementById("results");
 
     if(matches.length===0){
-        output.innerHTML="<h2>Meciuri Detectate</h2>Nu s-au detectat meciuri valide.";
+        container.innerHTML="❌ Nu s-au detectat meciuri valide.";
         return;
     }
 
-    let html="<h2>Meciuri Detectate</h2>";
+    container.innerHTML="<h2>Meciuri Detectate</h2>";
 
     matches.forEach(m=>{
-
-        let rec=getRecommendation(m);
-        let conf=calculateConfidence(m.odds);
-
-        html+=`
+        container.innerHTML += `
         <div class="match">
-        ${m.home} vs ${m.away}<br>
-        Cote: ${m.odds[0]} / ${m.odds[1]} / ${m.odds[2]}<br>
-        🔥 Recomandare Smart: ${rec}<br>
-        <span class="conf">Scor încredere: ${conf}%</span>
+            <strong>${m.home} vs ${m.away}</strong><br>
+            Cote: ${m.odds[0]} / ${m.odds[1]} / ${m.odds[2]}<br>
+            🔥 Recomandare Smart: ${m.home}<br>
+            <span class="confidence">Scor încredere: ${m.confidence}%</span>
         </div>
         `;
     });
-
-    output.innerHTML=html;
 }
 
 </script>
