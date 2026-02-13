@@ -22,9 +22,10 @@ h1 { color:#00ffee; }
 <p id="recommendation" class="recommendation"></p>
 
 <script>
-// Demo oportunități pentru ziua curentă
+// Lista demo oportunități
 const opportunities = [
   {name:"BTC/USD Crypto", type:"Crypto"},
+  {name:"ETH/USD Crypto", type:"Crypto"},
   {name:"EUR/USD Forex", type:"Forex"},
   {name:"S&P500 Indici", type:"Indici"},
   {name:"Man.City vs Fulham Sport", type:"Sport"},
@@ -48,15 +49,16 @@ function quantumUniverse(max){
   let universes = 10000;
   let total=0;
   for(let i=0;i<universes;i++){
-    total += Math.pow(Math.random(),Math.random())*max; // intensitate cosmică
+    total += Math.pow(Math.random(),Math.random())*max;
   }
   return Math.round(total/universes);
 }
 
-// Recomandare explicativă
+// Recomandare explicativă + pași concreți
 function getRecommendation(opName){
   let base = opName.split(' ')[0];
-  return `Pariu / acțiune recomandată pe ${base} – anomalie cosmică favorabilă detectată.`;
+  let minutes = Math.floor(Math.random()*120)+30; // ține între 30 min – 2h
+  return `🚀 Intră pe ${base}, ține ${minutes} minute / ore, apoi vinde. Anomalie cosmică favorabilă detectată.`;
 }
 
 // Animate + select semnal
