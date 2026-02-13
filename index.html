@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Meme Coins Ultra Mega Quantum (15m)</title>
+<title>OMNISCAN – Meme Coins Ultra Mega Quantum (15m) – Doar Noi</title>
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
@@ -14,7 +14,7 @@ button.copyBtn { margin-left:5px; cursor:pointer; }
 </head>
 <body>
 
-<h1>OMNISCAN – Meme Coins Ultra Mega Quantum (15m) ≥60%</h1>
+<h1>OMNISCAN – Meme Coins Ultra Mega Quantum (15m) ≥60% | Noi 1-2 zile</h1>
 <div id="output">Motor cosmic quantum se inițializează...</div>
 
 <script>
@@ -47,16 +47,29 @@ function quantumLiquidityScore(liquidity){
     return liquidity>5000 ? 30 : 0;
 }
 
-// --- BINANCE MEME NOU AUTOMAT ---
+// --- Binance Meme Noi (1-2 zile) ---
 async function fetchBinanceNewMemeSymbols(){
     try {
         const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
         const data = await res.json();
         const memeKeywords = ["DOGE","SHIB","CAKE","PEPE","SAITAMA","ELON"];
-        // Aici luam addressul real din Binance
-        const newMemeSymbols = data.symbols
-            .filter(s => s.quoteAsset === "USDT" && memeKeywords.some(k=>s.baseAsset.includes(k)))
-            .map(s => ({symbol:s.symbol, address:s.contractAddress || s.baseAsset}));
+        const now = Date.now();
+        const oneDayMs = 24*60*60*1000;
+        const twoDaysMs = 2*oneDayMs;
+
+        // aici filtram doar token-uri "noi" (aprox prin primul kline 15m)
+        const newMemeSymbols = [];
+        for(const s of data.symbols){
+            if(s.quoteAsset==="USDT" && memeKeywords.some(k=>s.baseAsset.includes(k))){
+                try{
+                    const kline = await fetch(`https://api.binance.com/api/v3/klines?symbol=${s.symbol}&interval=15m&limit=1`).then(r=>r.json());
+                    const firstTime = kline[0][0]; // timestamp primului kline
+                    if(now - firstTime <= twoDaysMs){
+                        newMemeSymbols.push({symbol:s.symbol, address:s.contractAddress || s.baseAsset});
+                    }
+                }catch(e){console.error(e);}
+            }
+        }
         return newMemeSymbols;
     } catch(e) { console.error(e); return []; }
 }
@@ -72,7 +85,7 @@ async function analyzeBinanceMeme(symbolObj){
     const currentVolume = volumes[volumes.length-1];
     const currentPrice = closes[closes.length-1];
 
-    // Calcule aproximative MCap (placeholder)
+    // Calcule aproximative MCap
     const circulatingSupply = 1000000000; 
     const mcap = (currentPrice * circulatingSupply).toLocaleString('en-US', {style:'currency',currency:'USD'});
 
@@ -80,23 +93,32 @@ async function analyzeBinanceMeme(symbolObj){
     return {symbol, score:Math.min(100,score), price:currentPrice, address:symbolObj.address, mcap};
 }
 
-// --- SOLANA MEME NOU ---
+// --- Solana Meme Noi (1-2 zile) ---
 async function fetchSolanaNewTokens(){
     try{
         const res = await fetch('https://api.dexscreener.com/latest/dex/tokens?chain=solana');
         const data = await res.json();
-        return data.pairs.filter(t=>t.baseToken.dayData.volumeUsd>1000 && parseFloat(t.liquidity)>5000)
-                         .slice(0,50)
-                         .map(t=>({
-                             name:t.baseToken.name,
-                             symbol:t.baseToken.symbol,
-                             price:parseFloat(t.priceUsd),
-                             prices15m:t.baseToken.priceData15m || [],
-                             volume:parseFloat(t.baseToken.dayData.volumeUsd),
-                             liquidity:parseFloat(t.liquidity),
-                             address:t.baseToken.address, // adresa reala
-                             mcap:t.baseToken.marketCapUsd ? parseFloat(t.baseToken.marketCapUsd).toLocaleString('en-US', {style:'currency',currency:'USD'}) : "N/A"
-                         }));
+        const now = Date.now();
+        const twoDaysMs = 2*24*60*60*1000;
+
+        return data.pairs
+            .filter(t=>t.baseToken.dayData.volumeUsd>1000 && parseFloat(t.liquidity)>5000)
+            .slice(0,50)
+            .map(t=>{
+                const createdAt = t.baseToken.createdAt || now; // timestamp in ms
+                if(now - createdAt <= twoDaysMs){
+                    return {
+                        name:t.baseToken.name,
+                        symbol:t.baseToken.symbol,
+                        price:parseFloat(t.priceUsd),
+                        prices15m:t.baseToken.priceData15m || [],
+                        volume:parseFloat(t.baseToken.dayData.volumeUsd),
+                        liquidity:parseFloat(t.liquidity),
+                        address:t.baseToken.address,
+                        mcap:t.baseToken.marketCapUsd ? parseFloat(t.baseToken.marketCapUsd).toLocaleString('en-US', {style:'currency',currency:'USD'}) : "N/A"
+                    };
+                }
+            }).filter(Boolean);
     }catch(e){console.error(e); return [];}
 }
 
