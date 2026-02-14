@@ -2,152 +2,132 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Meme Coins Ultra Mega Quantum</title>
-<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+<title>OMNISCAN – Ultra Quantum</title>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
 h1 { color:#0ff; }
-.signal { margin-bottom:15px; border-bottom:1px solid #0f0; padding-bottom:8px; }
-.address { background:#111; padding:2px 4px; font-family:monospace; }
-button { cursor:pointer; margin-left:5px; }
-.sparkline { font-size:10px; color:#0ff; margin-left:6px; }
+.signal { border-bottom:1px solid #0f0; padding:8px 0; }
 .risk { color:red; }
 .early { color:orange; }
+.address { background:#111; color:#0f0; border:none; width:100%; }
+button { margin-top:4px; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<h1>OMNISCAN – Meme Coins Ultra Mega Quantum (15m)</h1>
-<div id="output">Motor cosmic quantum se inițializează...</div>
+<h1>OMNISCAN – Meme Coins Ultra Mega Quantum</h1>
+<div id="output">Scanning...</div>
 
 <script>
 
-// ==================== CONFIG ====================
-const MAIN_THRESHOLD = 60;      // Prag principal
-const EARLY_THRESHOLD = 45;     // Early Hunter
-const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
-
-// ==================== QUANTUM ENGINE ====================
-function quantumTrendScore(prices){
-    let score=0;
-    if(prices.length>=5){
-        for(let i=prices.length-5;i<prices.length-1;i++){
-            const diff=prices[i+1]-prices[i];
-            score += diff>0 ? 10 + Math.log(1+diff*100) : 0;
-        }
-    }
-    return Math.min(score,40);
-}
-
-function quantumVolumeScore(current, avg){
-    return current>avg*1.2 ? 30 : 0;
-}
-
-function quantumLiquidityScore(liq){
-    return liq>5000 ? 30 : 0;
-}
-
-function sparkline(prices){
-    if(!prices || prices.length===0) return "";
-    const max=Math.max(...prices);
-    const min=Math.min(...prices);
-    return prices.slice(-10).map(p=>{
-        const level=Math.round((p-min)/(max-min+0.00001)*5);
-        return "▁▂▃▄▅▆"[level] || "▁";
-    }).join("");
-}
-
-// ==================== SOLANA FIX REAL ====================
-async function fetchSolanaNew(){
-    try{
-        const res = await fetch("https://api.dexscreener.com/latest/dex/pairs/solana");
-        const data = await res.json();
-        const now = Date.now();
-
-        return data.pairs
-            .filter(p =>
-                p.pairCreatedAt &&
-                (now - p.pairCreatedAt <= TWO_DAYS)
-            )
-            .map(p=>{
-                const volume = parseFloat(p.volume?.h24 || 0);
-                const liquidity = parseFloat(p.liquidity?.usd || 0);
-
-                const score =
-                    quantumVolumeScore(volume, volume/2) +
-                    quantumLiquidityScore(liquidity);
-
-                const rugpull =
-                    liquidity < 2000 ||
-                    volume < 800;
-
-                return {
-                    symbol: p.baseToken.symbol,
-                    price: parseFloat(p.priceUsd),
-                    address: p.baseToken.address,
-                    mcap: p.fdv ? "$"+Number(p.fdv).toLocaleString() : "N/A",
-                    score: Math.min(100, score),
-                    prices: [],
-                    rugpull
-                };
-            });
-
-    }catch(e){
-        console.error("Solana error:", e);
-        return [];
-    }
-}
-
-// ==================== MAIN SCANNER ====================
-async function runScanner(){
-    const output=document.getElementById("output");
-
-    let solana = await fetchSolanaNew();
-
-    // scor final quantum (păstrăm motorul intact)
-    solana = solana.map(t=>{
-        const finalScore = t.score;
-        return {...t, score:finalScore};
-    });
-
-    // filtrare prag minim Early
-    let signals = solana.filter(t => t.score >= EARLY_THRESHOLD);
-
-    // sort desc
-    signals.sort((a,b)=>b.score-a.score);
-
-    // Top 5
-    signals = signals.slice(0,5);
-
-    if(signals.length===0){
-        output.innerHTML="⚠️ Nicio oportunitate nouă momentan.";
-        return;
-    }
-
-    output.innerHTML = signals.map((s,i)=>{
-
-        const early = s.score < MAIN_THRESHOLD;
-
-        return `
-        <div class="signal">
-        🚀 ${s.symbol} | 
-        Score: ${s.score}% | 
-        Price: ${s.price} | 
-        MCap: ${s.mcap}
-        ${s.rugpull ? '<span class="risk">⚠️ Risc Rugpull</span>' : ''}
-        ${early ? '<span class="early">⚠️ Early Hunter</span>' : ''}
-        <br>
-        <input type="text" id="addr${i}" value="${s.address}" readonly class="address">
-        <button onclick="copyAddr('addr${i}')">Copy</button>
-        </div>
-        `;
-    }).join("");
-}
+const MAIN_THRESHOLD = 60;
+const EARLY_THRESHOLD = 45;
 
 function copyAddr(id){
-    const el=document.getElementById(id);
-    navigator.clipboard.writeText(el.value);
-    alert("Address copied!");
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.value);
+  alert("Address copied");
+}
+
+async function fetchBinance(){
+  try{
+    const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+    const data = await res.json();
+
+    const memeKeywords = ["DOGE","SHIB","PEPE","FLOKI","BONK"];
+
+    return data
+      .filter(t =>
+        t.symbol.endsWith("USDT") &&
+        memeKeywords.some(k => t.symbol.includes(k))
+      )
+      .map(t=>{
+        const price = parseFloat(t.lastPrice);
+        const volume = parseFloat(t.quoteVolume);
+        const score =
+          (volume > 1000000 ? 40 : 10) +
+          (parseFloat(t.priceChangePercent) > 3 ? 30 : 0);
+
+        return {
+          symbol: t.symbol,
+          price,
+          address: t.symbol,
+          mcap: "$" + volume.toLocaleString(),
+          score: Math.min(100,score),
+          rugpull: false
+        };
+      });
+
+  }catch(e){
+    return [];
+  }
+}
+
+async function fetchSolana(){
+  try{
+    const res = await fetch("https://api.dexscreener.com/latest/dex/search/?q=SOL");
+    const data = await res.json();
+
+    if(!data.pairs) return [];
+
+    return data.pairs.slice(0,50).map(p=>{
+      const liquidity = parseFloat(p.liquidity?.usd || 0);
+      const volume = parseFloat(p.volume?.h24 || 0);
+
+      const score =
+        (liquidity > 5000 ? 30 : 0) +
+        (volume > 2000 ? 30 : 0);
+
+      return {
+        symbol: p.baseToken.symbol,
+        price: parseFloat(p.priceUsd),
+        address: p.baseToken.address,
+        mcap: p.fdv ? "$"+Number(p.fdv).toLocaleString() : "N/A",
+        score: Math.min(100,score),
+        rugpull: liquidity < 1500
+      };
+    });
+
+  }catch(e){
+    return [];
+  }
+}
+
+async function runScanner(){
+  const output = document.getElementById("output");
+
+  const binance = await fetchBinance();
+  const solana = await fetchSolana();
+
+  let signals = [...binance, ...solana]
+    .filter(t => t.score >= EARLY_THRESHOLD)
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,5);
+
+  if(signals.length === 0){
+    output.innerHTML = "⚠️ Nicio oportunitate nouă momentan.";
+    return;
+  }
+
+  output.innerHTML = signals.map((s,i)=>{
+
+    const early = s.score < MAIN_THRESHOLD;
+
+    return `
+      <div class="signal">
+        🚀 ${s.symbol} |
+        Score: ${s.score}% |
+        Price: ${s.price} |
+        MCap: ${s.mcap}
+        ${s.rugpull ? '<span class="risk"> ⚠️ Risc Rugpull</span>' : ''}
+        ${early ? '<span class="early"> ⚠️ Early Hunter</span>' : ''}
+        <br>
+        <input id="addr${i}" value="${s.address}" readonly class="address">
+        <button onclick="copyAddr('addr${i}')">Copy Address</button>
+      </div>
+    `;
+
+  }).join("");
 }
 
 runScanner();
