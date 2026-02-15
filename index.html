@@ -2,21 +2,22 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – Ultra Quantum</title>
+<title>OMNISCAN – HUNTER MODE</title>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
 h1 { color:#0ff; }
 .signal { border-bottom:1px solid #0f0; padding:8px 0; }
 .risk { color:red; }
 .early { color:orange; }
+.spike { color:#00ffff; }
 .address { background:#111; color:#0f0; border:none; width:100%; }
 button { margin-top:4px; cursor:pointer; }
 </style>
 </head>
 <body>
 
-<h1>OMNISCAN – Meme Coins Ultra Mega Quantum</h1>
-<div id="output">Scanning...</div>
+<h1>OMNISCAN – SOLANA HUNTER MODE</h1>
+<div id="output">Scanning Solana DEX...</div>
 
 <script>
 
@@ -24,68 +25,49 @@ const MAIN_THRESHOLD = 60;
 const EARLY_THRESHOLD = 45;
 
 function copyAddr(id){
-  const el = document.getElementById(id);
-  navigator.clipboard.writeText(el.value);
-  alert("Address copied");
+  navigator.clipboard.writeText(document.getElementById(id).value);
+  alert("Copied!");
 }
 
-async function fetchBinance(){
-  try{
-    const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
-    const data = await res.json();
-
-    const memeKeywords = ["DOGE","SHIB","PEPE","FLOKI","BONK"];
-
-    return data
-      .filter(t =>
-        t.symbol.endsWith("USDT") &&
-        memeKeywords.some(k => t.symbol.includes(k))
-      )
-      .map(t=>{
-        const price = parseFloat(t.lastPrice);
-        const volume = parseFloat(t.quoteVolume);
-        const score =
-          (volume > 1000000 ? 40 : 10) +
-          (parseFloat(t.priceChangePercent) > 3 ? 30 : 0);
-
-        return {
-          symbol: t.symbol,
-          price,
-          address: t.symbol,
-          mcap: "$" + volume.toLocaleString(),
-          score: Math.min(100,score),
-          rugpull: false
-        };
-      });
-
-  }catch(e){
-    return [];
-  }
-}
-
-async function fetchSolana(){
+async function fetchHunterData(){
   try{
     const res = await fetch("https://api.dexscreener.com/latest/dex/search/?q=SOL");
     const data = await res.json();
 
     if(!data.pairs) return [];
 
-    return data.pairs.slice(0,50).map(p=>{
+    return data.pairs.slice(0,80).map((p,index)=>{
+
       const liquidity = parseFloat(p.liquidity?.usd || 0);
       const volume = parseFloat(p.volume?.h24 || 0);
+      const fdv = parseFloat(p.fdv || 0);
 
-      const score =
-        (liquidity > 5000 ? 30 : 0) +
-        (volume > 2000 ? 30 : 0);
+      let score = 0;
+
+      if(liquidity > 5000) score += 25;
+      if(volume > 3000) score += 25;
+      if(fdv < 2000000 && fdv > 0) score += 20; // low cap early
+      if(volume > liquidity) score += 20; // spike condition
+      if(index < 15) score += 10; // early appearance in list
+
+      const rugpull =
+        liquidity < 1500 ||
+        volume < 800 ||
+        fdv > 50000000;
+
+      const spike = volume > liquidity;
 
       return {
         symbol: p.baseToken.symbol,
         price: parseFloat(p.priceUsd),
         address: p.baseToken.address,
-        mcap: p.fdv ? "$"+Number(p.fdv).toLocaleString() : "N/A",
-        score: Math.min(100,score),
-        rugpull: liquidity < 1500
+        mcap: fdv ? "$"+fdv.toLocaleString() : "N/A",
+        score: Math.min(score,100),
+        rugpull,
+        spike,
+        early: index < 15
       };
+
     });
 
   }catch(e){
@@ -93,45 +75,39 @@ async function fetchSolana(){
   }
 }
 
-async function runScanner(){
+async function runHunter(){
   const output = document.getElementById("output");
 
-  const binance = await fetchBinance();
-  const solana = await fetchSolana();
+  const tokens = await fetchHunterData();
 
-  let signals = [...binance, ...solana]
+  let signals = tokens
     .filter(t => t.score >= EARLY_THRESHOLD)
     .sort((a,b)=>b.score-a.score)
     .slice(0,5);
 
   if(signals.length === 0){
-    output.innerHTML = "⚠️ Nicio oportunitate nouă momentan.";
+    output.innerHTML = "⚠️ No early opportunities detected.";
     return;
   }
 
-  output.innerHTML = signals.map((s,i)=>{
-
-    const early = s.score < MAIN_THRESHOLD;
-
-    return `
-      <div class="signal">
-        🚀 ${s.symbol} |
-        Score: ${s.score}% |
-        Price: ${s.price} |
-        MCap: ${s.mcap}
-        ${s.rugpull ? '<span class="risk"> ⚠️ Risc Rugpull</span>' : ''}
-        ${early ? '<span class="early"> ⚠️ Early Hunter</span>' : ''}
-        <br>
-        <input id="addr${i}" value="${s.address}" readonly class="address">
-        <button onclick="copyAddr('addr${i}')">Copy Address</button>
-      </div>
-    `;
-
-  }).join("");
+  output.innerHTML = signals.map((s,i)=>`
+    <div class="signal">
+      🚀 ${s.symbol} |
+      Score: ${s.score}% |
+      Price: ${s.price} |
+      MCap: ${s.mcap}
+      ${s.rugpull ? '<span class="risk"> ⚠ Rugpull Risk</span>' : ''}
+      ${s.early ? '<span class="early"> ⚡ Early</span>' : ''}
+      ${s.spike ? '<span class="spike"> 💥 Volume Spike</span>' : ''}
+      <br>
+      <input id="addr${i}" value="${s.address}" readonly class="address">
+      <button onclick="copyAddr('addr${i}')">Copy Address</button>
+    </div>
+  `).join("");
 }
 
-runScanner();
-setInterval(runScanner,60000);
+runHunter();
+setInterval(runHunter,30000);
 
 </script>
 </body>
