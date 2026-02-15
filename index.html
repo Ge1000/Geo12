@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>OMNISCAN – ULTRA SNIPER 1H</title>
+<title>OMNISCAN – ULTRA MEGA SMART SNIPER 1H</title>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:10px; }
 h1 { color:#0ff; }
@@ -17,62 +17,70 @@ button { margin-top:4px; cursor:pointer; background:#111; color:#0f0; border:1px
 </head>
 <body>
 
-<h1>OMNISCAN – 1H ULTRA SNIPER</h1>
-<div id="output">Scanning...</div>
+<h1>OMNISCAN – ULTRA MEGA SMART SNIPER 1H</h1>
+<div id="output">Initializing Ultra Mega Smart Sniper...</div>
 
 <script>
+// --- ULTRA MEGA SMART QUANTUM MOTOR ---
 const ONE_HOUR = 60*60*1000;
 const MIN_SCORE = 60;
 let history = {};
 
 function copyAddr(id){ navigator.clipboard.writeText(document.getElementById(id).value); alert("Copied!"); }
 
+function calculateScore(token, prev=null){
+  let score=0;
+  if(token.liquidity>10000) score+=20;
+  if(token.volume24>8000) score+=20;
+  if(token.volume5m>token.liquidity*0.3) score+=15;
+  if(token.volume24>token.liquidity) score+=15;
+  if(token.fdv>0 && token.fdv<1500000) score+=10;
+  if(token.volume24>token.liquidity*1.5) score+=10;
+
+  let lpGrowth=false, volumeSpike=false;
+  if(prev){
+    if(token.liquidity>prev.liquidity*1.3){ lpGrowth=true; score+=5; }
+    if(token.volume24>prev.volume24*1.5){ volumeSpike=true; score+=5; }
+  }
+  return {score, lpGrowth, volumeSpike};
+}
+
+// --- ULTRA SNIPER SCAN ---
 async function scan(){
   const output = document.getElementById("output");
   try{
-    // Folosim proxy public CORS pentru DEXscreener
-    const proxy = "https://api.allorigins.win/get?url=";
-    const target = encodeURIComponent("https://api.dexscreener.com/latest/dex/pairs/solana");
-    const res = await fetch(proxy+target);
-    const jsonText = await res.json();
-    const data = JSON.parse(jsonText.contents);
+    // Fetch prin backend Vercel pentru a evita CORS
+    const res = await fetch("/api/scan");
+    const data = await res.json();
 
     const now = Date.now();
     let results = [];
 
     for(const p of data.pairs){
-      if(p.chainId!=="solana"||!p.pairCreatedAt||now-p.pairCreatedAt>ONE_HOUR) continue;
+      if(p.chainId!=="solana" || !p.pairCreatedAt || now - p.pairCreatedAt > ONE_HOUR) continue;
       const symbol = p.baseToken.symbol;
-      if(["SOL","USDC","USDT"].includes(symbol)||symbol.includes("SOL")) continue;
+      if(["SOL","USDC","USDT"].includes(symbol) || symbol.includes("SOL")) continue;
 
-      const address = p.baseToken.address;
-      const liquidity = parseFloat(p.liquidity?.usd||0);
-      const volume24 = parseFloat(p.volume?.h24||0);
-      const volume5m = parseFloat(p.volume?.m5||0);
-      const fdv = parseFloat(p.fdv||0);
+      const token = {
+        symbol,
+        price: p.priceUsd,
+        address: p.baseToken.address,
+        liquidity: parseFloat(p.liquidity?.usd||0),
+        volume24: parseFloat(p.volume?.h24||0),
+        volume5m: parseFloat(p.volume?.m5||0),
+        fdv: parseFloat(p.fdv||0)
+      };
 
-      let score=0;
-      if(liquidity>10000) score+=20;
-      if(volume24>8000) score+=20;
-      if(volume5m>liquidity*0.3) score+=15;
-      if(volume24>liquidity) score+=15;
-      if(fdv>0 && fdv<1500000) score+=10;
-      if(volume24>liquidity*1.5) score+=10;
+      const prev = history[token.address];
+      const {score, lpGrowth, volumeSpike} = calculateScore(token, prev);
+      history[token.address]=token;
 
-      let lpGrowth=false, volumeSpike=false;
-      if(history[address]){
-        const prev=history[address];
-        if(liquidity>prev.liquidity*1.3){ lpGrowth=true; score+=5; }
-        if(volume24>prev.volume24*1.5){ volumeSpike=true; score+=5; }
-      }
-      history[address]={liquidity,volume24};
-
-      const rugpull=liquidity<2000||fdv>50000000||volume24<1000;
-      const honeypot=liquidity<3000 && volume24>liquidity*2;
-      const whaleRisk=fdv>0 && liquidity/fdv<0.05;
+      const rugpull = token.liquidity<2000 || token.fdv>50000000 || token.volume24<1000;
+      const honeypot = token.liquidity<3000 && token.volume24>token.liquidity*2;
+      const whaleRisk = token.fdv>0 && token.liquidity/token.fdv<0.05;
 
       if(score>=MIN_SCORE){
-        results.push({symbol,price:p.priceUsd,address,liquidity,volume24,volume5m,fdv,score, rugpull, honeypot, whaleRisk, lpGrowth, volumeSpike});
+        results.push({...token, score, rugpull, honeypot, whaleRisk, lpGrowth, volumeSpike});
       }
     }
 
@@ -101,6 +109,7 @@ async function scan(){
   }catch(e){ output.innerHTML="Error fetching data."; console.error(e); }
 }
 
+// --- START MOTOR ULTRA MEGA SMART ---
 scan();
 setInterval(scan,30000);
 </script>
