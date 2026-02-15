@@ -30,8 +30,13 @@ function copyAddr(id){ navigator.clipboard.writeText(document.getElementById(id)
 async function scan(){
   const output = document.getElementById("output");
   try{
-    const res = await fetch("https://api.dexscreener.com/latest/dex/pairs/solana");
-    const data = await res.json();
+    // Folosim proxy public CORS pentru DEXscreener
+    const proxy = "https://api.allorigins.win/get?url=";
+    const target = encodeURIComponent("https://api.dexscreener.com/latest/dex/pairs/solana");
+    const res = await fetch(proxy+target);
+    const jsonText = await res.json();
+    const data = JSON.parse(jsonText.contents);
+
     const now = Date.now();
     let results = [];
 
@@ -39,6 +44,7 @@ async function scan(){
       if(p.chainId!=="solana"||!p.pairCreatedAt||now-p.pairCreatedAt>ONE_HOUR) continue;
       const symbol = p.baseToken.symbol;
       if(["SOL","USDC","USDT"].includes(symbol)||symbol.includes("SOL")) continue;
+
       const address = p.baseToken.address;
       const liquidity = parseFloat(p.liquidity?.usd||0);
       const volume24 = parseFloat(p.volume?.h24||0);
@@ -92,7 +98,7 @@ async function scan(){
       </div>
     `).join("");
 
-  }catch(e){ output.innerHTML="Error fetching data."; }
+  }catch(e){ output.innerHTML="Error fetching data."; console.error(e); }
 }
 
 scan();
